@@ -1,0 +1,106 @@
+<!-- timetables/templates/timetables/generate_teacher_timetable.html -->
+
+{% extends 'timetables/base.html' %}
+{% load static %}
+
+{% block title %}Generate Timetable for {{ teacher.first_name }} {{ teacher.last_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-9">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-sync-alt"></i> Generate Timetable
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Teacher:</strong> {{ teacher.first_name }} {{ teacher.last_name }} ({{ teacher.teacher_id }})
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <h5>Assigned Subjects:</h5>
+                            {% if assigned_subjects %}
+                                {% for batch_key, subjects in subjects_by_batch.items %}
+                                <div class="card mb-3">
+                                    <div class="card-header bg-secondary text-white">
+                                        <strong>{{ batch_key }}</strong>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered mb-0">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>Subject Code</th>
+                                                        <th>Subject Name</th>
+                                                        <th>Sections</th>
+                                                        <th>Credit Hours</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for assignment in subjects %}
+                                                    <tr>
+                                                        <td><strong>{{ assignment.subject.code }}</strong></td>
+                                                        <td>{{ assignment.subject.name }}</td>
+                                                        <td>
+                                                            {% for section in assignment.sections.all %}
+                                                                <span class="badge bg-info me-1">{{ section.name }}</span>
+                                                            {% empty %}
+                                                                <span class="text-muted">No sections assigned</span>
+                                                            {% endfor %}
+                                                        </td>
+                                                        <td>{{ assignment.subject.credit_hours }}</td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                                
+                                <div class="alert alert-success mt-3">
+                                    <i class="fas fa-check-circle"></i>
+                                    <strong>Total Subjects:</strong> {{ total_subjects }}
+                                </div>
+                                
+                                <div class="alert alert-info">
+                                    <i class="fas fa-clock"></i>
+                                    <strong>What will happen:</strong>
+                                    <ul class="mt-2 mb-0">
+                                        <li>Timetable will be generated for all {{ total_subjects }} subjects above</li>
+                                        <li>Classes will be created for each section listed above</li>
+                                        <li>Classes will be scheduled in available time slots (Monday-Friday)</li>
+                                        <li>System will automatically avoid conflicts (same teacher, same section, same classroom at same time)</li>
+                                        <li>Classrooms with sufficient capacity will be assigned</li>
+                                    </ul>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    No subjects assigned to this teacher. Please assign subjects first in the admin panel.
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg" {% if not assigned_subjects %}disabled{% endif %}>
+                                <i class="fas fa-play"></i> Generate Timetable for All Subjects
+                            </button>
+                            <a href="{% url 'timetables:generate_teacher_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Teacher List
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

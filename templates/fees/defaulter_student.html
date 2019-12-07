@@ -1,0 +1,427 @@
+{% extends "Home/base.html" %}
+{% load static %}
+{% load fee_extras %}
+
+{% block body %}
+
+<div class="main-wrapper">
+    <div class="page-wrapper">
+        <div class="content container-fluid">
+
+            <div class="page-header no-print">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h3 class="page-title">Defaulter Students</h3>
+                        <ul class="breadcrumb">
+                            <li class="breadcrumb-item active">Defaulters</li>
+                        </ul>
+                    </div>
+                    <div class="col-auto">
+                        <!-- Add Excel Export Button -->
+                        <button id="exportExcelBtn" class="btn btn-success me-2">
+                            <i class="fas fa-file-excel"></i> Export to Excel
+                        </button>
+                        <button onclick="window.print()" class="btn btn-danger print-btn">
+                            <i class="fas fa-print"></i> Print List
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row no-print">
+                <div class="col-sm-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="filter-section">
+                                <h5>Filter Defaulters</h5>
+
+                                <form method="get" class="filter-form" id="filterForm">
+                                    <div class="row">
+                                        <!-- Discipline -->
+                                        <div class="form-group col-sm-6 col-md-3">
+                                            <label for="disciplineSelect">Discipline</label>
+                                            <select class="form-control" name="discipline" id="disciplineSelect">
+                                                <option value="">All Disciplines</option>
+                                                {% for disc in disciplines %}
+                                                <option value="{{ disc.id }}" 
+                                                    {% if selected_discipline == disc.id|stringformat:"s" %}selected{% endif %}>
+                                                    {{ disc.field }} ({{ disc.program }})
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <div class="form-group col-sm-6 col-md-3">
+                                            <label for="batchSelect">Batch</label>
+                                            <select name="batch" class="form-control" id="batchSelect">
+                                                <option value="">All Batches</option>
+                                                {% for batch in batches %}
+                                                    <option value="{{ batch.id }}"
+                                                        {% if selected_batch == batch.id|stringformat:"s" %}selected{% endif %}>
+                                                        {{ batch.name }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <div class="form-group col-sm-6 col-md-3">
+                                            <label for="semesterSelect">Semester</label>
+                                            <select name="semester" class="form-control" id="semesterSelect">
+                                                <option value="">All Semesters</option>
+                                                {% for semester in semesters %}
+                                                    <option value="{{ semester.id }}"
+                                                        {% if selected_semester == semester.id|stringformat:"s" %}selected{% endif %}>
+                                                        {{ semester.number }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <div class="form-group col-sm-6 col-md-3">
+                                            <label for="sectionSelect">Section</label>
+                                            <select name="section" class="form-control" id="sectionSelect">
+                                                <option value="">All Sections</option>
+                                                {% for section in sections %}
+                                                    <option value="{{ section.id }}"
+                                                        {% if selected_section == section.id|stringformat:"s" %}selected{% endif %}>
+                                                        {{ section.name }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group mt-3">
+                                        <button type="submit" class="btn btn-danger">
+                                            <i class="fas fa-search"></i> Apply Filters
+                                        </button>
+                                        <a href="{% url 'defaulter_student' %}" class="btn btn-secondary">
+                                            <i class="fas fa-redo"></i> Clear Filters
+                                        </a>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Filters Display -->
+            {% if selected_discipline or selected_batch or selected_semester or selected_section %}
+            <div class="alert alert-info mb-4 no-print">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-filter me-2"></i>
+                    <div class="flex-grow-1">
+                        <strong>Active Filters:</strong>
+                        {% if selected_discipline %}
+                        <span class="badge bg-primary me-2">{{ selected_discipline_name }}</span>
+                        {% endif %}
+                        {% if selected_batch %}
+                        <span class="badge bg-primary me-2">{{ selected_batch_name }}</span>
+                        {% endif %}
+                        {% if selected_semester %}
+                        <span class="badge bg-primary me-2">{{ selected_semester_name }}</span>
+                        {% endif %}
+                        {% if selected_section %}
+                        <span class="badge bg-primary me-2">{{ selected_section_name }}</span>
+                        {% endif %}
+                    </div>
+                    <span class="badge bg-danger">
+                        <i class="fas fa-users"></i>
+                        {{ fees|length|default:"0" }} Defaulters Found
+                    </span>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover table-striped fee-table">
+                                    <thead class="thead-dark">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Student ID</th>
+                                            <th>Name</th>
+                                            <th>Discipline</th>
+                                            <th>Batch</th>
+                                            <th>Section</th>
+                                            <th>Semester</th>
+                                            <th>Pending Semesters</th>
+                                            <th>Pending Amount</th>
+                                            <th class="no-print">Actions</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        {% regroup fees by student as student_list %}
+                                        {% for student in student_list %}
+                                            {% with student_fees=student.list %}
+                                            <tr>
+                                                <td>{{ forloop.counter }}</td>
+                                                <td>{{ student.grouper.student_id }}</td>
+                                                <td>{{ student.grouper.first_name }} {{ student.grouper.last_name }}</td>
+                                                <td>{{ student_fees.0.discipline.field }} ({{ student_fees.0.discipline.program }})</td>
+                                                <td>{{ student_fees.0.batch.name }}</td>
+                                                <td>{{ student_fees.0.section.name }}</td>
+                                                <td>{{ student_fees.0.semester.number }}</td>
+                                                <td>
+                                                    {% for fee in student_fees %}
+                                                        {% if fee.is_overdue %}
+                                                            <span class="badge badge-danger">
+                                                                Sem {{ fee.semester_option }} ⚠️
+                                                            </span>
+                                                        {% else %}
+                                                            <span class="badge badge-warning">
+                                                                Sem {{ fee.semester_option }}
+                                                            </span>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </td>
+                                                <td class="text-danger font-weight-bold">
+                                                    <!-- Display total with fine breakdown -->
+                                                    {% with total=student_fees|calculate_total %}
+                                                        PKR {{ total|floatformat:2 }}
+                                                        {% for fee in student_fees %}
+                                                            {% if fee.fine > 0 %}
+                                                                <small class="text-muted d-block">
+                                                                    Includes PKR {{ fee.fine|floatformat:2 }} fine
+                                                                </small>
+                                                            {% endif %}
+                                                        {% endfor %}
+                                                    {% endwith %}
+                                                </td>
+                                                <td class="no-print">
+                                                    <a href="{% url 'student_fee_detail' student.grouper.id %}" 
+                                                       class="btn btn-sm btn-info" 
+                                                       title="View Details">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a href="{% url 'student_fee_detail' student.grouper.id %}" 
+                                                       class="btn btn-sm btn-success" 
+                                                       title="Make Payment">
+                                                        <i class="fas fa-credit-card"></i>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                            {% endwith %}
+                                        {% empty %}
+                                            <tr>
+                                                <td colspan="10" class="text-center py-4">
+                                                    <div class="empty-state">
+                                                        <i class="fas fa-check-circle fa-2x text-success mb-3"></i>
+                                                        <h5>No Defaulters Found</h5>
+                                                        <p class="text-muted">
+                                                            {% if selected_discipline or selected_batch or selected_semester or selected_section %}
+                                                                Try adjusting your filters
+                                                            {% else %}
+                                                                All students are up to date with their fee payments.
+                                                            {% endif %}
+                                                        </p>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Excel Export Functionality
+    document.getElementById('exportExcelBtn').addEventListener('click', function() {
+        exportDefaulterExcel();
+    });
+    
+    function exportDefaulterExcel() {
+        // Get current filter values
+        const discipline = document.getElementById('disciplineSelect').value;
+        const batch = document.getElementById('batchSelect').value;
+        const section = document.getElementById('sectionSelect').value;
+        const semester = document.getElementById('semesterSelect').value;
+        
+        // Show loading state
+        const originalText = this.innerHTML;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating Excel...';
+        this.disabled = true;
+        
+        // Build URL with filters
+        let exportUrl = "{% url 'export_defaulter_excel' %}?";
+        const params = new URLSearchParams();
+        
+        if (discipline) params.append('discipline', discipline);
+        if (batch) params.append('batch', batch);
+        if (section) params.append('section', section);
+        if (semester) params.append('semester', semester);
+        
+        exportUrl += params.toString();
+        
+        // Open in new tab (triggers download)
+        window.open(exportUrl, '_blank');
+        
+        // Restore button
+        setTimeout(() => {
+            this.innerHTML = originalText;
+            this.disabled = false;
+            showToast('Excel file download started!', 'success');
+        }, 1000);
+    }
+    
+    // Filter dependencies (similar to fee_list)
+    const disciplineSelect = document.getElementById('disciplineSelect');
+    const batchSelect = document.getElementById('batchSelect');
+    const sectionSelect = document.getElementById('sectionSelect');
+    
+    const allBatches = [
+        {% for batch in batches %}
+        {
+            id: "{{ batch.id }}", 
+            name: "{{ batch.name|escapejs }}", 
+            disciplineId: "{{ batch.discipline.id }}"
+        },
+        {% endfor %}
+    ];
+    
+    const allSections = [
+        {% for section in sections %}
+        {
+            id: "{{ section.id }}", 
+            name: "{{ section.name|escapejs }}", 
+            batchId: "{{ section.batch.id }}"
+        },
+        {% endfor %}
+    ];
+    
+    function filterBatches() {
+        const selectedDisciplineId = disciplineSelect.value;
+        const currentValue = batchSelect.value;
+        
+        batchSelect.innerHTML = '<option value="">All Batches</option>';
+        
+        const filteredBatches = selectedDisciplineId 
+            ? allBatches.filter(b => b.disciplineId === selectedDisciplineId)
+            : allBatches;
+        
+        filteredBatches.forEach(b => {
+            const option = document.createElement('option');
+            option.value = b.id;
+            option.textContent = b.name;
+            
+            // Preselect if this was previously selected
+            if (b.id === "{{ selected_batch }}") {
+                option.selected = true;
+            }
+            
+            batchSelect.appendChild(option);
+        });
+        
+        // Restore selection if valid
+        if (currentValue && filteredBatches.some(b => b.id === currentValue)) {
+            batchSelect.value = currentValue;
+        } else {
+            batchSelect.value = '';
+        }
+        
+        filterSections();
+    }
+    
+    function filterSections() {
+        const selectedBatchId = batchSelect.value;
+        const currentValue = sectionSelect.value;
+        
+        sectionSelect.innerHTML = '<option value="">All Sections</option>';
+        
+        const filteredSections = selectedBatchId 
+            ? allSections.filter(s => s.batchId === selectedBatchId)
+            : allSections;
+        
+        filteredSections.forEach(s => {
+            const option = document.createElement('option');
+            option.value = s.id;
+            option.textContent = s.name;
+            
+            // Preselect if this was previously selected
+            if (s.id === "{{ selected_section }}") {
+                option.selected = true;
+            }
+            
+            sectionSelect.appendChild(option);
+        });
+        
+        // Restore selection if valid
+        if (currentValue && filteredSections.some(s => s.id === currentValue)) {
+            sectionSelect.value = currentValue;
+        } else {
+            sectionSelect.value = '';
+        }
+    }
+    
+    // Event listeners
+    if (disciplineSelect) {
+        disciplineSelect.addEventListener('change', filterBatches);
+    }
+    
+    if (batchSelect) {
+        batchSelect.addEventListener('change', filterSections);
+    }
+    
+    // Initialize filters
+    filterBatches();
+    filterSections();
+    
+    // Toast notification
+    function showToast(message, type = 'info') {
+        // Simple alert for now
+        alert(message);
+    }
+});
+</script>
+
+<style>
+.badge-danger {
+    background-color: #dc3545 !important;
+}
+
+.badge-warning {
+    background-color: #ffc107 !important;
+    color: #000;
+}
+
+.btn-success {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.btn-success:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+}
+
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .fee-table th {
+        background-color: #f8f9fa !important;
+        color: #000 !important;
+    }
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+}
+</style>
+
+{% endblock %}

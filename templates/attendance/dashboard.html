@@ -1,0 +1,410 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}Attendance Dashboard - Student Management System{% endblock %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <div class="page-header">
+            <div class="row">
+                <div class="col-sm-12">
+                    <h3 class="page-title">Attendance Management System</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Attendance</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Attendance Statistics Row -->
+        <div class="row">
+            <!-- Today's Attendance Card -->
+            <div class="col-xl-3 col-sm-6 col-12 d-flex">
+                <div class="card bg-primary w-100">
+                    <div class="card-body">
+                        <div class="db-widgets d-flex justify-content-between align-items-center">
+                            <div class="db-icon">
+                                <i class="fas fa-calendar-day"></i>
+                            </div>
+                            <div class="db-info">
+                                <h3>{{ today_attendance }}</h3>
+                                <h6>Today's Attendance</h6>
+                                <p class="text-white mb-0">{{ today|date:"F d, Y" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Total Attendance Card -->
+            <div class="col-xl-3 col-sm-6 col-12 d-flex">
+                <div class="card bg-success w-100">
+                    <div class="card-body">
+                        <div class="db-widgets d-flex justify-content-between align-items-center">
+                            <div class="db-icon">
+                                <i class="fas fa-clipboard-list"></i>
+                            </div>
+                            <div class="db-info">
+                                <h3>{{ total_attendance }}</h3>
+                                <h6>Total Records</h6>
+                                <p class="text-white mb-0">All time attendance</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Batch Statistics Card -->
+            <div class="col-xl-3 col-sm-6 col-12 d-flex">
+                <div class="card bg-info w-100">
+                    <div class="card-body">
+                        <div class="db-widgets d-flex justify-content-between align-items-center">
+                            <div class="db-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="db-info">
+                                <h3>{{ batch_stats|length }}</h3>
+                                <h6>Active Batches</h6>
+                                <p class="text-white mb-0">With attendance records</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Mark Card -->
+            <div class="col-xl-3 col-sm-6 col-12 d-flex">
+                <div class="card bg-warning w-100">
+                    <div class="card-body">
+                        <div class="db-widgets d-flex justify-content-between align-items-center">
+                            <div class="db-icon">
+                                <i class="fas fa-user-check"></i>
+                            </div>
+                            <div class="db-info">
+                                <h3><i class="fas fa-plus"></i></h3>
+                                <h6>Mark Attendance</h6>
+                                <a href="{% url 'mark_attendance' %}" class="text-white mb-0">Click to mark</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Batch Statistics -->
+        {% if batch_stats %}
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">Batch-wise Attendance Statistics</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-center mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Batch</th>
+                                        <th>Total Records</th>
+                                        <th>Present</th>
+                                        <th>Absent</th>
+                                        <th>Attendance %</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for stat in batch_stats %}
+                                    <tr>
+                                        <td>
+                                            <h2 class="table-avatar">
+                                                <a href="{% url 'attendance_list' %}?batch={{ stat.batch__id }}">
+                                                    {{ stat.batch__name }}
+                                                </a>
+                                            </h2>
+                                        </td>
+                                        <td>{{ stat.total }}</td>
+                                        <td>
+                                            <span class="badge badge-success">{{ stat.present }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-danger">{{ stat.total|add:"-"|add:stat.present }}</span>
+                                        </td>
+                                        <td>
+                                            <div class="progress" style="height: 20px;">
+                                                <div class="progress-bar 
+                                                    {% if stat.percentage >= 80 %}bg-success
+                                                    {% elif stat.percentage >= 60 %}bg-info
+                                                    {% elif stat.percentage >= 40 %}bg-warning
+                                                    {% else %}bg-danger{% endif %}" 
+                                                    style="width: {{ stat.percentage }}%">
+                                                    <span>{{ stat.percentage|floatformat:1 }}%</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'attendance_list' %}?batch={{ stat.batch__id }}" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i> View
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Main Content Row -->
+        <div class="row mt-4">
+            <div class="col-md-8">
+                <!-- Recent Attendance -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <h5 class="card-title">Recent Attendance Records</h5>
+                            </div>
+                            <div class="col-auto">
+                                <a href="{% url 'attendance_list' %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-list"></i> View All
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-center mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Student</th>
+                                        <th>Subject</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                        <th>Batch</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for attendance in recent_attendance %}
+                                    <tr>
+                                        <td>
+                                            <h2 class="table-avatar">
+                                                <a href="{% url 'student_attendance' attendance.student.id %}">
+                                                    {{ attendance.student.get_full_name }}
+                                                </a>
+                                                <small>{{ attendance.student.student_id }}</small>
+                                            </h2>
+                                        </td>
+                                        <td>
+                                            {% if attendance.subject %}
+                                            <a href="{% url 'subject_attendance' attendance.subject.id %}">
+                                                {{ attendance.subject.code }}
+                                            </a>
+                                            {% else %}
+                                            <span class="text-muted">No Subject</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ attendance.date|date:"d M Y" }}</td>
+                                        <td>
+                                            {% if attendance.status == 'P' %}
+                                            <span class="badge badge-success">Present</span>
+                                            {% else %}
+                                            <span class="badge badge-danger">Absent</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ attendance.batch.name }}</td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                {% if attendance.subject %}
+                                                <a href="{% url 'subject_attendance' attendance.subject.id %}" 
+                                                   class="btn btn-outline-info" title="View Subject">
+                                                    <i class="fas fa-book"></i>
+                                                </a>
+                                                {% endif %}
+                                                <a href="{% url 'student_attendance' attendance.student.id %}" 
+                                                   class="btn btn-outline-primary" title="View Student">
+                                                    <i class="fas fa-user"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted">
+                                            <i class="fas fa-clipboard-list fa-3x mb-3"></i>
+                                            <p class="mb-0">No attendance records found</p>
+                                            <a href="{% url 'mark_attendance' %}" class="btn btn-primary mt-2">
+                                                <i class="fas fa-plus"></i> Mark Attendance
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Subject Access -->
+                {% if recent_subjects %}
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="card-title">Quick Subject Access</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% for subject in recent_subjects %}
+                            <div class="col-md-6 mb-3">
+                                <div class="card border">
+                                    <div class="card-body">
+                                        <h6 class="card-title">{{ subject.code }}</h6>
+                                        <p class="card-text text-muted mb-2">{{ subject.name|truncatechars:30 }}</p>
+                                        <p class="mb-1"><small>Semester: {{ subject.semester }}</small></p>
+                                        <div class="btn-group btn-group-sm w-100" role="group">
+                                            <a href="{% url 'subject_attendance' subject.id %}" 
+                                               class="btn btn-outline-primary">
+                                                <i class="fas fa-list"></i> Records all reorcddddddddddddddddddd
+                                            </a>
+                                            <!--when you create these views -->
+                                            
+                                            {% comment %} {% comment %} <a href="{% url 'subject_summary' subject.id %}" 
+                                               class="btn btn-outline-info">
+                                                <i class="fas fa-chart-pie"></i> Summary
+                                            </a>
+                                            <a href="{% url 'subject_low_attendance' subject.id %}" 
+                                               class="btn btn-outline-warning">
+                                                <i class="fas fa-exclamation-triangle"></i> Low attebnffltkekrjgjkjkd
+                                            </a> {% endcomment %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="col-md-4">
+                <!-- Quick Actions Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">Quick Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'mark_attendance' %}" class="btn btn-primary">
+                                <i class="fas fa-user-check"></i> Mark Single Attendance
+                            </a>
+                            <a href="{% url 'bulk_attendance' %}" class="btn btn-success">
+                                <i class="fas fa-users"></i> Bulk Attendance
+                            </a>
+                            <a href="{% url 'attendance_list' %}" class="btn btn-info">
+                                <i class="fas fa-list"></i> View All Attendance
+                            </a>
+                            <a href="{% url 'attendance_statistics' %}" class="btn btn-warning">
+                                <i class="fas fa-chart-bar"></i> View Statistics
+                            </a>
+                            <a href="{% url 'daily_summary' %}" class="btn btn-secondary">
+                                <i class="fas fa-calendar-alt"></i> Daily Summary
+                            </a>
+                            <a href="{% url 'monthly_reports' %}" class="btn btn-dark">
+                                <i class="fas fa-file-alt"></i> Monthly Reports
+                            </a>
+                               <a href="{% url 'subject_short_attendance' %}" class="btn btn-outline-info mr-2">
+        <i class="fas fa-book"></i> View By Subject Short Attendance
+    </a>
+                            <a href="{% url 'export_attendance' %}" class="btn btn-outline-primary">
+                                <i class="fas fa-download"></i> Export Data
+                            </a>  
+                            
+
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Today's Date Card -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="card-title">Today's Date</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <div class="display-4 text-primary">{{ today|date:"d" }}</div>
+                        <div class="text-muted">{{ today|date:"F Y" }}</div>
+                        <div class="mt-2">
+                            <small>{{ today|date:"l" }}</small>
+                        </div>
+                        <hr>
+                        <a href="{% url 'mark_attendance' %}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-plus"></i> Mark Today's Attendance
+                        </a>
+                    </div>
+                </div>
+
+                <!-- System Status -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="card-title">System Status</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Total Students
+                                <span class="badge badge-primary badge-pill">{{ total_students }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Total Subjects
+                                <span class="badge badge-primary badge-pill">{{ total_subjects }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Active Batches
+                                <span class="badge badge-success badge-pill">{{ active_batches }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Today's Records
+                                <span class="badge badge-info badge-pill">{{ today_attendance }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
+<script src="{% static 'assets/plugins/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<script>
+    $(document).ready(function() {
+        // Auto-dismiss alerts after 5 seconds
+        setTimeout(function() {
+            $('.alert').alert('close');
+        }, 5000);
+        
+        // Add hover effect to cards
+        $('.card').hover(
+            function() {
+                $(this).css('transform', 'translateY(-5px)');
+                $(this).css('box-shadow', '0 4px 15px rgba(0,0,0,0.1)');
+            },
+            function() {
+                $(this).css('transform', 'translateY(0)');
+                $(this).css('box-shadow', 'none');
+            }
+        );
+
+        // Auto-refresh dashboard every 30 seconds
+        setInterval(function() {
+            location.reload();
+        }, 30000);
+    });
+</script>
+{% endblock %}

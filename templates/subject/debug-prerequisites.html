@@ -1,0 +1,217 @@
+{% extends "Home/base.html" %}
+{% load static %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">🐛 Debug Prerequisites</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'subject:view_subject' %}">Subjects</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'subject:show_all_subjects' %}">All Subjects</a></li>
+                        <li class="breadcrumb-item active">Debug Prerequisites</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fas fa-search"></i> Test Prerequisite Loading
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="get" class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Discipline *</label>
+                                    <select name="discipline_id" class="form-control" required>
+                                        <option value="">Select Discipline</option>
+                                        {% for discipline in disciplines %}
+                                        <option value="{{ discipline.id }}" {% if selected_discipline_id == discipline.id|stringformat:"i" %}selected{% endif %}>
+                                            {{ discipline.field }} ({{ discipline.program }})
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Semester *</label>
+                                    <select name="semester_id" class="form-control" required>
+                                        <option value="">Select Semester</option>
+                                        {% for semester in semesters %}
+                                        <option value="{{ semester.id }}" {% if selected_semester_id == semester.id|stringformat:"i" %}selected{% endif %}>
+                                            Semester {{ semester.number }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Section (Optional)</label>
+                                    <select name="section_id" class="form-control">
+                                        <option value="">All Sections</option>
+                                        {% for section in sections %}
+                                        <option value="{{ section.id }}" {% if selected_section_id == section.id|stringformat:"i" %}selected{% endif %}>
+                                            {{ section.name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search"></i> Test Prerequisites
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                {% if selected_discipline %}
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fas fa-info-circle"></i> Debug Results
+                            <span class="badge badge-info ml-2">Discipline: {{ selected_discipline.field }}</span>
+                            <span class="badge badge-info ml-2">Semester: {{ selected_semester.number }}</span>
+                            {% if selected_section %}
+                            <span class="badge badge-info ml-2">Section: {{ selected_section.name }}</span>
+                            {% endif %}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-primary text-white">
+                                        <h6 class="mb-0">All Subjects in Database for {{ selected_discipline.field }}</h6>
+                                    </div>
+                                    <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                                        <p class="text-muted">Total: {{ total_all_subjects }} subjects</p>
+                                        {% if all_subjects %}
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Code</th>
+                                                    <th>Name</th>
+                                                    <th>Sem</th>
+                                                    <th>Section</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for subject in all_subjects %}
+                                                <tr>
+                                                    <td><strong>{{ subject.code }}</strong></td>
+                                                    <td>{{ subject.name }}</td>
+                                                    <td>{{ subject.semester.number }}</td>
+                                                    <td>{{ subject.section.name|default:"-" }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                        {% else %}
+                                        <div class="text-center text-muted py-3">
+                                            <i class="fas fa-exclamation-triangle fa-2x"></i>
+                                            <p>No subjects found for this discipline</p>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-success text-white">
+                                        <h6 class="mb-0">Available Prerequisites for Semester {{ selected_semester.number }}</h6>
+                                    </div>
+                                    <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                                        <p class="text-muted">
+                                            Subjects from Semester ≤ {{ selected_semester.number }}
+                                            {% if selected_section %} (Filtered by Section: {{ selected_section.name }}){% endif %}
+                                        </p>
+                                        <p class="text-muted">Found: {{ total_available_prereqs }} subjects</p>
+                                        {% if available_prereqs %}
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Code</th>
+                                                    <th>Name</th>
+                                                    <th>Sem</th>
+                                                    <th>Section</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for subject in available_prereqs %}
+                                                <tr>
+                                                    <td><strong>{{ subject.code }}</strong></td>
+                                                    <td>{{ subject.name }}</td>
+                                                    <td>{{ subject.semester.number }}</td>
+                                                    <td>{{ subject.section.name|default:"-" }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                        {% else %}
+                                        <div class="text-center text-warning py-3">
+                                            <i class="fas fa-exclamation-triangle fa-2x"></i>
+                                            <p>No prerequisite subjects available!</p>
+                                            <small class="text-muted">
+                                                This could be because:<br>
+                                                1. No subjects exist in database<br>
+                                                2. All subjects are in higher semesters<br>
+                                                3. Section filter doesn't match any subjects
+                                            </small>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Debug Information -->
+                        <div class="card mt-3">
+                            <div class="card-header bg-info text-white">
+                                <h6 class="mb-0">Debug Information</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6>Database Query Used:</h6>
+                                        <pre class="bg-light p-3">
+Subject.objects.filter(
+    desciplain_id={{ selected_discipline.id }},
+    semester__number__lte={{ selected_semester.number }}
+    {% if selected_section %}, section_id={{ selected_section.id }}{% endif %}
+).order_by('semester__number', 'code')</pre>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6>What to Check:</h6>
+                                        <ul>
+                                            <li>Are there subjects in the database? Check "All Subjects" view</li>
+                                            <li>Do subjects belong to the correct discipline?</li>
+                                            <li>Are subjects in semester {{ selected_semester.number }} or lower?</li>
+                                            <li>If filtering by section, do subjects have that section?</li>
+                                            <li>Check browser console for JavaScript errors (F12)</li>
+                                        </ul>
+                                        <a href="{% url 'subject:show_all_subjects' %}?discipline={{ selected_discipline.id }}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-external-link-alt"></i> View All {{ selected_discipline.field }} Subjects
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

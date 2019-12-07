@@ -1,0 +1,269 @@
+<!-- templates/authentication/password_reset_confirm.html -->
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}Confirm Password Reset - Student Management System{% endblock %}
+
+{% block body %}
+<style>
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    .card-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #e3e6f0;
+    }
+    .required:after {
+        content: " *";
+        color: red;
+    }
+    .user-icon {
+        font-size: 5rem;
+        color: #6c757d;
+        margin-bottom: 1rem;
+    }
+    .warning-icon {
+        font-size: 3rem;
+        color: #ffc107;
+        margin-bottom: 1rem;
+    }
+    .reset-details {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        margin: 15px 0;
+    }
+    .info-badge {
+        font-size: 0.9rem;
+        padding: 5px 10px;
+        margin: 2px;
+    }
+    .action-buttons {
+        margin-top: 30px;
+    }
+    .checkbox-container {
+        background-color: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 15px;
+        border-radius: 5px;
+        margin: 20px 0;
+    }
+</style>
+
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <div class="page-header">
+            <div class="row">
+                <div class="col-sm-12">
+                    <h3 class="page-title">Confirm Password Reset</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="
+                            {% if user_type == 'student' %}
+                                {% url 'manage_students_view' %}
+                            {% elif user_type == 'teacher' %}
+                                {% url 'manage_teachers_view' %}
+                            {% elif user_type == 'admin' %}
+                                {% url 'manage_admins' %}
+                            {% endif %}
+                        ">Manage {{ user_type|title }}s</a></li>
+                        <li class="breadcrumb-item active">Confirm Password Reset</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8 offset-md-2">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fas fa-exclamation-triangle text-warning mr-2"></i>
+                            Reset Password Confirmation
+                        </h5>
+                    </div>
+                    <div class="card-body text-center">
+                        
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+                                    {{ message }}
+                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+
+                        <div class="text-center">
+                            <i class="fas fa-user-circle user-icon"></i>
+                        </div>
+                        
+                        <h4 class="mb-2">Reset Password for:</h4>
+                        <h3 class="mb-3 text-primary">{{ user_name }}</h3>
+                        
+                        <div class="reset-details">
+                            <div class="row">
+                                <div class="col-sm-6 text-right">
+                                    <strong>Email:</strong>
+                                </div>
+                                <div class="col-sm-6 text-left">
+                                    {{ user_email }}
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-sm-6 text-right">
+                                    <strong>User Type:</strong>
+                                </div>
+                                <div class="col-sm-6 text-left">
+                                    <span class="badge badge-{% if user_type == 'student' %}primary{% elif user_type == 'teacher' %}success{% else %}danger{% endif %} badge-lg">
+                                        {{ user_type|title }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-sm-6 text-right">
+                                    <strong>Account Status:</strong>
+                                </div>
+                                <div class="col-sm-6 text-left">
+                                    <span class="badge badge-success">Active</span>
+                                    {% if user_obj.user.password_generated %}
+                                        <span class="badge badge-warning">Using Temp Password</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-warning text-left">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-exclamation-circle mr-2"></i>
+                                Important Information:
+                            </h6>
+                            <p class="mb-0">Resetting this user's password will:</p>
+                            <ul class="mb-0 mt-2">
+                                <li class="mb-1">
+                                    <i class="fas fa-key text-warning mr-2"></i>
+                                    Generate a new random 10-character password
+                                </li>
+                                <li class="mb-1">
+                                    <i class="fas fa-envelope text-info mr-2"></i>
+                                    Send the new password to <strong>{{ user_email }}</strong>
+                                </li>
+                                <li class="mb-1">
+                                    <i class="fas fa-sign-out-alt text-danger mr-2"></i>
+                                    Log the user out from all active sessions
+                                </li>
+                                <li class="mb-1">
+                                    <i class="fas fa-clock text-muted mr-2"></i>
+                                    Mark the password as temporary (user must change on next login)
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <div class="checkbox-container">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" class="custom-control-input" id="confirmCheck" required>
+                                <label class="custom-control-label font-weight-bold" for="confirmCheck">
+                                    I understand that this action will reset the user's password and cannot be undone
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="action-buttons">
+                            <form method="post" action="{% url 'process_password_reset' user_type user_id %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-warning btn-lg" id="submitBtn" disabled>
+                                    <i class="fas fa-key mr-2"></i> Yes, Reset Password
+                                </button>
+                            </form>
+                            
+                            <a href="
+                                {% if user_type == 'student' %}
+                                    {% url 'manage_students_view' %}
+                                {% elif user_type == 'teacher' %}
+                                    {% url 'manage_teachers_view' %}
+                                {% elif user_type == 'admin' %}
+                                    {% url 'manage_admins' %}
+                                {% endif %}
+                            " class="btn btn-secondary btn-lg ml-2">
+                                <i class="fas fa-times mr-2"></i> Cancel
+                            </a>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <div class="text-left small text-muted">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            The new password will be sent immediately to the user's email address.
+                            The user will be required to change it upon their next login.
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Additional Information Card -->
+                <div class="card mt-3">
+                    <div class="card-header bg-light">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-shield-alt mr-2"></i>
+                            Security Guidelines
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="media mb-3">
+                                    <i class="fas fa-check-circle text-success mr-3 mt-1"></i>
+                                    <div class="media-body">
+                                        <h6>Strong Passwords</h6>
+                                        <small>Generated passwords are random and secure (10 characters)</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="media mb-3">
+                                    <i class="fas fa-clock text-warning mr-3 mt-1"></i>
+                                    <div class="media-body">
+                                        <h6>Immediate Action</h6>
+                                        <small>User should change password on first login</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="media mb-3">
+                                    <i class="fas fa-envelope text-info mr-3 mt-1"></i>
+                                    <div class="media-body">
+                                        <h6>Email Notification</h6>
+                                        <small>User receives password via email</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="media mb-3">
+                                    <i class="fas fa-history text-secondary mr-3 mt-1"></i>
+                                    <div class="media-body">
+                                        <h6>Audit Trail</h6>
+                                        <small>All password resets are logged</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Enable submit button only when checkbox is checked
+    document.getElementById('confirmCheck').addEventListener('change', function() {
+        document.getElementById('submitBtn').disabled = !this.checked;
+    });
+    
+    // Prevent accidental form resubmission
+    if (window.history.replaceState) {
+        window.history.replaceState(null, null, window.location.href);
+    }
+</script>
+{% endblock %}

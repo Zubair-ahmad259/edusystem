@@ -1,0 +1,121 @@
+{% extends 'timetables/base.html' %}
+{% load static %}
+
+{% block title %}{% if time_slot %}Edit Time Slot{% else %}Add Time Slot{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                    <h4 class="mb-0">
+                        <i class="fas fa-clock"></i> 
+                        {% if time_slot %}Edit Time Slot{% else %}Add New Time Slot{% endif %}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="day" class="form-label">Day *</label>
+                            <select name="day" id="day" class="form-select" required>
+                                <option value="">Select Day</option>
+                                {% for day in days %}
+                                <option value="{{ day }}" {% if time_slot and time_slot.day == day %}selected{% endif %}>
+                                    {{ day }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted">Classes are only allowed Monday-Friday</small>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="start_time" class="form-label">Start Time *</label>
+                                <input type="time" name="start_time" id="start_time" class="form-control" 
+                                       value="{% if time_slot %}{{ time_slot.start_time|time:'H:i' }}{% endif %}" required>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="end_time" class="form-label">End Time *</label>
+                                <input type="time" name="end_time" id="end_time" class="form-control" 
+                                       value="{% if time_slot %}{{ time_slot.end_time|time:'H:i' }}{% endif %}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" name="is_active" id="is_active" class="form-check-input" 
+                                   {% if not time_slot or time_slot.is_active %}checked{% endif %}>
+                            <label for="is_active" class="form-check-label">Active</label>
+                            <small class="text-muted d-block">Inactive time slots won't appear in timetable generation</small>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Guidelines:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Monday-Thursday: 9:00 AM to 4:00 PM only</li>
+                                <li>Friday: 9:00 AM to 2:00 PM only</li>
+                                <li>Recommended duration: 1 hour (60 minutes)</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> 
+                                {% if time_slot %}Update{% else %}Create{% endif %} Time Slot
+                            </button>
+                            <a href="{% url 'timetables:time_slot_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Auto-calculate and validate time slot
+    document.getElementById('start_time').addEventListener('change', validateTimeSlot);
+    document.getElementById('end_time').addEventListener('change', validateTimeSlot);
+    
+    function validateTimeSlot() {
+        const startTime = document.getElementById('start_time').value;
+        const endTime = document.getElementById('end_time').value;
+        const day = document.getElementById('day').value;
+        
+        if (startTime && endTime && day) {
+            const start = new Date(`1970-01-01T${startTime}`);
+            const end = new Date(`1970-01-01T${endTime}`);
+            
+            if (end <= start) {
+                alert('End time must be after start time!');
+                document.getElementById('end_time').value = '';
+                return;
+            }
+            
+            // Validate based on day
+            const startHour = parseInt(startTime.split(':')[0]);
+            const endHour = parseInt(endTime.split(':')[0]);
+            
+            if (day === 'Friday') {
+                if (startHour < 9 || endHour > 14 || (endHour === 14 && parseInt(endTime.split(':')[1]) > 0)) {
+                    alert('Friday time slots must be between 9:00 AM and 2:00 PM!');
+                    document.getElementById('start_time').value = '';
+                    document.getElementById('end_time').value = '';
+                }
+            } else if (day === 'Monday' || day === 'Tuesday' || day === 'Wednesday' || day === 'Thursday') {
+                if (startHour < 9 || endHour > 16 || (endHour === 16 && parseInt(endTime.split(':')[1]) > 0)) {
+                    alert('Monday-Thursday time slots must be between 9:00 AM and 4:00 PM!');
+                    document.getElementById('start_time').value = '';
+                    document.getElementById('end_time').value = '';
+                }
+            }
+        }
+    }
+</script>
+{% endblock %}

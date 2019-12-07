@@ -1,0 +1,219 @@
+{% extends "Home/base.html" %}
+{% load static %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">📚 Subjects</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'subject:view_subject' %}">Subjects</a></li>
+                        <li class="breadcrumb-item active">Subject List</li>
+                    </ul>
+                </div>
+                <div class="col-auto">
+                    <a href="{% url 'subject:add_subject' %}" class="btn btn-primary ml-2">
+                        <i class="fas fa-plus"></i> Add New Subject
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fas fa-database"></i> Database Statistics
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="card bg-primary text-white">
+                                    <div class="card-body text-center">
+                                        <h2>{{ total_subjects }}</h2>
+                                        <p>Total Subjects</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-success text-white">
+                                    <div class="card-body text-center">
+                                        <h2>{{ disciplines.count }}</h2>
+                                        <p>Disciplines</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-info text-white">
+                                    <div class="card-body text-center">
+                                        <h2>{{ semesters.count }}</h2>
+                                        <p>Semesters</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-warning text-white">
+                                    <div class="card-body text-center">
+                                        <h2>{{ sections.count }}</h2>
+                                        <p>Sections</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filter Form -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="card-title">Filter Subjects</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="get" class="row">
+                            <div class="col-md-3">
+                                <label>Subject Code</label>
+                                <input type="text" name="code" class="form-control" placeholder="Search by code" value="{{ request.GET.code }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label>Subject Name</label>
+                                <input type="text" name="name" class="form-control" placeholder="Search by name" value="{{ request.GET.name }}">
+                            </div>
+                            <div class="col-md-2">
+                                <label>Subject Type</label>
+                                <select name="subject_type" class="form-control">
+                                    <option value="">All Types</option>
+                                    {% for value, label in subject_type_choices %}
+                                    <option value="{{ value }}" {% if request.GET.subject_type == value %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label>Status</label>
+                                <select name="is_active" class="form-control">
+                                    <option value="">All</option>
+                                    <option value="true" {% if request.GET.is_active == 'true' %}selected{% endif %}>Active</option>
+                                    <option value="false" {% if request.GET.is_active == 'false' %}selected{% endif %}>Inactive</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary btn-block">Filter</button>
+                                <a href="{% url 'subject:view_subject' %}" class="btn btn-secondary btn-block ml-1">Reset</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Subjects Table -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fas fa-list"></i> Subjects List ({{ subjects|length }} found)
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if subjects %}
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover">
+                                <thead class="thead-dark">
+                                    <tr>
+                                        <th>Code</th>
+                                        <th>Name</th>
+                                        <th>Type</th>
+                                        <th>Credits</th>
+                                        <th>Prerequisites</th>
+                                        <th>Status</th>
+                                        <th>Created</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for subject in subjects %}
+                                    <tr>
+                                        <td><strong>{{ subject.code }}</strong></td>
+                                        <td>{{ subject.name }}</td>
+                                        <td>
+                                            <span class="badge {% if subject.subject_type == 'core' %}badge-primary{% else %}badge-success{% endif %}">
+                                                {{ subject.get_subject_type_display }}
+                                            </span>
+                                        </td>
+                                        <td>{{ subject.credit_hours }}</td>
+                                        <td>
+                                            {% if subject.prerequisites.all %}
+                                                {% for prereq in subject.prerequisites.all %}
+                                                <span class="badge badge-secondary">{{ prereq.code }}</span>
+                                                {% endfor %}
+                                            {% else %}
+                                            <span class="text-muted">None</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if subject.is_active %}
+                                            <span class="badge badge-success">Active</span>
+                                            {% else %}
+                                            <span class="badge badge-danger">Inactive</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ subject.created_at|date:"Y-m-d" }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Pagination -->
+                        {% if subjects.has_other_pages %}
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination justify-content-center">
+                                {% if subjects.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ subjects.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Previous</a>
+                                </li>
+                                {% endif %}
+                                
+                                {% for num in subjects.paginator.page_range %}
+                                <li class="page-item {% if subjects.number == num %}active{% endif %}">
+                                    <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                                </li>
+                                {% endfor %}
+                                
+                                {% if subjects.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ subjects.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Next</a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                        
+                        {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-book fa-4x text-muted mb-3"></i>
+                            <h4>No subjects found</h4>
+                            <p class="text-muted">Add your first subject using the button above</p>
+                            <a href="{% url 'subject:add_subject' %}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Add First Subject
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.badge {
+    font-size: 0.8em;
+    padding: 3px 8px;
+}
+.table td {
+    vertical-align: middle;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,149 @@
+{% extends 'teacher/teacher_base.html' %}
+{% load static %}
+
+{% block teacher_content %}
+<!-- Header Section -->
+<div class="page-header bg-light p-3 rounded shadow-sm mb-4">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <h3 class="page-title mb-0 text-primary">
+                Welcome 
+                {% if request.user.first_name %}
+                    {{ request.user.first_name }} {{ request.user.last_name }}
+                {% else %}
+                    Teacher
+                {% endif %}
+                !
+            </h3>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <ul class="breadcrumb mb-0">
+                <li class="breadcrumb-item active">Teacher Dashboard</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row g-3">
+    <!-- Classes Card (changed color to purple) -->
+    <div class="col-xl-3 col-sm-6 col-12">
+        <div class="card text-white" style="background-color:#6f42c1;">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="fw-bold mb-0">5</h3>
+                    <small>Classes</small>
+                </div>
+                <i class="fas fa-chalkboard-teacher fa-2x"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Students -->
+    <div class="col-xl-3 col-sm-6 col-12">
+        <div class="card text-white bg-success shadow-sm rounded-3">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="fw-bold mb-0">120</h3>
+                    <small>Students</small>
+                </div>
+                <i class="fas fa-users fa-2x"></i>
+            </div>
+        </div>
+    </div>
+    
+
+    <!-- Assignments -->
+    <div class="col-xl-3 col-sm-6 col-12">
+        <div class="card text-white bg-info shadow-sm rounded-3">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="fw-bold mb-0">15</h3>
+                    <small>Assignments</small>
+                </div>
+                <i class="fas fa-tasks fa-2x"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Completion Rate -->
+    <div class="col-xl-3 col-sm-6 col-12">
+        <div class="card text-white bg-warning shadow-sm rounded-3">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="fw-bold mb-0">85%</h3>
+                    <small>Completion Rate</small>
+                </div>
+                <i class="fas fa-clipboard-check fa-2x"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions Row -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card shadow-sm rounded-3 border-0">
+            <div class="card-header text-white" style="background-color:#6f42c1;">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bolt"></i> Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <a href="{% url 'timetables:my_timetable' %}" class="btn btn-primary btn-lg w-100 mb-2">
+                            <i class="fas fa-calendar-alt"></i> View My Timetable
+                        </a>
+                    </div>
+
+                    <div class="col-md-6">
+                        <a href="{% url 'timetables:teacher_availability' %}" class="btn btn-info btn-lg w-100 mb-2">
+                            <i class="fas fa-clock"></i> Set Availability
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upcoming Classes -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card shadow-sm rounded-3 border-0">
+            <div class="card-header text-white" style="background-color:#0d6efd;">
+                <h5 class="card-title mb-0">Today's Classes</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Class</th>
+                                <th>Time</th>
+                                <th>Room</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Compiler - Batch 11</td>
+                                <td>09:00 AM - 10:00 AM</td>
+                                <td>Room SF01</td>
+                                <td><span class="badge bg-warning">Pending</span></td>
+                            </tr>
+                            <tr>
+                                <td>ICT - Batch 14</td>
+                                <td>11:00 AM - 12:00 PM</td>
+                                <td>Lab 3</td>
+                                <td><span class="badge bg-warning">Pending</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

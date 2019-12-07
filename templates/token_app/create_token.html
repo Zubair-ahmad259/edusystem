@@ -1,0 +1,129 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}Create Token - Exam Token System{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">
+            <i class="fas fa-plus-circle text-primary"></i> Create New Exam Token
+        </h1>
+        <a href="{% url 'token_app:all_tokens' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to List
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Token Information</h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST" id="createTokenForm">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Select Student <span class="text-danger">*</span></label>
+                            <select name="student" class="form-control" id="studentSelect" required>
+                                <option value="">-- Choose Student --</option>
+                                {% for student in students %}
+                                <option value="{{ student.id }}">
+                                    {{ student.student_id }} - {{ student.first_name }} {{ student.last_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div id="studentInfo" style="display: none;" class="alert alert-info mb-3">
+                            <h6 class="alert-heading">Student Information:</h6>
+                            <p class="mb-1"><strong>Batch:</strong> <span id="studentBatch"></span></p>
+                            <p class="mb-1"><strong>Semester:</strong> <span id="studentSemester"></span></p>
+                            <p class="mb-1"><strong>Section:</strong> <span id="studentSection"></span></p>
+                            <p class="mb-0"><strong>Discipline:</strong> <span id="studentDiscipline"></span></p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Valid Until <span class="text-danger">*</span></label>
+                            <input type="date" name="valid_until" class="form-control" 
+                                   value="{{ default_valid_until|date:'Y-m-d' }}" min="{{ today|date:'Y-m-d' }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Eligible Subjects</label>
+                            <div class="border p-3" style="max-height: 300px; overflow-y: auto;">
+                                <div class="row" id="subjectsList">
+                                    <!-- Subjects will be loaded via AJAX -->
+                                    <div class="col-12 text-center text-muted py-4">
+                                        <i class="fas fa-spinner fa-spin"></i> Loading subjects...
+                                    </div>
+                                </div>
+                            </div>
+                            <small class="text-muted">Hold Ctrl to select multiple subjects</small>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'token_app:all_tokens' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Create Token
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('#studentSelect').change(function() {
+        var studentId = $(this).val();
+        
+        if (studentId) {
+            // Load student info
+            $.getJSON('/tokens/api/student/' + studentId + '/', function(data) {
+                $('#studentBatch').text(data.batch);
+                $('#studentSemester').text(data.semester);
+                $('#studentSection').text(data.section);
+                $('#studentDiscipline').text(data.discipline);
+                $('#studentInfo').show();
+            });
+            
+            // Load subjects
+            $.getJSON('/tokens/api/student/' + studentId + '/subjects/', function(subjects) {
+                var html = '';
+                for (var i = 0; i < subjects.length; i++) {
+                    html += '<div class="col-md-6 mb-2">';
+                    html += '<div class="form-check">';
+                    html += '<input class="form-check-input" type="checkbox" name="subjects" value="' + subjects[i].id + '" id="subject_' + subjects[i].id + '">';
+                    html += '<label class="form-check-label" for="subject_' + subjects[i].id + '">';
+                    html += '<strong>' + subjects[i].code + '</strong> - ' + subjects[i].name;
+                    html += ' <small class="text-muted">(' + subjects[i].credit_hours + ' CH)</small>';
+                    html += '</label>';
+                    html += '</div>';
+                    html += '</div>';
+                }
+                
+                if (subjects.length === 0) {
+                    html = '<div class="col-12 text-center text-muted">No subjects found for this student</div>';
+                }
+                
+                $('#subjectsList').html(html);
+            });
+        } else {
+            $('#studentInfo').hide();
+            $('#subjectsList').html('<div class="col-12 text-center text-muted py-4">Select a student to view subjects</div>');
+        }
+    });
+});
+</script>
+{% endblock %}

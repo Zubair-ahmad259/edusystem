@@ -1,0 +1,453 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}Monthly Attendance Reports - Student Management System{% endblock %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Monthly Attendance Reports</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'attendance_dashboard' %}">Attendance</a></li>
+                      
+                        <li class="breadcrumb-item active">Monthly Reports</li>
+                    </ul>
+                </div>
+                <div class="col-auto text-right float-right ml-auto">
+                    <button class="btn btn-outline-primary mr-2" onclick="generatePDF()">
+                        <i class="fas fa-file-pdf"></i> Export PDF
+                    </button>
+                    <a href="{% url 'attendance_statistics' %}" class="btn btn-primary">
+                        <i class="fas fa-chart-bar"></i> View Statistics
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">Filter Reports</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="GET" action="{% url 'monthly_reports' %}">
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <label class="form-label">Select Month</label>
+                                    <select name="month" class="form-control">
+                                        <option value="">All Months</option>
+                                        {% for month_num, month_name in month_choices %}
+                                        <option value="{{ month_num }}" 
+                                                {% if request.GET.month == month_num|stringformat:"i" %}selected{% endif %}>
+                                            {{ month_name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Select Year</label>
+                                    <select name="year" class="form-control">
+                                        <option value="">All Years</option>
+                                        {% for year in year_choices %}
+                                        <option value="{{ year }}" 
+                                                {% if request.GET.year == year|stringformat:"i" %}selected{% endif %}>
+                                            {{ year }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Discipline</label>
+                                    <select name="discipline" class="form-control">
+                                        <option value="">All Disciplines</option>
+                                        {% for discipline in disciplines %}
+                                        <option value="{{ discipline.id }}" 
+                                                {% if request.GET.discipline == discipline.id|stringformat:"i" %}selected{% endif %}>
+                                            {{ discipline }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-3 d-flex align-items-end">
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="fas fa-filter"></i> Generate Report
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="row mb-4">
+            <div class="col-xl-3 col-sm-6 col-12 d-flex">
+                <div class="card bg-primary w-100">
+                    <div class="card-body">
+                        <div class="db-widgets d-flex justify-content-between align-items-center">
+                            <div class="db-icon">
+                                <i class="fas fa-calendar-alt"></i>
+                            </div>
+                            <div class="db-info">
+                                <h3>{{ total_months }}</h3>
+                                <h6>Months Tracked</h6>
+                                <p class="text-white mb-0">Attendance data</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-sm-6 col-12 d-flex">
+                <div class="card bg-success w-100">
+                    <div class="card-body">
+                        <div class="db-widgets d-flex justify-content-between align-items-center">
+                            <div class="db-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="db-info">
+                                <h3>{{ avg_monthly_attendance|floatformat:1 }}%</h3>
+                                <h6>Avg. Monthly</h6>
+                                <p class="text-white mb-0">Overall average</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-sm-6 col-12 d-flex">
+                <div class="card bg-info w-100">
+                    <div class="card-body">
+                        <div class="db-widgets d-flex justify-content-between align-items-center">
+                            <div class="db-icon">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                            <div class="db-info">
+                                <h3>{{ best_month.month|slice:"5:7" }}/{{ best_month.year }}</h3>
+                                <h6>Best Month</h6>
+                                <p class="text-white mb-0">{{ best_month.percentage|floatformat:1 }}% present</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-sm-6 col-12 d-flex">
+                <div class="card bg-warning w-100">
+                    <div class="card-body">
+                        <div class="db-widgets d-flex justify-content-between align-items-center">
+                            <div class="db-icon">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="db-info">
+                                <h3>{{ worst_month.month|slice:"5:7" }}/{{ worst_month.year }}</h3>
+                                <h6>Needs Improvement</h6>
+                                <p class="text-white mb-0">{{ worst_month.percentage|floatformat:1 }}% present</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monthly Reports Table -->
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">Monthly Attendance Reports</h5>
+                        <div class="text-muted">Showing {{ reports|length }} monthly reports</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-center mb-0" id="monthlyReportsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Month</th>
+                                        <th>Year</th>
+                                        <th>Total Days</th>
+                                        <th>Working Days</th>
+                                        <th>Present Days</th>
+                                        <th>Absent Days</th>
+                                        <th>Attendance %</th>
+                                        <th>Status</th>
+                                        <th>Trend</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for report in reports %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ report.get_month_display }}</strong>
+                                        </td>
+                                        <td>{{ report.year }}</td>
+                                        <td>{{ report.total_days }}</td>
+                                        <td>{{ report.working_days }}</td>
+                                        <td>
+                                            <span class="badge badge-success">{{ report.present_days }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-danger">{{ report.absent_days }}</span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="progress flex-grow-1" style="height: 20px;">
+                                                    <div class="progress-bar 
+                                                        {% if report.attendance_percentage >= 80 %}bg-success
+                                                        {% elif report.attendance_percentage >= 60 %}bg-info
+                                                        {% elif report.attendance_percentage >= 40 %}bg-warning
+                                                        {% else %}bg-danger{% endif %}" 
+                                                        style="width: {{ report.attendance_percentage }}%">
+                                                    </div>
+                                                </div>
+                                                <span class="ml-2 font-weight-bold">{{ report.attendance_percentage|floatformat:1 }}%</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% if report.attendance_percentage >= 80 %}
+                                            <span class="badge badge-success">Excellent</span>
+                                            {% elif report.attendance_percentage >= 70 %}
+                                            <span class="badge badge-info">Good</span>
+                                            {% elif report.attendance_percentage >= 60 %}
+                                            <span class="badge badge-warning">Average</span>
+                                            {% else %}
+                                            <span class="badge badge-danger">Poor</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if report.trend == 'up' %}
+                                            <i class="fas fa-arrow-up text-success"></i> Improving
+                                            {% elif report.trend == 'down' %}
+                                            <i class="fas fa-arrow-down text-danger"></i> Declining
+                                            {% else %}
+                                            <i class="fas fa-minus text-secondary"></i> Stable
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="dropdown">
+                                                <button class="btn btn-sm btn-outline-primary dropdown-toggle" 
+                                                        type="button" data-toggle="dropdown">
+                                                    <i class="fas fa-cog"></i> Actions
+                                                </button>
+                                                <div class="dropdown-menu">
+                                                    <a class="dropdown-item" href="#">
+                                                        <i class="fas fa-eye"></i> View Details
+                                                    </a>
+                                                    <a class="dropdown-item" href="#">
+                                                        <i class="fas fa-download"></i> Download Report
+                                                    </a>
+                                                    <a class="dropdown-item" href="#">
+                                                        <i class="fas fa-print"></i> Print Report
+                                                    </a>
+                                                    <div class="dropdown-divider"></div>
+                                                    <a class="dropdown-item" href="#">
+                                                        <i class="fas fa-chart-pie"></i> View Analytics
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="10" class="text-center text-muted">
+                                            <i class="fas fa-file-alt fa-3x mb-3"></i>
+                                            <p class="mb-0">No monthly reports generated yet</p>
+                                            <p>Attendance data will be compiled into monthly reports</p>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Yearly Comparison Chart -->
+                        {% if reports %}
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="card-title">Yearly Attendance Comparison</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="yearlyChart" height="100"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+    $(document).ready(function() {
+        {% if reports %}
+        // Prepare yearly chart data
+        const yearlyData = {};
+        
+        // Group data by year
+        {% for report in reports %}
+            const year = {{ report.year }};
+            const month = {{ report.month }};
+            const percentage = {{ report.attendance_percentage }};
+            
+            if (!yearlyData[year]) {
+                yearlyData[year] = Array(12).fill(null);
+            }
+            yearlyData[year][month-1] = percentage;
+        {% endfor %}
+        
+        const years = Object.keys(yearlyData).sort();
+        const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        
+        const datasets = years.map((year, index) => {
+            const colors = ['#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1', '#17a2b8'];
+            return {
+                label: `Year ${year}`,
+                data: yearlyData[year],
+                borderColor: colors[index % colors.length],
+                backgroundColor: colors[index % colors.length] + '20',
+                fill: false,
+                tension: 0.4
+            };
+        });
+        
+        // Create yearly chart
+        const yearlyCtx = document.getElementById('yearlyChart').getContext('2d');
+        const yearlyChart = new Chart(yearlyCtx, {
+            type: 'line',
+            data: {
+                labels: monthLabels,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ${context.parsed.y}%`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: 'Attendance Percentage (%)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Months'
+                        }
+                    }
+                }
+            }
+        });
+        {% endif %}
+        
+        // Sort table by month/year
+        $('#monthlyReportsTable').DataTable({
+            order: [[1, 'desc'], [0, 'desc']],
+            pageLength: 10,
+            language: {
+                search: "Search reports:",
+                lengthMenu: "Show _MENU_ reports per page",
+                info: "Showing _START_ to _END_ of _TOTAL_ reports",
+                paginate: {
+                    previous: "Previous",
+                    next: "Next"
+                }
+            }
+        });
+    });
+    
+    function generatePDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4');
+        
+        // Add title
+        doc.setFontSize(18);
+        doc.text('Monthly Attendance Reports', 105, 20, null, null, 'center');
+        
+        // Add date
+        doc.setFontSize(10);
+        doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 105, 30, null, null, 'center');
+        
+        // Add table
+        doc.autoTable({
+            html: '#monthlyReportsTable',
+            startY: 40,
+            theme: 'striped',
+            headStyles: { fillColor: [41, 128, 185] },
+            columnStyles: {
+                0: { cellWidth: 25 },
+                1: { cellWidth: 20 },
+                2: { cellWidth: 20 },
+                3: { cellWidth: 25 },
+                4: { cellWidth: 25 },
+                5: { cellWidth: 25 },
+                6: { cellWidth: 30 },
+                7: { cellWidth: 20 },
+                8: { cellWidth: 20 }
+            }
+        });
+        
+        // Save PDF
+        doc.save(`attendance-reports-${new Date().toISOString().slice(0,10)}.pdf`);
+    }
+</script>
+
+<style>
+    .progress {
+        min-width: 100px;
+    }
+    
+    .dataTables_wrapper {
+        margin-top: 20px;
+    }
+    
+    .dataTables_length,
+    .dataTables_filter {
+        margin-bottom: 15px;
+    }
+    
+    .dropdown-menu {
+        min-width: 180px;
+    }
+    
+    @media print {
+        .page-header, .card-header, .btn, .breadcrumb, .dropdown {
+            display: none !important;
+        }
+        .card {
+            border: none !important;
+            box-shadow: none !important;
+        }
+    }
+</style>
+{% endblock %}

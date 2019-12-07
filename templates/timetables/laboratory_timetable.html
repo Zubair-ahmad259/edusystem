@@ -1,0 +1,211 @@
+<!-- timetables/templates/timetables/laboratory_timetable.html -->
+
+{% extends 'timetables/base.html' %}
+{% load static %}
+
+{% block title %}Laboratory Timetable - {{ lab.lab_code }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="text-primary">
+                <i class="fas fa-flask"></i> Laboratory Timetable
+            </h2>
+            <p class="text-muted">
+                <strong>{{ lab.lab_code }} - {{ lab.lab_name }}</strong><br>
+                Building: {{ lab.building }} | Capacity: {{ lab.capacity }} students | Computers: {{ lab.computer_count }}
+            </p>
+        </div>
+        <div class="col text-end">
+            <a href="{% url 'timetables:laboratory_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> All Laboratories
+            </a>
+            <button onclick="window.print()" class="btn btn-info">
+                <i class="fas fa-print"></i> Print
+            </button>
+        </div>
+    </div>
+
+    <!-- Timetable Table -->
+    <div class="card shadow">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-bordered timetable-table mb-0">
+                    <thead>
+                        <tr style="background-color: #343a40; color: white;">
+                            <th style="width: 140px; background-color: #343a40; color: white; text-align: center;">Time / Day</th>
+                            <th style="background-color: #343a40; color: white; text-align: center;">Monday</th>
+                            <th style="background-color: #343a40; color: white; text-align: center;">Tuesday</th>
+                            <th style="background-color: #343a40; color: white; text-align: center;">Wednesday</th>
+                            <th style="background-color: #343a40; color: white; text-align: center;">Thursday</th>
+                            <th style="background-color: #343a40; color: white; text-align: center;">Friday</th>
+                         </tr>
+                    </thead>
+                    <tbody>
+                        <!-- 9:00 - 10:00 -->
+                        <tr>
+                            <td style="background-color: #f8f9fa; font-weight: bold; text-align: center;">9:00 - 10:00</td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Monday' and entry.time_slot.start_time|time:"H:i" == "09:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-chalkboard-teacher"></i> {{ entry.teacher.first_name }} {{ entry.teacher.last_name }}</div>
+                                        <div><i class="fas fa-users"></i> Section: {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-layer-group"></i> {{ entry.batch.name }} - Sem {{ entry.semester.number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Tuesday' and entry.time_slot.start_time|time:"H:i" == "09:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-chalkboard-teacher"></i> {{ entry.teacher.first_name }} {{ entry.teacher.last_name }}</div>
+                                        <div><i class="fas fa-users"></i> Section: {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-layer-group"></i> {{ entry.batch.name }} - Sem {{ entry.semester.number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Wednesday' and entry.time_slot.start_time|time:"H:i" == "09:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-chalkboard-teacher"></i> {{ entry.teacher.first_name }} {{ entry.teacher.last_name }}</div>
+                                        <div><i class="fas fa-users"></i> Section: {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-layer-group"></i> {{ entry.batch.name }} - Sem {{ entry.semester.number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Thursday' and entry.time_slot.start_time|time:"H:i" == "09:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-chalkboard-teacher"></i> {{ entry.teacher.first_name }} {{ entry.teacher.last_name }}</div>
+                                        <div><i class="fas fa-users"></i> Section: {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-layer-group"></i> {{ entry.batch.name }} - Sem {{ entry.semester.number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Friday' and entry.time_slot.start_time|time:"H:i" == "09:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-chalkboard-teacher"></i> {{ entry.teacher.first_name }} {{ entry.teacher.last_name }}</div>
+                                        <div><i class="fas fa-users"></i> Section: {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-layer-group"></i> {{ entry.batch.name }} - Sem {{ entry.semester.number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        
+                        <!-- Continue for 10:00-11:00, 11:00-12:00, etc. -->
+                        <!-- Add all time slots similar to above -->
+                        
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Laboratory Details -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-laptop-code"></i> Computer Details</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tr><th>Computers:</th><td>{{ lab.computer_count }}</td></tr>
+                        <tr><th>Configuration:</th><td>{{ lab.computer_config|default:"-" }}</td></tr>
+                        <tr><th>Operating System:</th><td>{{ lab.operating_system|default:"-" }}</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-tools"></i> Facilities</h5>
+                </div>
+                <div class="card-body">
+                    <div>
+                        {% for facility in lab.facilities_list %}
+                        <span class="badge bg-info me-2 mb-2">{{ facility }}</span>
+                        {% empty %}
+                        <span class="text-muted">Basic facilities only</span>
+                        {% endfor %}
+                    </div>
+                    {% if lab.internet_speed %}
+                    <hr>
+                    <small><strong>Internet Speed:</strong> {{ lab.internet_speed }}</small><br>
+                    <small><strong>Network Type:</strong> {{ lab.network_type|default:"-" }}</small>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .timetable-table {
+        font-size: 0.85rem;
+    }
+    .timetable-cell {
+        vertical-align: top;
+        min-height: 100px;
+        background: #fff;
+        padding: 8px;
+    }
+    .class-card {
+        background: #f8f9fa;
+        padding: 8px;
+        margin-bottom: 5px;
+        border-radius: 8px;
+        border-left: 4px solid #28a745;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .class-card strong {
+        color: #2c3e50;
+        font-size: 0.9rem;
+        display: block;
+        margin-bottom: 5px;
+    }
+    .class-card .subject-name {
+        color: #6c757d;
+        font-size: 0.75rem;
+        margin-bottom: 5px;
+    }
+    .class-card div {
+        font-size: 0.7rem;
+        color: #6c757d;
+        margin-top: 2px;
+    }
+    .class-card div i {
+        width: 16px;
+        margin-right: 4px;
+        color: #007bff;
+    }
+    @media print {
+        .btn {
+            display: none;
+        }
+    }
+</style>
+{% endblock %}

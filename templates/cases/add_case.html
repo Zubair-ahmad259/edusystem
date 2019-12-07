@@ -1,0 +1,41 @@
+{% extends 'Home/index.html' %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row">
+                <div class="col-sm-12">
+                    <h3 class="page-title">➕ Add New Case</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'case_list' %}">Cases</a>
+                        </li>
+                        <li class="breadcrumb-item active">Add Case</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Case Form -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Case Form</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" class="row g-3">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <div class="text-right">
+                        <button type="submit" class="btn btn-success">💾 Save</button>
+                        <a href="{% url 'case_list' %}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

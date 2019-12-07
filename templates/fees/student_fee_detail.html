@@ -1,0 +1,566 @@
+{% extends "Home/base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block body %}
+<div class="main-wrapper">
+    <div class="page-wrapper">
+        <div class="content container-fluid">
+
+            <!-- Page Header -->
+            <div class="page-header">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h3 class="page-title">Student Fee Details</h3>
+                        <ul class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{% url 'fee_list' %}">Fee Management</a></li>
+                            <li class="breadcrumb-item active">{{ student.first_name }} {{ student.last_name }}</li>
+                        </ul>
+                    </div>
+                    <div class="col-auto">
+                        <button onclick="window.print()" class="btn btn-primary me-2">
+                            <i class="fas fa-print"></i> Print
+                        </button>
+                        <a href="{% url 'fee_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Overdue Fine Notice -->
+            {% if total_fine > 0 %}
+            <div class="alert alert-danger mb-4">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                    <div>
+                        <h5 class="mb-1"><strong>OVERDUE FEE NOTICE</strong></h5>
+                        <p class="mb-0">
+                            <i class="fas fa-money-bill-wave me-1"></i>
+                            <strong>PKR 5,000 late fine</strong> has been applied to overdue fees.
+                            Total fine amount: <strong>PKR {{ total_fine|floatformat:0|intcomma }}</strong>
+                        </p>
+                        <p class="mb-0 small mt-1">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Late fine will be removed when fees are fully paid.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Student Information Card -->
+            <div class="row">
+                <div class="col-lg-4 col-md-6">
+                    <div class="card student-info-card shadow-sm" style="border-radius: 15px;">
+                        <div class="card-header bg-gradient-primary text-white" style="border-radius: 15px 15px 0 0;">
+                            <h5 class="mb-0"><i class="fas fa-user-graduate me-2"></i>Student Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="text-center mb-4">
+                                {% if student.image %}
+                                <img class="avatar-img rounded-circle" src="{{ student.image.url }}" alt="{{ student.first_name }}" width="80" height="80">
+                                {% else %}
+                                <div class="avatar-placeholder bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px; font-size: 24px;">
+                                    {{ student.first_name|first|upper }}{{ student.last_name|first|upper }}
+                                </div>
+                                {% endif %}
+                                <h4 class="mt-3 mb-1">{{ student.first_name }} {{ student.last_name }}</h4>
+                                <p class="text-muted">{{ student.student_id }}</p>
+                            </div>
+                            
+                            <div class="student-details">
+                                <div class="detail-item mb-2">
+                                    <span class="detail-label"><i class="fas fa-envelope text-primary me-2"></i>Email:</span>
+                                    <span class="detail-value">{{ student.email|default:"N/A" }}</span>
+                                </div>
+                                <div class="detail-item mb-2">
+                                    <span class="detail-label"><i class="fas fa-phone text-primary me-2"></i>Phone:</span>
+                                    <span class="detail-value">{{ student.contact_number|default:"N/A" }}</span>
+                                </div>
+                                <div class="detail-item mb-2">
+                                    <span class="detail-label"><i class="fas fa-building text-primary me-2"></i>Discipline:</span>
+                                    <span class="detail-value">{{ student.discipline.field|default:"N/A" }} ({{ student.discipline.program|default:"N/A" }})</span>
+                                </div>
+                                <div class="detail-item mb-2">
+                                    <span class="detail-label"><i class="fas fa-users text-primary me-2"></i>Batch:</span>
+                                    <span class="detail-value">{{ student.batch.name|default:"N/A" }}</span>
+                                </div>
+                                <div class="detail-item mb-2">
+                                    <span class="detail-label"><i class="fas fa-layer-group text-primary me-2"></i>Section:</span>
+                                    <span class="detail-value">{{ student.section.name|default:"N/A" }}</span>
+                                </div>
+                                <div class="detail-item mb-2">
+                                    <span class="detail-label"><i class="fas fa-calendar text-primary me-2"></i>Current Date:</span>
+                                    <span class="detail-value">{{ current_date|date:"d M Y" }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fee Summary Card -->
+                <div class="col-lg-8 col-md-6">
+                    <div class="card fee-summary-card shadow-sm" style="border-radius: 15px;">
+                        <div class="card-header bg-gradient-info text-white" style="border-radius: 15px 15px 0 0;">
+                            <h5 class="mb-0"><i class="fas fa-file-invoice-dollar me-2"></i>Fee Summary</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3 mb-3">
+                                    <div class="summary-item total-fee p-3 border rounded">
+                                        <div class="text-center">
+                                            <div class="mb-2">
+                                                <i class="fas fa-money-bill-wave fa-2x text-primary"></i>
+                                            </div>
+                                            <h6 class="summary-label">Total Fee</h6>
+                                            <h4 class="summary-value text-primary">PKR {{ total_fee_payable|floatformat:0|intcomma }}</h4>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="summary-item total-paid p-3 border rounded">
+                                        <div class="text-center">
+                                            <div class="mb-2">
+                                                <i class="fas fa-check-circle fa-2x text-success"></i>
+                                            </div>
+                                            <h6 class="summary-label">Total Paid</h6>
+                                            <h4 class="summary-value text-success">PKR {{ total_paid|floatformat:0|intcomma }}</h4>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="summary-item total-fine p-3 border rounded">
+                                        <div class="text-center">
+                                            <div class="mb-2">
+                                                <i class="fas fa-exclamation-triangle fa-2x text-warning"></i>
+                                            </div>
+                                            <h6 class="summary-label">Total Fine</h6>
+                                            <h4 class="summary-value text-warning">
+                                                PKR {{ total_fine|floatformat:0|intcomma }}
+                                                {% if total_fine > 0 %}
+                                                <small class="d-block text-danger">(PKR 5,000 per overdue)</small>
+                                                {% endif %}
+                                            </h4>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="summary-item balance-due p-3 border rounded">
+                                        <div class="text-center">
+                                            <div class="mb-2">
+                                                <i class="fas fa-balance-scale fa-2x {% if balance_due > 0 %}text-danger{% else %}text-success{% endif %}"></i>
+                                            </div>
+                                            <h6 class="summary-label">Balance Due</h6>
+                                            <h4 class="summary-value {% if balance_due > 0 %}text-danger{% else %}text-success{% endif %}">
+                                                PKR {{ balance_due|floatformat:0|intcomma }}
+                                            </h4>
+                                            {% if balance_due <= 0 %}
+                                            <span class="badge bg-success">All Fees Cleared</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Payment Progress -->
+                            <div class="mt-4">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Payment Progress</span>
+                                    <span>{{ payment_percentage|floatformat:1 }}%</span>
+                                </div>
+                                <div class="progress" style="height: 15px; border-radius: 10px;">
+                                    <div class="progress-bar bg-success" role="progressbar" 
+                                         style="width: {{ payment_percentage }}%; border-radius: 10px;" 
+                                         aria-valuenow="{{ payment_percentage }}" aria-valuemin="0" aria-valuemax="100">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Quick Actions -->
+                            {% if balance_due > 0 %}
+                            <div class="mt-4">
+                                <h6><i class="fas fa-bolt text-primary me-2"></i>Quick Actions</h6>
+                                <div class="d-flex flex-wrap gap-2">
+                                    {% for fee in fees %}
+                                    {% if fee.balance > 0 %}
+                                    <a href="{% url 'clear_fees' fee.id %}" 
+                                       class="btn btn-sm btn-outline-primary d-flex align-items-center">
+                                        <i class="fas fa-credit-card me-1"></i> Pay Sem {{ fee.semester.number }}
+                                        <span class="badge bg-danger ms-2">
+                                            PKR {{ fee.balance|floatformat:0|intcomma }}
+                                            {% if fee.fine > 0 %}
+                                            <small class="d-block">(Incl. PKR {{ fee.fine|floatformat:0|intcomma }} fine)</small>
+                                            {% endif %}
+                                        </span>
+                                    </a>
+                                    {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Pending Semesters -->
+                            {% if pending_semesters %}
+                            <div class="mt-4">
+                                <h6><i class="fas fa-exclamation-circle text-danger me-2"></i>Pending Fee Semesters:</h6>
+                                {% for sem in pending_semesters %}
+                                <span class="badge bg-danger me-2 mb-1">Semester {{ sem }}</span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fee Details Table -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card shadow-sm" style="border-radius: 15px;">
+                        <div class="card-header bg-gradient-secondary text-white d-flex justify-content-between align-items-center" style="border-radius: 15px 15px 0 0;">
+                            <h5 class="mb-0"><i class="fas fa-list-alt me-2"></i>Fee Details by Semester</h5>
+                            <span class="badge bg-light text-dark">{{ fees|length }} Semester(s)</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="feeDetailsTable">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Semester</th>
+                                            <th>Base Amount</th>
+                                            <th>Fine</th>
+                                            <th>Total Amount</th>
+                                            <th>Paid Amount</th>
+                                            <th>Balance</th>
+                                            <th>Due Date</th>
+                                            <th>Status</th>
+                                            <th>Payment Info</th>
+                                            <th class="text-center">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for fee in fees %}
+                                        <tr class="{% if fee.is_cleared %}table-success{% elif fee.is_overdue %}table-danger{% elif fee.paid_amount > 0 %}table-warning{% endif %}">
+                                            <td>{{ forloop.counter }}</td>
+                                            <td>
+                                                <strong>Semester {{ fee.semester.number }}</strong>
+                                                <div class="small text-muted">
+                                                    Uploaded: {{ fee.upload_date|date:"d M Y" }}
+                                                </div>
+                                            </td>
+                                            <td class="text-primary fw-bold">
+                                                PKR {{ fee.amount|floatformat:0|intcomma }}
+                                            </td>
+                                            <td class="text-warning fw-bold">
+                                                {% if fee.fine > 0 %}
+                                                <div class="text-danger">
+                                                    <i class="fas fa-exclamation-triangle"></i>
+                                                    PKR {{ fee.fine|floatformat:0|intcomma }}
+                                                    <small class="d-block">Late Fine</small>
+                                                </div>
+                                                {% else %}
+                                                PKR {{ fee.fine|floatformat:0|intcomma }}
+                                                {% endif %}
+                                            </td>
+                                            <td class="fw-bold">
+                                                PKR {{ fee.total_fee|floatformat:0|intcomma }}
+                                            </td>
+                                            <td class="text-success fw-bold">
+                                                PKR {{ fee.paid_amount|floatformat:0|intcomma }}
+                                            </td>
+                                            <td>
+                                                {% if fee.balance > 0 %}
+                                                <div class="text-danger fw-bold">
+                                                    PKR {{ fee.balance|floatformat:0|intcomma }}
+                                                    {% if fee.fine > 0 %}
+                                                    <small class="text-danger d-block">
+                                                        Includes PKR {{ fee.fine|floatformat:0|intcomma }} fine
+                                                    </small>
+                                                    {% endif %}
+                                                </div>
+                                                <small class="text-muted">Due</small>
+                                                {% else %}
+                                                <div class="text-success fw-bold">
+                                                    PKR 0
+                                                </div>
+                                                <small class="text-muted">Cleared</small>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <div class="{% if fee.is_overdue %}text-danger{% endif %}">
+                                                    {{ fee.due_date|date:"d M Y"|default:"Not set" }}
+                                                </div>
+                                                {% if fee.is_overdue %}
+                                                <small class="text-danger">
+                                                    <i class="fas fa-exclamation-triangle"></i> 
+                                                    <strong>OVERDUE</strong>
+                                                </small>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if fee.is_cleared %}
+                                                <span class="badge bg-success p-2">
+                                                    <i class="fas fa-check-circle"></i> Paid
+                                                </span>
+                                                {% elif fee.paid_amount > 0 %}
+                                                <span class="badge bg-warning p-2">
+                                                    <i class="fas fa-clock"></i> Partial
+                                                </span>
+                                                {% elif fee.is_overdue %}
+                                                <span class="badge bg-danger p-2">
+                                                    <i class="fas fa-exclamation-circle"></i> Overdue
+                                                    <div class="small">PKR 5,000 fine applied</div>
+                                                </span>
+                                                {% else %}
+                                                <span class="badge bg-secondary p-2">
+                                                    <i class="fas fa-clock"></i> Pending
+                                                </span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if fee.receipt_number %}
+                                                <div class="small">
+                                                    <div><strong>Receipt:</strong> #{{ fee.receipt_number }}</div>
+                                                    {% if fee.payment_method %}
+                                                    <div><strong>Method:</strong> {{ fee.payment_method }}</div>
+                                                    {% endif %}
+                                                    {% if fee.payment_date %}
+                                                    <div><strong>Paid:</strong> {{ fee.payment_date|date:"d M Y" }}</div>
+                                                    {% endif %}
+                                                </div>
+                                                {% else %}
+                                                <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-center">
+                                                <div class="btn-group">
+                                                    {% if fee.balance > 0 %}
+                                                    <a href="{% url 'clear_fees' fee.id %}" 
+                                                       class="btn btn-sm btn-primary"
+                                                       title="Make Payment">
+                                                        <i class="fas fa-money-bill-wave"></i>
+                                                    </a>
+                                                    {% endif %}
+                                                    <a href="{% url 'edit_fee' fee.id %}" 
+                                                       class="btn btn-sm btn-warning"
+                                                       title="Edit Fee">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    {% if fee.paid_amount == 0 %}
+                                                    <button type="button" 
+                                                            class="btn btn-sm btn-danger delete-fee-btn"
+                                                            title="Delete Fee"
+                                                            data-fee-id="{{ fee.id }}"
+                                                            data-fee-semester="Semester {{ fee.semester.number }}"
+                                                            data-fee-amount="{{ fee.amount }}">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="11" class="text-center py-5">
+                                                <div class="empty-state">
+                                                    <i class="fas fa-file-invoice-dollar fa-3x text-muted mb-3"></i>
+                                                    <h5>No Fee Records Found</h5>
+                                                    <p class="text-muted">No fee records available for this student.</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="table-light">
+                                            <td colspan="4" class="text-end"><strong>Totals:</strong></td>
+                                            <td><strong>PKR {{ total_fee_payable|floatformat:0|intcomma }}</strong></td>
+                                            <td><strong>PKR {{ total_paid|floatformat:0|intcomma }}</strong></td>
+                                            <td><strong class="{% if balance_due > 0 %}text-danger{% else %}text-success{% endif %}">
+                                                PKR {{ balance_due|floatformat:0|intcomma }}</strong></td>
+                                            <td colspan="4"></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment History -->
+            {% if total_paid > 0 %}
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card shadow-sm" style="border-radius: 15px;">
+                        <div class="card-header bg-gradient-success text-white" style="border-radius: 15px 15px 0 0;">
+                            <h5 class="mb-0"><i class="fas fa-history me-2"></i>Payment History</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                {% for fee in fees %}
+                                {% if fee.paid_amount > 0 %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="card border-success">
+                                        <div class="card-header bg-success text-white py-2">
+                                            <strong>Semester {{ fee.semester.number }}</strong>
+                                            <span class="float-end">Paid: PKR {{ fee.paid_amount|floatformat:0|intcomma }}</span>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row mb-2">
+                                                <div class="col-6">
+                                                    <small class="text-muted">Total Fee:</small>
+                                                    <div>PKR {{ fee.total_fee|floatformat:0|intcomma }}</div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <small class="text-muted">Fine Amount:</small>
+                                                    <div class="{% if fee.fine > 0 %}text-danger{% else %}text-success{% endif %}">
+                                                        PKR {{ fee.fine|floatformat:0|intcomma }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {% if fee.receipt_number %}
+                                            <div class="mt-2">
+                                                <small class="text-muted">Receipt: #{{ fee.receipt_number }}</small>
+                                                <div class="small">
+                                                    {% if fee.payment_method %}Method: {{ fee.payment_method }}{% endif %}
+                                                    {% if fee.payment_date %} on {{ fee.payment_date|date:"d M Y" }}{% endif %}
+                                                </div>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteFeeModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Confirm Deletion</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <p>Are you sure you want to delete the fee for <strong id="deleteSemesterText"></strong>?</p>
+                    <p class="mb-0">Amount: <strong>PKR <span id="deleteAmountText"></span></strong></p>
+                </div>
+                <p class="text-muted small">This action cannot be undone. Only fees with zero payments can be deleted.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteFeeForm" method="POST" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete Fee</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar-placeholder {
+    font-weight: bold;
+}
+
+.summary-item {
+    transition: all 0.3s ease;
+}
+
+.summary-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.table tbody tr {
+    transition: all 0.3s ease;
+}
+
+.table tbody tr:hover {
+    transform: scale(1.01);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.table-danger {
+    background-color: rgba(220, 53, 69, 0.05) !important;
+}
+
+.table-success {
+    background-color: rgba(40, 167, 69, 0.05) !important;
+}
+
+.table-warning {
+    background-color: rgba(255, 193, 7, 0.05) !important;
+}
+
+.badge-pill {
+    border-radius: 20px;
+    padding: 5px 12px;
+}
+
+.btn-group .btn {
+    margin: 0 2px;
+}
+
+@media print {
+    .no-print, .btn, .btn-group, .actions-column {
+        display: none !important;
+    }
+    
+    .alert {
+        border: 2px solid #dc3545 !important;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Print button
+    document.querySelector('.print-btn').addEventListener('click', function() {
+        window.print();
+    });
+    
+    // Delete fee modal
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteFeeModal'));
+    
+    document.querySelectorAll('.delete-fee-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const feeId = this.dataset.feeId;
+            const semester = this.dataset.feeSemester;
+            const amount = this.dataset.feeAmount;
+            
+            document.getElementById('deleteSemesterText').textContent = semester;
+            document.getElementById('deleteAmountText').textContent = amount;
+            
+            const form = document.getElementById('deleteFeeForm');
+            form.action = `/fees/delete/${feeId}/`;
+            
+            deleteModal.show();
+        });
+    });
+    
+    // Auto-hide alerts after 5 seconds (except overdue notice)
+    setTimeout(function() {
+        const alerts = document.querySelectorAll('.alert:not(.alert-danger)');
+        alerts.forEach(alert => {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        });
+    }, 5000);
+});
+</script>
+{% endblock %}

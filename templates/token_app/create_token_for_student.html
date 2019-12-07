@@ -1,0 +1,105 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}Create Token for {{ student.first_name }} {{ student.last_name }}{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">
+            <i class="fas fa-plus-circle text-primary"></i> Create Token for Student
+        </h1>
+        <a href="{% url 'token_app:student_tokens' student.id %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Student Tokens
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <!-- Student Info Card -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Student Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <strong>Name:</strong> {{ student.first_name }} {{ student.last_name }}
+                        </div>
+                        <div class="col-md-2">
+                            <strong>ID:</strong> {{ student.student_id }}
+                        </div>
+                        <div class="col-md-2">
+                            <strong>Batch:</strong> {{ student.batch.name }}
+                        </div>
+                        <div class="col-md-2">
+                            <strong>Semester:</strong> {{ student.semester.number }}
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Discipline:</strong> {{ student.discipline.name }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Create Token Form -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Token Details</h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Valid Until <span class="text-danger">*</span></label>
+                            <input type="date" name="valid_until" class="form-control" 
+                                   value="{{ default_valid_until|date:'Y-m-d' }}" 
+                                   min="{{ today|date:'Y-m-d' }}" required>
+                            <small class="text-muted">Token will be valid until this date</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Eligible Subjects</label>
+                            <div class="border p-3" style="max-height: 300px; overflow-y: auto;">
+                                <div class="row">
+                                    {% for subject in subjects %}
+                                    <div class="col-md-6 mb-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" 
+                                                   name="subjects" value="{{ subject.id }}" 
+                                                   id="subject_{{ subject.id }}">
+                                            <label class="form-check-label" for="subject_{{ subject.id }}">
+                                                <strong>{{ subject.code }}</strong> - {{ subject.name }}
+                                                <small class="text-muted">({{ subject.credit_hours }} CH)</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    {% empty %}
+                                    <div class="col-12 text-center text-muted py-4">
+                                        No subjects found for this student's semester
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <small class="text-muted">Select subjects the student is eligible for</small>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'token_app:student_tokens' student.id %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Create Token
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

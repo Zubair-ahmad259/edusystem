@@ -1,0 +1,103 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+{% block body %}
+   
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Teachers</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Teachers</li>
+                    </ul>
+                </div>
+                <div class="col-auto text-right float-right ml-auto">
+                    <a href="#" class="btn btn-outline-primary mr-2"><i class="fas fa-download"></i> Download</a>
+                    <a href="{% url 'add_teacher' %}" class="btn btn-primary"><i class="fas fa-plus"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="card card-table">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-center mb-0 datatable">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Salary</th>
+                                        <th>DOB</th>
+                                        <th>Email</th>
+                                        <th>Mobile Number</th>
+                                        <th>Experience</th>
+                                        <th class="text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for teacher in teachers %}
+                                    <tr>
+                                        <td>{{ teacher.teacher_id }}</td>
+                                        <td>
+                                            <h2 class="table-avatar">
+                                                {% if teacher.teacher_image %}
+                                                <a href="{% url 'view_teacher' teacher.teacher_id %}" class="avatar avatar-sm mr-2">
+                                                    <img class="avatar-img rounded-circle" src="{{ teacher.teacher_image.url }}" alt="User Image">
+                                                </a>
+                                                {% endif %}
+                                                <a href="{% url 'view_teacher' teacher.teacher_id %}">{{ teacher.first_name }} {{ teacher.last_name }}</a>
+                                            </h2>
+                                        </td>
+                                        <td>{{ teacher.salary }}</td>
+                                        <td>{{ teacher.date_of_birth|date:"d M Y" }}</td>
+                                        <td>{{ teacher.email }}</td>
+                                        <td>{{ teacher.mobile_number }}</td>
+                                        <td>{{ teacher.experince }} years</td>
+                                        <td class="text-right">
+                                            <div class="actions">
+                                                    
+                                             <a href="{% url 'edit_teacher' teacher.teacher_id %}" class="btn btn-sm bg-success-light mr-2">
+                                                 <i class="fas fa-pen"></i>
+                                             </a>
+
+
+
+                                            
+                                                {% comment %} <form action="{% url 'delete_teacher' teacher.teacher_id %}" method="POST" style="display:inline;"> {% endcomment %}
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-sm bg-danger-light" onclick="return confirm('Are you sure you want to delete this teacher?');">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="8" class="text-center">No teachers found</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <footer>
+        <!-- Footer content here -->
+    </footer>
+</div>
+
+<script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
+<script src="{% static 'assets/js/popper.min.js' %}"></script>
+<script src="{% static 'assets/plugins/bootstrap/js/bootstrap.min.js' %}"></script>
+<script src="{% static 'assets/plugins/slimscroll/jquery.slimscroll.min.js' %}"></script>
+<script src="{% static 'assets/plugins/datatables/datatables.min.js' %}"></script>
+<script src="{% static 'assets/js/script.js' %}"></script>
+
+{% endblock %}

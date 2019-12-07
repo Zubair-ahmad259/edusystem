@@ -1,0 +1,213 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}Select Student - Student Management System{% endblock %}
+
+{% block body %}
+<style>
+    .student-card {
+        transition: transform 0.3s;
+        cursor: pointer;
+    }
+    .student-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .student-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+        background-color: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: #6c757d;
+    }
+</style>
+
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <div class="page-header">
+            <div class="row">
+                <div class="col-sm-12">
+                    <h3 class="page-title">Select Student</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'exam_list' %}">Exams</a></li>
+                        <li class="breadcrumb-item active">Select Student</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <form method="get" class="row">
+                            <div class="col-md-8">
+                                <div class="input-group">
+                                    <input type="text" 
+                                           class="form-control" 
+                                           name="search" 
+                                           placeholder="Search by Student ID, Name, or Batch..."
+                                           value="{{ request.GET.search }}">
+                                    <div class="input-group-append">
+                                        <button class="btn btn-primary" type="submit">
+                                            <i class="fas fa-search"></i> Search
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group mb-0">
+                                    <select class="form-control" name="batch">
+                                        <option value="">All Batches</option>
+                                        {% for batch in students|dictsort:"batch"|slice:":10" %}
+                                        <option value="{{ batch.batch.id }}" {% if request.GET.batch == batch.batch.id|stringformat:"s" %}selected{% endif %}>
+                                            {{ batch.batch }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Students Grid -->
+        <div class="row">
+            {% if students %}
+                {% for student in students %}
+                <div class="col-md-4 col-sm-6 col-12 mb-4">
+                    <div class="card student-card" onclick="window.location='{% url 'student_comprehensive_results' student.id %}'">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="student-avatar mr-3">
+                                    <i class="fas fa-user-graduate"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h5 class="mb-1">{{ student.get_full_name }}</h5>
+                                    <p class="text-muted mb-1">{{ student.student_id }}</p>
+                                    <div class="d-flex">
+                                        <span class="badge badge-primary mr-2">{{ student.batch }}</span>
+                                        <span class="badge badge-info">{{ student.semester }}</span>
+                                    </div>
+                                    <p class="text-muted mb-0 mt-2">
+                                        <i class="fas fa-book"></i> 
+                                        {{ student.discipline|default:"No Discipline" }}
+                                    </p>
+                                </div>
+                                <div>
+                                    <i class="fas fa-chevron-right text-muted"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <div class="text-center">
+                                <a href="{% url 'student_comprehensive_results' student.id %}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-chart-bar"></i> View Results
+                                </a>
+                                <a href="{% url 'generate_transcript' student.id %}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-scroll"></i> Transcript
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body text-center py-5">
+                            <i class="fas fa-user-graduate fa-3x text-muted mb-3"></i>
+                            <h5>No Students Found</h5>
+                            <p class="text-muted">
+                                {% if request.GET.search %}
+                                    No students found matching "{{ request.GET.search }}"
+                                {% else %}
+                                    No students available in the system
+                                {% endif %}
+                            </p>
+                            {% if request.GET.search %}
+                            <a href="{% url 'select_student_for_results' %}" class="btn btn-primary">
+                                <i class="fas fa-redo"></i> Clear Search
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Pagination -->
+        {% if students.has_other_pages %}
+        <div class="row">
+            <div class="col-12">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        {% if students.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ students.previous_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                &laquo; Previous
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for i in students.paginator.page_range %}
+                            {% if students.number == i %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ i }}</span>
+                            </li>
+                            {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ i }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                    {{ i }}
+                                </a>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if students.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ students.next_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                Next &raquo;
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
+<script>
+    $(document).ready(function() {
+        // Make entire card clickable
+        $('.student-card').click(function(e) {
+            if (!$(e.target).closest('a, button').length) {
+                window.location = $(this).find('a.btn-primary').attr('href');
+            }
+        });
+
+        // Highlight search term in results
+        var searchTerm = "{{ request.GET.search }}";
+        if (searchTerm) {
+            $('.student-card h5').each(function() {
+                var text = $(this).text();
+                var regex = new RegExp('(' + searchTerm + ')', 'gi');
+                var newText = text.replace(regex, '<span class="bg-warning">$1</span>');
+                $(this).html(newText);
+            });
+        }
+    });
+</script>
+{% endblock %}

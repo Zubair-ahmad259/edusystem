@@ -1,0 +1,346 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}Token Generated Students{% endblock %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Token Generated Students</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'token_app:dashboard' %}">Token Dashboard</a></li>
+                        <li class="breadcrumb-item active">Token Generated Students</li>
+                    </ul>
+                </div>
+                <div class="col-auto float-right ml-auto">
+                    <a href="{% url 'token_app:all_tokens' %}" class="btn btn-primary">
+                        <i class="fas fa-ticket-alt"></i> View All Tokens
+                    </a>
+                    <a href="{% url 'token_app:bulk_create_tokens' %}" class="btn btn-info">
+                        <i class="fas fa-layer-group"></i> Bulk Create
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row">
+            <div class="col-xl-3 col-sm-6 col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="dash-widget-header">
+                            <span class="dash-widget-icon bg-primary">
+                                <i class="fas fa-users"></i>
+                            </span>
+                            <div class="dash-count">
+                                <h3>{{ total_students }}</h3>
+                                <h5>Students with Tokens</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-sm-6 col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="dash-widget-header">
+                            <span class="dash-widget-icon bg-success">
+                                <i class="fas fa-ticket-alt"></i>
+                            </span>
+                            <div class="dash-count">
+                                <h3>{{ total_tokens }}</h3>
+                                <h5>Total Tokens</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-sm-6 col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="dash-widget-header">
+                            <span class="dash-widget-icon bg-info">
+                                <i class="fas fa-check-circle"></i>
+                            </span>
+                            <div class="dash-count">
+                                <h3>{{ active_tokens_count }}</h3>
+                                <h5>Active Tokens</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-sm-6 col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="dash-widget-header">
+                            <span class="dash-widget-icon bg-warning">
+                                <i class="fas fa-clock"></i>
+                            </span>
+                            <div class="dash-count">
+                                <h3>{{ page_obj.paginator.count }}</h3>
+                                <h5>Showing Now</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Card -->
+        <div class="card">
+            <div class="card-body">
+                <h5 class="form-title"><span>Filter Students</span></h5>
+                <form method="GET" id="filterForm">
+                    <div class="row">
+                        <div class="col-12 col-sm-3">
+                            <div class="form-group">
+                                <label>Discipline</label>
+                                <select class="form-control" name="discipline">
+                                    <option value="">All Disciplines</option>
+                                    {% for discipline in disciplines %}
+                                    <option value="{{ discipline.id }}" {% if selected_discipline == discipline.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ discipline.program }} in {{ discipline.field }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 col-sm-2">
+                            <div class="form-group">
+                                <label>Batch</label>
+                                <select class="form-control" name="batch">
+                                    <option value="">All Batches</option>
+                                    {% for batch in batches %}
+                                    <option value="{{ batch.id }}" {% if selected_batch == batch.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ batch.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 col-sm-2">
+                            <div class="form-group">
+                                <label>Semester</label>
+                                <select class="form-control" name="semester">
+                                    <option value="">All Semesters</option>
+                                    {% for semester in semesters %}
+                                    <option value="{{ semester.id }}" {% if selected_semester == semester.id|stringformat:"s" %}selected{% endif %}>
+                                        Sem {{ semester.number }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 col-sm-2">
+                            <div class="form-group">
+                                <label>Section</label>
+                                <select class="form-control" name="section">
+                                    <option value="">All Sections</option>
+                                    {% for section in sections %}
+                                    <option value="{{ section.id }}" {% if selected_section == section.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ section.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 col-sm-3">
+                            <div class="form-group">
+                                <label>Search</label>
+                                <input type="text" class="form-control" name="search" placeholder="Student ID or Name" value="{{ search }}">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-filter"></i> Apply Filters
+                            </button>
+                            <a href="{% url 'token_app:token_generated_students' %}" class="btn btn-secondary">
+                                <i class="fas fa-redo"></i> Reset
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Students List -->
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover table-center mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Student ID</th>
+                                <th>Student Name</th>
+                                <th>Batch/Section</th>
+                                <th>Total Tokens</th>
+                                <th>Active</th>
+                                <th>Latest Token</th>
+                                <th>Status</th>
+                                <th>Valid Until</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in students_data %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'token_app:student_token_history' item.student.id %}">
+                                        {{ item.student.student_id }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <h2 class="table-avatar">
+                                        <a href="{% url 'token_app:student_token_history' item.student.id %}">
+                                            {{ item.student.first_name }} {{ item.student.last_name }}
+                                        </a>
+                                    </h2>
+                                </td>
+                                <td>
+                                    {{ item.student.batch.name }} | {{ item.student.section.name }}<br>
+                                    <small>{{ item.student.discipline.program }} in {{ item.student.discipline.field }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge badge-info">{{ item.total_tokens }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-success">{{ item.active_tokens }}</span>
+                                </td>
+                                <td>
+                                    {% if item.latest_token %}
+                                        <a href="{% url 'token_app:student_token_detail' item.student.id item.latest_token.id %}">
+                                            <code>{{ item.latest_token.token_number|truncatechars:15 }}</code>
+                                        </a>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.latest_token %}
+                                        <span class="badge bg-{% if item.latest_token.status == 'verified' %}success{% elif item.latest_token.status == 'expired' %}danger{% elif item.latest_token.status == 'used' %}info{% elif item.latest_token.status == 'cancelled' %}warning{% else %}secondary{% endif %}">
+                                            {{ item.latest_token_status }}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge badge-secondary">No Token</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.latest_token_valid %}
+                                        {{ item.latest_token_valid|date:"d M Y" }}
+                                        {% if item.latest_token.days_until_expiry < 7 and item.latest_token.days_until_expiry > 0 %}
+                                            <br><small class="text-warning">{{ item.latest_token.days_until_expiry }} days left</small>
+                                        {% endif %}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'token_app:student_token_history' item.student.id %}" class="btn btn-info" title="View History">
+                                            <i class="fas fa-history"></i>
+                                        </a>
+                                        {% if item.latest_token %}
+                                            <a href="{% url 'token_app:student_token_detail' item.student.id item.latest_token.id %}" class="btn btn-primary" title="View Latest Token">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'token_app:print_token' item.latest_token.id %}" class="btn btn-secondary" title="Print Token" target="_blank">
+                                                <i class="fas fa-print"></i>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="9" class="text-center py-5">
+                                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">No students with generated tokens found</p>
+                                    <a href="{% url 'token_app:bulk_create_tokens' %}" class="btn btn-primary">
+                                        <i class="fas fa-layer-group"></i> Generate Tokens
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                {% if page_obj.paginator.num_pages > 1 %}
+                <div class="row mt-4">
+                    <div class="col-sm-12 col-md-5">
+                        <div class="dataTables_info">
+                            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} entries
+                        </div>
+                    </div>
+                    <div class="col-sm-12 col-md-7">
+                        <ul class="pagination justify-content-end">
+                            {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if selected_discipline %}&discipline={{ selected_discipline }}{% endif %}{% if selected_batch %}&batch={{ selected_batch }}{% endif %}{% if selected_semester %}&semester={{ selected_semester }}{% endif %}{% if selected_section %}&section={{ selected_section }}{% endif %}{% if search %}&search={{ search }}{% endif %}">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if selected_discipline %}&discipline={{ selected_discipline }}{% endif %}{% if selected_batch %}&batch={{ selected_batch }}{% endif %}{% if selected_semester %}&semester={{ selected_semester }}{% endif %}{% if selected_section %}&section={{ selected_section }}{% endif %}{% if search %}&search={{ search }}{% endif %}">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if selected_discipline %}&discipline={{ selected_discipline }}{% endif %}{% if selected_batch %}&batch={{ selected_batch }}{% endif %}{% if selected_semester %}&semester={{ selected_semester }}{% endif %}{% if selected_section %}&section={{ selected_section }}{% endif %}{% if search %}&search={{ search }}{% endif %}">
+                                        {{ num }}
+                                    </a>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if selected_discipline %}&discipline={{ selected_discipline }}{% endif %}{% if selected_batch %}&batch={{ selected_batch }}{% endif %}{% if selected_semester %}&semester={{ selected_semester }}{% endif %}{% if selected_section %}&section={{ selected_section }}{% endif %}{% if search %}&search={{ search }}{% endif %}">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if selected_discipline %}&discipline={{ selected_discipline }}{% endif %}{% if selected_batch %}&batch={{ selected_batch }}{% endif %}{% if selected_semester %}&semester={{ selected_semester }}{% endif %}{% if selected_section %}&section={{ selected_section }}{% endif %}{% if search %}&search={{ search }}{% endif %}">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for auto-submit on filter change -->
+<script>
+$(document).ready(function() {
+    $('select[name="discipline"], select[name="batch"], select[name="semester"], select[name="section"]').change(function() {
+        $('#filterForm').submit();
+    });
+});
+</script>
+{% endblock %}

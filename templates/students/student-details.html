@@ -1,0 +1,95 @@
+ {% extends 'Home/base.html' %}
+{% load static %}
+{% block body %}
+   
+
+
+<div class="page-wrapper">
+<div class="content container-fluid">
+<div class="page-header">
+<div class="row">
+<div class="col-sm-12">
+<h3 class="page-title">Student Details</h3>
+<ul class="breadcrumb">
+<li class="breadcrumb-item"><a href="/student">Student</a></li>
+<li class="breadcrumb-item active">Student Details</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="card">
+<div class="card-body">
+<div class="row">
+<div class="col-md-12">
+<div class="about-info">
+<h4>About us</h4>
+<div class="media mt-3">
+     {% if student.image %}
+        <img class="avatar-img rounded-circle" src="{{ student.image.url }}" alt="{{ student.first_name }}" width="40" height="160">
+          {% else %}
+        <img class="avatar-img rounded-circle" src="{% static 'assets/img/user.jpg' %}" alt="Default" width="40" height="40">
+             {% endif %}<div class="media-body">
+<ul>
+    
+<li>
+<span class="title-span">Student Id : </span>
+<span class="info-span">{{ student.student_id}}</span>
+</li>    
+
+    
+<li>
+<span class="title-span">Admission Number  : </span>
+<span class="info-span">{{ student.admission_number}}</span>
+</li>
+<li>
+<span class="title-span">Full Name : </span>
+<span class="info-span">{{ student.first_name}}</span>
+</li>
+
+<li>
+    <span class="title-span">Father name : </span>
+   <span class="info-span">{{ student.parent.father_name}}</span>
+
+</li>
+<li>
+<span class="title-span">Sections & Batch : </span>
+<span class="info-span">{{student.section}}</span>
+</li>
+<li>
+<span class="title-span">Mobile : </span>
+<span class="info-span">{{student.contact_number}}</span>
+</li>
+<li>
+<span class="title-span">Email : </span>
+    <span class="info-span">{{ student.email }}</span>
+</li>
+<li>
+<span class="title-span">Gender : </span>
+<span class="info-span">{{student.gender}}</span>
+</li>
+<li>
+<span class="title-span">DOB : </span>
+<span class="info-span">{{student.dob}}</span>
+</li>
+</ul>
+
+<footer>
+</footer>
+
+</div>
+
+</div>
+
+
+<script data-cfasync="false" src="../cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="{%static 'assets/js/jquery-3.6.0.min.js' %}"></script>
+
+<script src="{%static 'assets/js/popper.min.js' %}"></script>
+<script src="{%static 'assets/plugins/bootstrap/js/bootstrap.min.js' %}"></script>
+
+<script src="{%static 'assets/plugins/slimscroll/jquery.slimscroll.min.js' %}"></script>
+
+<script src="{%static 'assets/js/script.js' %}"></script>
+</body>
+
+</html>
+{% endblock %} 

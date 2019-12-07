@@ -1,0 +1,174 @@
+<!-- timetables/templates/timetables/edit_timetable_entry.html -->
+
+{% extends 'timetables/base.html' %}
+{% load static %}
+
+{% block title %}Edit Timetable Entry{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-edit"></i> Edit Timetable Entry
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="teacher" class="form-label">Teacher *</label>
+                                <select name="teacher" id="teacher" class="form-select" required>
+                                    <option value="">Select Teacher</option>
+                                    {% for teacher in teachers %}
+                                    <option value="{{ teacher.id }}" {% if entry.teacher.id == teacher.id %}selected{% endif %}>
+                                        {{ teacher.first_name }} {{ teacher.last_name }} ({{ teacher.teacher_id }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="subject" class="form-label">Subject *</label>
+                                <select name="subject" id="subject" class="form-select" required>
+                                    <option value="">Select Subject</option>
+                                    {% for subject in subjects %}
+                                    <option value="{{ subject.id }}" {% if entry.subject.id == subject.id %}selected{% endif %}>
+                                        {{ subject.code }} - {{ subject.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="section" class="form-label">Section *</label>
+                                <select name="section" id="section" class="form-select" required>
+                                    <option value="">Select Section</option>
+                                    {% for section in sections %}
+                                    <option value="{{ section.id }}" {% if entry.section.id == section.id %}selected{% endif %}>
+                                        {{ section.name }} ({{ section.batch.name }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="batch" class="form-label">Batch *</label>
+                                <select name="batch" id="batch" class="form-select" required>
+                                    <option value="">Select Batch</option>
+                                    {% for batch in batches %}
+                                    <option value="{{ batch.id }}" {% if entry.batch.id == batch.id %}selected{% endif %}>
+                                        {{ batch.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="semester" class="form-label">Semester *</label>
+                                <select name="semester" id="semester" class="form-select" required>
+                                    <option value="">Select Semester</option>
+                                    {% for semester in semesters %}
+                                    <option value="{{ semester.id }}" {% if entry.semester.id == semester.id %}selected{% endif %}>
+                                        Semester {{ semester.number }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="time_slot" class="form-label">Time Slot *</label>
+                                <select name="time_slot" id="time_slot" class="form-select" required>
+                                    <option value="">Select Time Slot</option>
+                                    {% for slot in time_slots %}
+                                    <option value="{{ slot.id }}" {% if entry.time_slot.id == slot.id %}selected{% endif %}>
+                                        {{ slot.day }} - {{ slot.start_time|time:"g:i A" }} to {{ slot.end_time|time:"g:i A" }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="classroom" class="form-label">Classroom *</label>
+                                <select name="classroom" id="classroom" class="form-select" required>
+                                    <option value="">Select Classroom</option>
+                                    {% for classroom in classrooms %}
+                                    <option value="{{ classroom.id }}" {% if entry.classroom.id == classroom.id %}selected{% endif %}>
+                                        {{ classroom.building }} - Room {{ classroom.room_number }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    <input type="checkbox" name="is_exam" id="is_exam" class="form-check-input" {% if entry.is_exam %}checked{% endif %}>
+                                    <label for="is_exam" class="form-check-label">Is Exam</label>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3" id="exam_type_div" {% if not entry.is_exam %}style="display:none;"{% endif %}>
+                                <label for="exam_type" class="form-label">Exam Type</label>
+                                <select name="exam_type" id="exam_type" class="form-select">
+                                    <option value="">Select Exam Type</option>
+                                    <option value="midterm" {% if entry.exam_type == 'midterm' %}selected{% endif %}>Midterm Exam</option>
+                                    <option value="final" {% if entry.exam_type == 'final' %}selected{% endif %}>Final Exam</option>
+                                    <option value="quiz" {% if entry.exam_type == 'quiz' %}selected{% endif %}>Quiz</option>
+                                    <option value="other" {% if entry.exam_type == 'other' %}selected{% endif %}>Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" name="is_active" id="is_active" class="form-check-input" {% if entry.is_active %}checked{% endif %}>
+                                <label for="is_active" class="form-check-label">Active</label>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Note:</strong> Changing time slot or classroom may create conflicts. The system will validate before saving.
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Update Timetable Entry
+                            </button>
+                            <a href="{% url 'timetables:teacher_timetable' entry.teacher.id %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Show/hide exam type field
+    document.getElementById('is_exam').addEventListener('change', function() {
+        var examTypeDiv = document.getElementById('exam_type_div');
+        if (this.checked) {
+            examTypeDiv.style.display = 'block';
+            document.getElementById('exam_type').required = true;
+        } else {
+            examTypeDiv.style.display = 'none';
+            document.getElementById('exam_type').required = false;
+        }
+    });
+</script>
+{% endblock %}

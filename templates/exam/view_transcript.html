@@ -1,0 +1,358 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}Transcript - {{ transcript.student.first_name }}{% endblock %}
+
+{% block body %}
+<style>
+    body {
+        position: relative;
+        background-color: white;
+    }
+    
+    body::before {
+        content: "";
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 80%;
+        height: 80%;
+        background-image: url('{% static "uni logo.jpg" %}');
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: contain;
+        opacity: 0.08;
+        z-index: -1;
+        pointer-events: none;
+    }
+    
+    .transcript-header {
+        border-bottom: 3px solid #007bff;
+        padding-bottom: 20px;
+        margin-bottom: 30px;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .university-logo {
+        max-width: 120px;
+        max-height: 120px;
+    }
+    
+    .grade-scale {
+        font-size: 0.9rem;
+    }
+    
+    .print-only {
+        display: none;
+    }
+    
+    .transcript-content {
+        position: relative;
+        z-index: 2;
+        background-color: white;
+        padding: 20px;
+    }
+    
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        
+        .print-only {
+            display: block !important;
+        }
+        
+        body {
+            font-size: 12pt;
+        }
+        
+        .transcript-header {
+            border-bottom: 2px solid black;
+        }
+        
+        body::before {
+            opacity: 0.05;
+            width: 85%;
+            height: 85%;
+        }
+    }
+</style>
+
+<div class="page-wrapper">
+    <div class="content container-fluid transcript-content">
+        <!-- Print Header -->
+        <div class="print-only text-center mb-4">
+            <h3>OFFICIAL ACADEMIC TRANSCRIPT</h3>
+            <p class="mb-0">{{ transcript.university_name|default:"University" }}</p>
+            <small>Issued on: {{ transcript.issue_date|date:"F d, Y" }}</small>
+        </div>
+
+        <div class="no-print">
+            <div class="page-header">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <h3 class="page-title">Academic Transcript</h3>
+                        <ul class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                            <li class="breadcrumb-item"><a href="{% url 'all_transcripts_list' %}">Transcripts</a></li>
+                            <li class="breadcrumb-item active">{{ transcript.transcript_number }}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transcript Card -->
+        <div class="card">
+            <div class="card-body">
+                <!-- University Header -->
+                <div class="transcript-header">
+                    <div class="row">
+                        <div class="col-md-2 text-center">
+                            <div class="university-logo bg-light rounded p-2 d-inline-block">
+                                <img src="{% static 'assets/images/uni logo.jpg' %}" alt="University Logo" class="img-fluid" style="max-height: 100px;">
+                            </div>
+                        </div>
+                        <div class="col-md-8 text-center">
+                            <h2 class="mb-1">{{ transcript.university_name|default:"UNIVERSITY" }}</h2>
+                            <h4 class="text-muted">{{ transcript.department_name|default:"Department" }}</h4>
+                            <h5 class="text-muted">{{ transcript.program_name|default:"Academic Program" }}</h5>
+                            <h3 class="text-primary mt-3">ACADEMIC TRANSCRIPT</h3>
+                        </div>
+                        <div class="col-md-2 text-center">
+                            <div class="bg-light rounded p-2">
+                                <small class="text-muted d-block">Transcript No.</small>
+                                <strong>{{ transcript.transcript_number }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Student Information -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h5>Student Information</h5>
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <td><strong>Student ID:</strong></td>
+                                <td>{{ transcript.student.student_id }}</td>
+                            </tr>
+                            <tr>
+                                <td width="40%"><strong>Name:</strong></td>
+                                <td>{{ transcript.student.first_name }} {{ transcript.student.last_name}}</td>
+                            </tr>
+                            <tr>
+                                <td width="40%"><strong>Father Name:</strong></td>
+                                <td>{{ transcript.student.parent.father_name }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Batch:</strong></td>
+                                <td>{{ transcript.student.batch }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Discipline:</strong></td>
+                                <td>{{ transcript.student.discipline|default:"-" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Academic Summary</h5>
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <td width="40%"><strong>Issue Date:</strong></td>
+                                <td>{{ transcript.issue_date|date:"F d, Y" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Cumulative GPA:</strong></td>
+                                <td><span class="badge badge-primary">{{ transcript.cumulative_gpa|floatformat:2 }}</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Credits Earned:</strong></td>
+                                <td>{{ transcript.total_credits_earned }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Credits Attempted:</strong></td>
+                                <td>{{ transcript.total_credits_attempted }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Academic Records by Semester -->
+                {% for semester_name, results in results_by_semester.items %}
+                <div class="mb-5">
+                    <h5 class="border-bottom pb-2 mb-3">{{ semester_name }}</h5>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Course Code</th>
+                                    <th>Course Title</th>
+                                    <th>Credit Hours</th>
+                                    <th>Grade</th>
+                                    <th>Total Marks</th>
+                                    <th>Obtained Marks</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for result in results %}
+                                <tr>
+                                    <td>{{ result.subject_code }}</td>
+                                    <td>{{ result.subject_name }}</td>
+                                    <td class="text-center">{{ result.credit_hours }}</td>
+                                    <td class="text-center">
+                                        <span class="badge 
+                                            {% if result.grade == 'A+' or result.grade == 'A' %}badge-success
+                                            {% elif result.grade == 'B+' or result.grade == 'B' %}badge-info
+                                            {% elif result.grade == 'C+' or result.grade == 'C' %}badge-warning
+                                            {% elif result.grade == 'D' %}badge-warning
+                                            {% elif result.grade == 'F' %}badge-danger
+                                            {% else %}badge-secondary{% endif %}">
+                                            {{ result.grade }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">{{ result.total_marks|default:"100" }}</td>
+                                    <td class="text-center">{{ result.obtained_marks|default:"-" }}</td>
+                                </tr>
+                                {% endfor %}
+                                <!-- Semester Summary -->
+                                <tr class="table-light">
+                                    <td colspan="3" class="text-right"><strong>Semester Total:</strong></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Overall Summary -->
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <h5>Grade Scale</h5>
+                        <div class="grade-scale">
+                            <div class="row">
+                                <div class="col-6">
+                                    <p class="mb-1">A+ (90-100%) = 4.00</p>
+                                    <p class="mb-1">A (85-89%) = 4.00</p>
+                                    <p class="mb-1">A- (80-84%) = 3.67</p>
+                                    <p class="mb-1">B+ (75-79%) = 3.33</p>
+                                    <p class="mb-1">B (70-74%) = 3.00</p>
+                                </div>
+                                <div class="col-6">
+                                    <p class="mb-1">B- (65-69%) = 2.67</p>
+                                    <p class="mb-1">C+ (60-64%) = 2.33</p>
+                                    <p class="mb-1">C (55-59%) = 2.00</p>
+                                    <p class="mb-1">D (50-54%) = 1.67</p>
+                                    <p class="mb-1">F (Below 50%) = 0.00</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Final Summary</h5>
+                        <table class="table table-sm table-bordered">
+                            <tr>
+                                <td><strong>Total Credits Attempted:</strong></td>
+                                <td class="text-right">{{ transcript.total_credits_attempted }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Total Credits Earned:</strong></td>
+                                <td class="text-right">{{ transcript.total_credits_earned }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Total Quality Points:</strong></td>
+                                <td class="text-right">{{ transcript.total_quality_points|floatformat:2 }}</td>
+                            </tr>
+                            <tr class="table-primary">
+                                <td><strong>Cumulative GPA:</strong></td>
+                                <td class="text-right"><strong>{{ transcript.cumulative_gpa|floatformat:2 }}</strong></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="row mt-5 pt-4 border-top">
+                    <div class="col-md-6">
+                        <div class="text-center">
+                            <p class="mb-1">_________________________</p>
+                            <small>HOD's Signature</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-center">
+                            <p class="mb-1">_________________________</p>
+                            <small>Date: {{ transcript.issue_date|date:"F d, Y" }}</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Official Stamp -->
+                <div class="text-center mt-4">
+                    <div class="d-inline-block border rounded p-3">
+                        <i class="fas fa-stamp fa-2x text-danger"></i>
+                        <p class="mb-0 small text-muted">OFFICIAL COPY</p>
+                        <small class="text-muted">Generated by Student Management System</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="card-footer no-print">
+                <div class="row">
+                    <div class="col-md-6">
+                        <a href="{% url 'all_transcripts_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Transcripts
+                        </a>
+                        {% if user.is_staff %}
+                        <a href="{% url 'delete_transcript' transcript.id %}" 
+                           class="btn btn-danger" 
+                           onclick="return confirm('Are you sure you want to delete this transcript?')">
+                            <i class="fas fa-trash"></i> Delete
+                        </a>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 text-right">
+                        <a href="{% url 'print_transcript' transcript.id %}" class="btn btn-primary" target="_blank">
+                            <i class="fas fa-print"></i> Print View
+                        </a>
+                        <button onclick="window.print()" class="btn btn-success">
+                            <i class="fas fa-file-pdf"></i> Print Now
+                        </button>
+                        <a href="{% url 'generate_transcript' transcript.student.id %}" class="btn btn-info">
+                            <i class="fas fa-redo"></i> Regenerate
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
+<script>
+    $(document).ready(function() {
+        // Print functionality
+        $('.btn-print').click(function() {
+            window.print();
+        });
+
+        // Confirm before delete
+        $('.btn-delete').click(function(e) {
+            if (!confirm('Are you sure you want to delete this transcript? This action cannot be undone.')) {
+                e.preventDefault();
+            }
+        });
+    });
+
+    // Auto-print if print parameter is present
+    if (window.location.search.includes('print=true')) {
+        window.print();
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,316 @@
+<!-- timetables/templates/timetables/laboratory_form.html -->
+
+{% extends 'timetables/base.html' %}
+{% load static %}
+
+{% block title %}{% if lab %}Edit Laboratory{% else %}Add New Laboratory{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-flask"></i> 
+                        {% if lab %}Edit Laboratory{% else %}Add New Laboratory{% endif %}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- Basic Information -->
+                        <h5 class="mt-3 mb-3 text-primary">Basic Information</h5>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="lab_code" class="form-label">Lab Code *</label>
+                                <input type="text" name="lab_code" id="lab_code" class="form-control" 
+                                       value="{% if lab %}{{ lab.lab_code }}{% endif %}" required>
+                                <small class="text-muted">e.g., LAB-101, CS-LAB-1</small>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="lab_name" class="form-label">Lab Name *</label>
+                                <input type="text" name="lab_name" id="lab_name" class="form-control" 
+                                       value="{% if lab %}{{ lab.lab_name }}{% endif %}" required>
+                                <small class="text-muted">e.g., Computer Science Lab 1</small>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="building" class="form-label">Building *</label>
+                                <input type="text" name="building" id="building" class="form-control" 
+                                       value="{% if lab %}{{ lab.building }}{% endif %}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="floor" class="form-label">Floor</label>
+                                <input type="text" name="floor" id="floor" class="form-control" 
+                                       value="{% if lab %}{{ lab.floor }}{% endif %}">
+                                <small class="text-muted">e.g., Ground Floor, 1st Floor</small>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="capacity" class="form-label">Capacity *</label>
+                                <input type="number" name="capacity" id="capacity" class="form-control" 
+                                       value="{% if lab %}{{ lab.capacity }}{% else %}30{% endif %}" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="computer_count" class="form-label">Number of Computers</label>
+                                <input type="number" name="computer_count" id="computer_count" class="form-control" 
+                                       value="{% if lab %}{{ lab.computer_count }}{% else %}0{% endif %}">
+                            </div>
+                        </div>
+                        
+                        <!-- Computer Details -->
+                        <h5 class="mt-4 mb-3 text-primary">Computer Details</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="computer_config" class="form-label">Computer Configuration</label>
+                                <textarea name="computer_config" id="computer_config" class="form-control" rows="2">{% if lab %}{{ lab.computer_config }}{% endif %}</textarea>
+                                <small class="text-muted">e.g., Intel i5, 8GB RAM, 512GB SSD</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="operating_system" class="form-label">Operating System</label>
+                                <input type="text" name="operating_system" id="operating_system" class="form-control" 
+                                       value="{% if lab %}{{ lab.operating_system }}{% endif %}">
+                                <small class="text-muted">e.g., Windows 11, Ubuntu 22.04</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Software -->
+                        <h5 class="mt-4 mb-3 text-primary">Software</h5>
+                        <div class="mb-3">
+                            <label for="software_installed" class="form-label">Installed Software</label>
+                            <textarea name="software_installed" id="software_installed" class="form-control" rows="4" placeholder="One software per line&#10;e.g.,&#10;Microsoft Office&#10;Visual Studio Code&#10;Adobe Photoshop">{% if lab %}{{ lab.software_installed }}{% endif %}</textarea>
+                            <small class="text-muted">Enter one software per line</small>
+                        </div>
+                        
+                        <!-- Facilities -->
+                        <h5 class="mt-4 mb-3 text-primary">Facilities</h5>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="form-check">
+                                    <input type="checkbox" name="has_projector" id="has_projector" class="form-check-input"
+                                           {% if lab and lab.has_projector %}checked{% endif %}>
+                                    <label for="has_projector" class="form-check-label">
+                                        <i class="fas fa-video"></i> Projector
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check">
+                                    <input type="checkbox" name="has_smartboard" id="has_smartboard" class="form-check-input"
+                                           {% if lab and lab.has_smartboard %}checked{% endif %}>
+                                    <label for="has_smartboard" class="form-check-label">
+                                        <i class="fas fa-chalkboard"></i> Smart Board
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check">
+                                    <input type="checkbox" name="has_ac" id="has_ac" class="form-check-input"
+                                           {% if lab and lab.has_ac %}checked{% endif %}>
+                                    <label for="has_ac" class="form-check-label">
+                                        <i class="fas fa-wind"></i> Air Conditioning
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check">
+                                    <input type="checkbox" name="has_generator" id="has_generator" class="form-check-input"
+                                           {% if lab and lab.has_generator %}checked{% endif %}>
+                                    <label for="has_generator" class="form-check-label">
+                                        <i class="fas fa-bolt"></i> Generator Backup
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-2">
+                            <div class="col-md-3">
+                                <div class="form-check">
+                                    <input type="checkbox" name="has_wifi" id="has_wifi" class="form-check-input"
+                                           {% if lab and lab.has_wifi %}checked{% endif %}>
+                                    <label for="has_wifi" class="form-check-label">
+                                        <i class="fas fa-wifi"></i> WiFi
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check">
+                                    <input type="checkbox" name="has_printer" id="has_printer" class="form-check-input"
+                                           {% if lab and lab.has_printer %}checked{% endif %}>
+                                    <label for="has_printer" class="form-check-label">
+                                        <i class="fas fa-print"></i> Printer
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check">
+                                    <input type="checkbox" name="has_whiteboard" id="has_whiteboard" class="form-check-input"
+                                           {% if lab and lab.has_whiteboard %}checked{% endif %}>
+                                    <label for="has_whiteboard" class="form-check-label">
+                                        <i class="fas fa-chalkboard"></i> Whiteboard
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Network Details -->
+                        <h5 class="mt-4 mb-3 text-primary">Network Details</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="internet_speed" class="form-label">Internet Speed</label>
+                                <input type="text" name="internet_speed" id="internet_speed" class="form-control" 
+                                       value="{% if lab %}{{ lab.internet_speed }}{% endif %}">
+                                <small class="text-muted">e.g., 100 Mbps, 1 Gbps</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="network_type" class="form-label">Network Type</label>
+                                <input type="text" name="network_type" id="network_type" class="form-control" 
+                                       value="{% if lab %}{{ lab.network_type }}{% endif %}">
+                                <small class="text-muted">e.g., LAN, Fiber Optic, Wi-Fi 6</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Primary Assignments -->
+                        <h5 class="mt-4 mb-3 text-primary">Primary Assignment</h5>
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <label for="primary_batch" class="form-label">Primary Batch</label>
+                                <select name="primary_batch" id="primary_batch" class="form-select">
+                                    <option value="">-- Select Batch --</option>
+                                    {% for batch in batches %}
+                                    <option value="{{ batch.id }}" {% if lab and lab.primary_batch and lab.primary_batch.id == batch.id %}selected{% endif %}>
+                                        {{ batch.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="primary_section" class="form-label">Primary Section</label>
+                                <select name="primary_section" id="primary_section" class="form-select">
+                                    <option value="">-- Select Section --</option>
+                                    {% for section in sections %}
+                                    <option value="{{ section.id }}" {% if lab and lab.primary_section and lab.primary_section.id == section.id %}selected{% endif %}>
+                                        {{ section.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="primary_semester" class="form-label">Primary Semester</label>
+                                <select name="primary_semester" id="primary_semester" class="form-select">
+                                    <option value="">-- Select Semester --</option>
+                                    {% for semester in semesters %}
+                                    <option value="{{ semester.id }}" {% if lab and lab.primary_semester and lab.primary_semester.id == semester.id %}selected{% endif %}>
+                                        Semester {{ semester.number }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="primary_discipline" class="form-label">Primary Discipline</label>
+                                <select name="primary_discipline" id="primary_discipline" class="form-select">
+                                    <option value="">-- Select Discipline --</option>
+                                    {% for discipline in disciplines %}
+                                    <option value="{{ discipline.id }}" {% if lab and lab.primary_discipline and lab.primary_discipline.id == discipline.id %}selected{% endif %}>
+                                        {{ discipline.program }} in {{ discipline.field }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Multiple Assignments -->
+                        <h5 class="mt-4 mb-3 text-primary">Multiple Assignments (All that can use this lab)</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="batches" class="form-label">Batches</label>
+                                <select name="batches" id="batches" class="form-select" multiple size="5">
+                                    {% for batch in batches %}
+                                    <option value="{{ batch.id }}" {% if lab and batch.id in selected_batches %}selected{% endif %}>
+                                        {{ batch.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">Hold Ctrl/Cmd to select multiple</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="sections" class="form-label">Sections</label>
+                                <select name="sections" id="sections" class="form-select" multiple size="5">
+                                    {% for section in sections %}
+                                    <option value="{{ section.id }}" {% if lab and section.id in selected_sections %}selected{% endif %}>
+                                        {{ section.name }} ({{ section.batch.name }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">Hold Ctrl/Cmd to select multiple</small>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="semesters" class="form-label">Semesters</label>
+                                <select name="semesters" id="semesters" class="form-select" multiple size="5">
+                                    {% for semester in semesters %}
+                                    <option value="{{ semester.id }}" {% if lab and semester.id in selected_semesters %}selected{% endif %}>
+                                        Semester {{ semester.number }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">Hold Ctrl/Cmd to select multiple</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="disciplines" class="form-label">Disciplines</label>
+                                <select name="disciplines" id="disciplines" class="form-select" multiple size="5">
+                                    {% for discipline in disciplines %}
+                                    <option value="{{ discipline.id }}" {% if lab and discipline.id in selected_disciplines %}selected{% endif %}>
+                                        {{ discipline.program }} in {{ discipline.field }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">Hold Ctrl/Cmd to select multiple</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Maintenance -->
+                        <h5 class="mt-4 mb-3 text-primary">Maintenance</h5>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <div class="form-check mt-4">
+                                    <input type="checkbox" name="is_active" id="is_active" class="form-check-input"
+                                           {% if not lab or lab.is_active %}checked{% endif %}>
+                                    <label for="is_active" class="form-check-label">Active</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="last_maintenance" class="form-label">Last Maintenance</label>
+                                <input type="date" name="last_maintenance" id="last_maintenance" class="form-control" 
+                                       value="{% if lab and lab.last_maintenance %}{{ lab.last_maintenance|date:'Y-m-d' }}{% endif %}">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="next_maintenance" class="form-label">Next Maintenance</label>
+                                <input type="date" name="next_maintenance" id="next_maintenance" class="form-control" 
+                                       value="{% if lab and lab.next_maintenance %}{{ lab.next_maintenance|date:'Y-m-d' }}{% endif %}">
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> 
+                                {% if lab %}Update Laboratory{% else %}Create Laboratory{% endif %}
+                            </button>
+                            <a href="{% url 'timetables:laboratory_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,678 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transcript - {{ transcript.student.get_full_name }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 0.25in;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 10pt;
+            line-height: 1.0;
+            color: #000;
+            background: white;
+            padding: 0;
+            margin: 0;
+        }
+        
+        /* Background watermark */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70%;
+            height: 70%;
+            background-image: url('{% static "assets/images/uni logo.jpg" %}');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: contain;
+            opacity: 0.1;
+            z-index: -1;
+            pointer-events: none;
+        }
+        
+        .container {
+            width: 100%;
+            padding: 10px 15px;
+            position: relative;
+        }
+        
+        /* Header Section - Matching reference style */
+        .header {
+            text-align: center;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 3px solid #000;
+        }
+        
+        .logo {
+            height: 50px;
+            width: auto;
+            margin-bottom: 5px;
+        }
+        
+        .university {
+            font-size: 14pt;
+            font-weight: bold;
+            margin: 2px 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .province {
+            font-size: 9pt;
+            margin: 1px 0;
+            color: #333;
+        }
+        
+        .controller {
+            font-size: 9.5pt;
+            font-weight: bold;
+            margin: 3px 0;
+        }
+        
+        .dept-title {
+            font-size: 10.5pt;
+            font-weight: bold;
+            margin: 4px 0;
+            text-transform: uppercase;
+        }
+        
+        .program-title {
+            font-size: 10pt;
+            font-weight: bold;
+            margin: 2px 0;
+            color: #000;
+        }
+        
+        .transcript-title {
+            font-size: 12pt;
+            font-weight: bold;
+            margin: 5px 0;
+            color: #000;
+            text-decoration: underline;
+        }
+        
+        /* Student Basic Info */
+        .student-basic-info {
+            border: 2px solid #000;
+            padding: 6px 10px;
+            margin: 10px 0 15px 0;
+            background: #f8f9fa;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+        }
+        
+        .info-item {
+            display: flex;
+            align-items: center;
+            min-height: 22px;
+            border-bottom: 1px dotted #999;
+            padding: 0 3px;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            min-width: 80px;
+            font-size: 8.5pt;
+        }
+        
+        .info-value {
+            font-weight: bold;
+            font-size: 9pt;
+            flex: 1;
+        }
+        
+        /* Semester Tables */
+        .semester-section {
+            margin-bottom: 12px;
+            page-break-inside: avoid;
+        }
+        
+        .semester-heading {
+            font-size: 9.5pt;
+            font-weight: bold;
+            background: #e0e0e0;
+            padding: 3px 8px;
+            margin-bottom: 3px;
+            border-left: 4px solid #000;
+            text-transform: uppercase;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 8pt;
+            margin-bottom: 5px;
+            border: 2px solid #000;
+        }
+        
+        th {
+            background: #333;
+            color: white;
+            border: 1px solid #000;
+            padding: 3px 4px;
+            font-weight: bold;
+            text-align: center;
+            font-size: 8.5pt;
+        }
+        
+        td {
+            border: 1px solid #000;
+            padding: 3px 4px;
+            vertical-align: middle;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .code-col {
+            width: 10%;
+        }
+        
+        .title-col {
+            width: 45%;
+            text-align: left;
+            padding-left: 5px;
+        }
+        
+        .total-col {
+            width: 8%;
+        }
+        
+        .obtained-col {
+            width: 9%;
+        }
+        
+        .grade-col {
+            width: 9%;
+        }
+        
+        .gpa-col {
+            width: 8%;
+        }
+        
+        .semester-total {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+        
+        .semester-total td {
+            padding: 4px;
+            font-size: 8.5pt;
+        }
+        
+        /* Horizontal rule style */
+        .hr-line {
+            border-top: 1px solid #000;
+            margin: 8px 0;
+        }
+        
+        /* Final Result Box */
+        .final-result {
+            border: 3px solid #000;
+            padding: 10px;
+            margin: 15px 0 20px 0;
+            background: #f0f0f0;
+            text-align: center;
+        }
+        
+        .result-title {
+            font-size: 11pt;
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-decoration: underline;
+        }
+        
+        .result-value {
+            font-size: 14pt;
+            font-weight: bold;
+            color: #000;
+            padding: 5px 0;
+        }
+        
+        /* Signature Section */
+        .signature-section {
+            margin-top: 20px;
+            padding-top: 10px;
+            border-top: 2px solid #000;
+        }
+        
+        .signature-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .signature-box {
+            text-align: center;
+            padding: 5px;
+        }
+        
+        .signature-line {
+            border-top: 1px solid #000;
+            width: 150px;
+            margin: 20px auto 5px auto;
+        }
+        
+        .signature-name {
+            font-weight: bold;
+            font-size: 9pt;
+        }
+        
+        .signature-title {
+            font-size: 8pt;
+            color: #333;
+        }
+        
+        /* Footer Note */
+        .footer-note {
+            text-align: center;
+            font-size: 8pt;
+            color: #666;
+            margin-top: 10px;
+            padding-top: 5px;
+            border-top: 1px dashed #999;
+        }
+        
+        /* Print Controls */
+        .print-controls {
+            background: #f5f5f5;
+            padding: 6px;
+            border-bottom: 2px solid #ddd;
+            margin-bottom: 10px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .print-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            font-size: 9pt;
+            cursor: pointer;
+            border-radius: 3px;
+            margin-right: 5px;
+            font-weight: bold;
+        }
+        
+        .close-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            font-size: 9pt;
+            cursor: pointer;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        
+        @media print {
+            .print-controls {
+                display: none;
+            }
+            
+            body::before {
+                opacity: 0.08;
+                width: 65%;
+                height: 65%;
+            }
+        }
+        
+        @media screen {
+            .container {
+                max-width: 1000px;
+                margin: 0 auto;
+                background: white;
+                box-shadow: 0 0 10px rgba(0,0,0,0.1);
+                min-height: 100vh;
+            }
+        }
+        
+        /* Grade highlighting */
+        .grade-A, .grade-A-plus {
+            background: #d4edda;
+        }
+        
+        .grade-B, .grade-B-plus {
+            background: #fff3cd;
+        }
+        
+        .grade-C, .grade-C-plus, .grade-D, .grade-F {
+            background: #f8d7da;
+        }
+        
+        /* Text styles */
+        .text-left {
+            text-align: left;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        .bold {
+            font-weight: bold;
+        }
+        
+        .uppercase {
+            text-transform: uppercase;
+        }
+        
+        .text-sm {
+            font-size: 7.5pt;
+        }
+    </style>
+<body>
+    <!-- Print Controls -->
+    <div class="print-controls">
+        <button onclick="window.print()" class="print-btn">🖨️ PRINT TRANSCRIPT</button>
+        <button onclick="window.close()" class="close-btn">✕ CLOSE</button>
+        <span style="margin-left: 15px; font-size: 9pt; color: #666;">Press Ctrl+P to print</span>
+    </div>
+    
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <img src="{% static 'assets/images/uni logo.jpg' %}" alt="University Logo" class="logo">
+            <div class="university">UNIVERSITY OF SWABI</div>
+            <div class="province">Khyber Pakhtunkhwa - Pakistan</div>
+            
+            <div class="controller">Controller of Examinations</div>
+            <div class="controller">University of Swabi</div>
+            
+            <div class="hr-line"></div>
+            
+            <div class="dept-title">Bachelor of Science (Honors) Computer Science</div>
+            <div class="program-title">Department of Computer Science, University of Swabi</div>
+            
+            <div class="hr-line"></div>
+            
+            <div class="transcript-title">ACADEMIC TRANSCRIPT</div>
+        </div>
+        
+        <!-- Student Basic Information -->
+        <div class="student-basic-info">
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Name:</span>
+                    <span class="info-value">{{ transcript.student.first_name }} {{ transcript.student.last_name }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Roll No:</span>
+                    <span class="info-value">{{ transcript.student.student_id }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Session:</span>
+                    <span class="info-value">{{ transcript.student.batch.start_session|default:"-" }} {{ transcript.student.batch.end_session|default:"-" }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">CGPA:</span>
+                    <span class="info-value">{{ transcript.cumulative_gpa|floatformat:2 }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Academic Records by Semester -->
+        {% for semester_name, results in results_by_semester.items %}
+        <div class="semester-section" id="semester-{{ forloop.counter }}">
+            <div class="semester-heading">{{ semester_name }}</div>
+            <table class="semester-table">
+                <thead>
+                    <tr>
+                        <th class="code-col">Course Code</th>
+                        <th class="title-col">Title of the Course</th>
+                        <th class="total-col">Total Marks</th>
+                        <th class="obtained-col">Marks Obtained</th>
+                        <th class="grade-col">Grade</th>
+                        <th class="gpa-col">G.P.A</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in results %}
+                    <tr class="course-row">
+                        <td>{{ result.subject_code }}</td>
+                        <td class="text-left">{{ result.subject_name }}</td>
+                        <td>100</td> <!-- Always 100 for total marks -->
+                        <td class="obtained-marks">
+                            {% if result.total_marks %}
+                                {{ result.total_marks|floatformat:2 }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="grade-{{ result.grade }}">
+                            {{ result.grade|default:"-" }}
+                        </td>
+                        <td class="course-gpa">
+                            {% if result.grade_point %}
+                                {{ result.grade_point|floatformat:2 }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    
+                    <!-- Semester Total Row -->
+                    <tr class="semester-total">
+                        <td colspan="2" class="text-right"><strong>SEMESTER TOTAL:</strong></td>
+                        <td id="total-marks-{{ forloop.counter }}"><strong>0</strong></td>
+                        <td id="total-obtained-{{ forloop.counter }}"><strong>0</strong></td>
+                        <td id="semester-grade-{{ forloop.counter }}"><strong>-</strong></td>
+                        <td id="semester-gpa-{{ forloop.counter }}"><strong>0</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        {% endfor %}
+        
+        <div class="hr-line"></div>
+        
+        <!-- Final Result -->
+        <div class="final-result">
+            <div class="result-title">FINAL RESULT</div>
+            <div class="result-value">
+                {% if transcript.cumulative_gpa >= 2.0 %}
+                PASS with CGPA: {{ transcript.cumulative_gpa|floatformat:2 }}
+                {% else %}
+                FAILED
+                {% endif %}
+            </div>
+            <div style="font-size: 10pt; margin-top: 5px; font-weight: bold;">
+                Total Credits Earned: {{ transcript.total_credits_earned }} / {{ transcript.total_credits_attempted }}
+            </div>
+        </div>
+        
+        <!-- Signatures -->
+        <div class="signature-section">
+            <div class="signature-grid">
+                <div class="signature-box">
+                    <div class="signature-line"></div>
+                    <div class="signature-name">Head of Department</div>
+                    <div class="signature-title">Department of Computer Science</div>
+                    <div class="signature-title">University of Swabi</div>
+                </div>
+                
+                <div class="signature-box">
+                    <div class="signature-line"></div>
+                    <div class="signature-name">Controller of Examinations</div>
+                    <div class="signature-title">University of Swabi</div>
+                </div>
+                
+                <div class="signature-box">
+                    <div class="signature-line"></div>
+                    <div class="signature-name">Registrar</div>
+                    <div class="signature-title">University of Swabi</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer Note -->
+        <div class="footer-note">
+            <p>This transcript is issued under the authority of the University of Swabi and is valid only if it bears the official seal and signatures.</p>
+            <p>Transcript No: {{ transcript.transcript_number }} | Issue Date: {{ transcript.issue_date|date:"F d, Y" }}</p>
+            <p>Generated on: {% now "F d, Y H:i" %} | Document ID: {{ transcript.id }}</p>
+        </div>
+    </div>
+    
+    <script>
+        window.onload = function() {
+            // Auto-print if requested
+            if (window.location.search.includes('autoprint=true')) {
+                setTimeout(function() {
+                    window.print();
+                }, 500);
+            }
+            
+            // Calculate and display semester totals
+            calculateAllSemesterTotals();
+            
+            // Add grade colors
+            addGradeColors();
+            
+            // Adjust for single page
+            adjustForSinglePage();
+        };
+        
+        function calculateAllSemesterTotals() {
+            const semesterSections = document.querySelectorAll('.semester-section');
+            
+            semesterSections.forEach((section, index) => {
+                const courseRows = section.querySelectorAll('.course-row');
+                let totalCourses = 0;
+                let totalObtained = 0;
+                let totalGPA = 0;
+                let validGPACount = 0;
+                
+                courseRows.forEach(row => {
+                    totalCourses++;
+                    
+                    // Get obtained marks (now from result.total_marks)
+                    const obtainedCell = row.querySelector('.obtained-marks');
+                    const obtainedText = obtainedCell.textContent.trim();
+                    if (obtainedText !== '-') {
+                        const obtained = parseFloat(obtainedText);
+                        if (!isNaN(obtained)) {
+                            totalObtained += obtained;
+                        }
+                    }
+                    
+                    // Get GPA
+                    const gpaCell = row.querySelector('.course-gpa');
+                    const gpaText = gpaCell.textContent.trim();
+                    if (gpaText !== '-') {
+                        const gpa = parseFloat(gpaText);
+                        if (!isNaN(gpa)) {
+                            totalGPA += gpa;
+                            validGPACount++;
+                        }
+                    }
+                });
+                
+                // Calculate totals
+                const totalMarks = totalCourses * 100;
+                const avgGPA = validGPACount > 0 ? (totalGPA / validGPACount) : 0;
+                
+                // Determine grade based on GPA
+                let grade = '-';
+                if (avgGPA >= 3.67) grade = 'A';
+                else if (avgGPA >= 3.33) grade = 'B+';
+                else if (avgGPA >= 3.00) grade = 'B';
+                else if (avgGPA >= 2.67) grade = 'C+';
+                else if (avgGPA >= 2.33) grade = 'C';
+                else if (avgGPA >= 2.00) grade = 'D';
+                else if (avgGPA > 0) grade = 'F';
+                
+                // Update the total row
+                const totalMarksCell = section.querySelector(`#total-marks-${index + 1}`);
+                const totalObtainedCell = section.querySelector(`#total-obtained-${index + 1}`);
+                const semesterGradeCell = section.querySelector(`#semester-grade-${index + 1}`);
+                const semesterGPACell = section.querySelector(`#semester-gpa-${index + 1}`);
+                
+                if (totalMarksCell) totalMarksCell.textContent = totalMarks;
+                if (totalObtainedCell) totalObtainedCell.textContent = totalObtained.toFixed(2);
+                if (semesterGradeCell) semesterGradeCell.textContent = grade;
+                if (semesterGPACell) semesterGPACell.textContent = avgGPA.toFixed(2);
+            });
+        }
+        
+        function addGradeColors() {
+            document.querySelectorAll('[class*="grade-"]').forEach(el => {
+                const className = el.className;
+                if (className.includes('grade-A')) {
+                    el.style.backgroundColor = '#d4edda';
+                } else if (className.includes('grade-B')) {
+                    el.style.backgroundColor = '#fff3cd';
+                } else if (className.includes('grade-C') || className.includes('grade-D') || className.includes('grade-F')) {
+                    el.style.backgroundColor = '#f8d7da';
+                }
+            });
+        }
+        
+        function adjustForSinglePage() {
+            const container = document.querySelector('.container');
+            const windowHeight = window.innerHeight;
+            const contentHeight = container.scrollHeight;
+            
+            if (contentHeight > windowHeight * 0.9) {
+                document.body.style.fontSize = '9.8pt';
+                document.querySelectorAll('table').forEach(table => {
+                    table.style.fontSize = '7.8pt';
+                    table.style.marginBottom = '3px';
+                });
+                document.querySelectorAll('.semester-section').forEach(section => {
+                    section.style.marginBottom = '8px';
+                });
+            }
+        }
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'p') {
+                e.preventDefault();
+                window.print();
+            }
+            if (e.key === 'Escape') {
+                window.close();
+            }
+        });
+        
+        // Print button event
+        document.querySelector('.print-btn').addEventListener('click', function() {
+            window.print();
+        });
+        
+        // Close button event
+        document.querySelector('.close-btn').addEventListener('click', function() {
+            window.close();
+        });
+    </script>
+</body>
+</html>

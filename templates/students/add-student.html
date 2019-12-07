@@ -1,0 +1,252 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+{% block body %}
+   
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Add Students</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'student_list' %}">Students</a></li>
+                        <li class="breadcrumb-item active">Add Students</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="mb-3">
+                    {% for message in messages %}
+                    <div class="alert 
+                                {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %}">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                    </div>
+            <div class="col-sm-12">
+                <div class="card">
+                    <div class="card-body">
+                        <form method="POST" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="row">
+                                <div class="col-12">
+                                    <h5 class="form-title"><span>Student Information</span></h5>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>First Name</label>
+                                        <input type="text" class="form-control" name="first_name" required>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Last Name</label>
+                                        <input type="text" class="form-control" name="last_name" required>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Student ID</label>
+                                        <input type="text" class="form-control" name="student_id" required>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Admission Number</label>
+                                        <input type="text" class="form-control" name="admission_number" required>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Gender</label>
+                                        <select class="form-control" name="gender" required>
+                                            <option value="">Select Gender</option>
+                                            <option value="M">Male</option>
+                                            <option value="F">Female</option>
+                                            <option value="O">Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Date of Birth</label>
+                                        <div>
+                                            <input type="date" class="form-control" name="dob" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Email</label>
+                                        <input type="email" class="form-control" name="email" required>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Contact Number</label>
+                                        <input type="text" class="form-control" name="contact_number">
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Batch</label>
+                                        <select class="form-control" name="batch" required>
+                                            <option value="">Select Batch</option>
+                                            {% for batch in batches %}
+                                            <option value="{{ batch.id }}">{{ batch.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Semester</label>
+                                        <select class="form-control" name="semester" required>
+                                            <option value="">Select Semester</option>
+                                            {% for semester in semesters %}
+                                            <option value="{{ semester.id }}">Semester {{ semester.number }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                     <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Discipline <span class="text-danger">*</span></label>
+                                            <select class="form-control" name="discipline" id="discipline_filter" required>
+                                             <option value="">All Disciplines</option>
+                                              {% for discipline in disciplines %}
+                                             <option value="{{ discipline.id }}" {% if selected_discipline and selected_discipline.id == discipline.id %}selected{% endif %}>
+                                               {{ discipline.field }} ({{ discipline.program }})
+                                             </option>
+                                               {% endfor %}
+                                             </select>
+                                        <small class="form-text text-muted">Choose the related discipline</small>
+                                    </div>
+                                </div>
+
+                                {% comment %} <div class="col-12 col-sm-6"> {% endcomment %}
+                                    {% comment %} <div class="form-group">
+                                        <label>Section</label>
+                                        <select class="form-control" name="section" required>
+                                            <option value="">Select Section</option>
+                                            {% for section in sections %}
+                                            <option value="{{ section.id }}">{{ section.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div> {% endcomment %}
+                                {% comment %} </div> {% endcomment %}
+<!-- Previous code remains the same until the section dropdown -->
+
+<div class="col-12 col-sm-6">
+    <div class="form-group">
+        <label>Section</label>
+        <select class="form-control" name="section" id="section_select" required>
+            <option value="">Select Section</option>
+            {% for section in sections %}
+            <option value="{{ section.id }}" data-batch="{{ section.batch.id }}">
+                {{ section.name }} ({{ section.batch.name }})
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+</div>
+
+<!-- Rest of your template remains the same -->
+
+                    
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Student Image</label>
+                                        <input type="file" class="form-control" name="image">
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-group">
+                                        <label>Student Address</label>
+                                        <textarea class="form-control" name="address" required></textarea>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <h5 class="form-title"><span>Parent Information (Optional)</span></h5>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Father's Name</label>
+                                        <input type="text" class="form-control" name="father_name">
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Mother's Name</label>
+                                        <input type="text" class="form-control" name="mother_name">
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Father's Contact</label>
+                                        <input type="text" class="form-control" name="father_contact">
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Father's Email</label>
+                                        <input type="email" class="form-control" name="father_email">
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-group">
+                                        <label>Parent Address</label>
+                                        <textarea class="form-control" name="parent_address"></textarea>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-primary">Submit</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
+<script src="{% static 'assets/js/popper.min.js' %}"></script>
+<script src="{% static 'assets/plugins/bootstrap/js/bootstrap.min.js' %}"></script>
+<script src="{% static 'assets/plugins/slimscroll/jquery.slimscroll.min.js' %}"></script>
+<script src="{% static 'assets/js/script.js' %}"></script>
+
+<script>
+$(document).ready(function() {
+    // When batch changes, filter sections
+    $('select[name="batch"]').change(function() {
+        var batchId = $(this).val();
+        var $sectionSelect = $('#section_select');
+        
+        if (batchId) {
+            // Enable and filter sections
+            $sectionSelect.prop('disabled', false);
+            $sectionSelect.find('option').each(function() {
+                var $option = $(this);
+                // Show only options for selected batch or the default option
+                $option.toggle(
+                    $option.val() === '' || $option.data('batch') == batchId
+                );
+            });
+        } else {
+            // Disable and show all sections if no batch selected
+            $sectionSelect.prop('disabled', true);
+            $sectionSelect.find('option').show();
+        }
+        
+        // Reset section selection
+        $sectionSelect.val('');
+    });
+    
+    // Trigger change event on page load if batch is already selected
+    $('select[name="batch"]').trigger('change');
+});
+</script>
+{% endblock %}

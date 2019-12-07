@@ -1,0 +1,205 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}All Tokens - Exam Token System{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">
+            <i class="fas fa-list text-primary"></i> All Exam Tokens
+            <span class="badge bg-secondary">{{ page_obj.paginator.count }} Total</span>
+        </h1>
+        <div>
+            <a href="{% url 'token_app:create_token' %}" class="btn btn-primary">
+                <i class="fas fa-plus-circle"></i> Create New Token
+            </a>
+            <a href="{% url 'token_app:index' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-filter"></i> Filters
+            </h6>
+        </div>
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-control">
+                        <option value="">All Status</option>
+                        {% for code, name in status_choices %}
+                            <option value="{{ code }}" {% if selected_status == code %}selected{% endif %}>
+                                {{ name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Batch</label>
+                    <select name="batch" class="form-control">
+                        <option value="">All Batches</option>
+                        {% for batch in batches %}
+                            <option value="{{ batch.id }}" {% if selected_batch == batch.id|stringformat:"s" %}selected{% endif %}>
+                                {{ batch.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Semester</label>
+                    <select name="semester" class="form-control">
+                        <option value="">All Semesters</option>
+                        {% for semester in semesters %}
+                            <option value="{{ semester.id }}" {% if selected_semester == semester.id|stringformat:"s" %}selected{% endif %}>
+                                {{ semester.number }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="fas fa-search"></i> Apply
+                    </button>
+                    <a href="{% url 'token_app:all_tokens' %}" class="btn btn-secondary">
+                        <i class="fas fa-redo"></i> Reset
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tokens Table -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Token #</th>
+                            <th>Student</th>
+                            <th>Batch/Semester</th>
+                            <th>Issue Date</th>
+                            <th>Valid Until</th>
+                            <th>Status</th>
+                            <th>Days Left</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for token in tokens %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'token_app:token_detail' token.id %}">
+                                    <code>{{ token.token_number }}</code>
+                                </a>
+                            </td>
+                            <td>
+                                {{ token.student.first_name }} {{ token.student.last_name }}<br>
+                                <small class="text-muted">{{ token.student.student_id }}</small>
+                            </td>
+                            <td>
+                                {{ token.batch.name }}<br>
+                                <small>Sem {{ token.semester.number }} | {{ token.section.name }}</small>
+                            </td>
+                            <td>{{ token.issue_date|date:"d M Y" }}</td>
+                            <td>{{ token.valid_until|date:"d M Y" }}</td>
+                            <td>
+                                <span class="badge bg-{% if token.status == 'verified' %}success{% elif token.status == 'expired' %}danger{% elif token.status == 'used' %}info{% elif token.status == 'cancelled' %}warning{% else %}secondary{% endif %}">
+                                    {{ token.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if token.days_until_expiry > 0 %}
+                                    <span class="badge bg-success">{{ token.days_until_expiry }} days</span>
+                                {% elif token.days_until_expiry == 0 %}
+                                    <span class="badge bg-warning">Today</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Expired</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'token_app:token_detail' token.id %}" class="btn btn-info" title="View">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'token_app:print_token' token.id %}" class="btn btn-secondary" title="Print" target="_blank">
+                                        <i class="fas fa-print"></i>
+                                    </a>
+                                    {% if token.status == 'verified' %}
+                                    <a href="{% url 'token_app:verify_token' token.id %}" class="btn btn-success" title="Mark as Used" onclick="return confirm('Mark this token as used?')">
+                                        <i class="fas fa-check"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4">
+                                <i class="fas fa-ticket-alt fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">No tokens found</p>
+                                <a href="{% url 'token_app:create_token' %}" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Create First Token
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if page_obj.paginator.num_pages > 1 %}
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_batch %}&batch={{ selected_batch }}{% endif %}{% if selected_semester %}&semester={{ selected_semester }}{% endif %}{% if search %}&search={{ search }}{% endif %}">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_batch %}&batch={{ selected_batch }}{% endif %}{% if selected_semester %}&semester={{ selected_semester }}{% endif %}{% if search %}&search={{ search }}{% endif %}">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_batch %}&batch={{ selected_batch }}{% endif %}{% if selected_semester %}&semester={{ selected_semester }}{% endif %}{% if search %}&search={{ search }}{% endif %}">
+                                    {{ num }}
+                                </a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_batch %}&batch={{ selected_batch }}{% endif %}{% if selected_semester %}&semester={{ selected_semester }}{% endif %}{% if search %}&search={{ search }}{% endif %}">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_batch %}&batch={{ selected_batch }}{% endif %}{% if selected_semester %}&semester={{ selected_semester }}{% endif %}{% if search %}&search={{ search }}{% endif %}">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

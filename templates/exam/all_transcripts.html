@@ -1,0 +1,317 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}All Transcripts - Student Management System{% endblock %}
+
+{% block body %}
+<style>
+    .transcript-card {
+        transition: all 0.3s;
+        border-left: 4px solid #007bff;
+    }
+    .transcript-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .gpa-badge {
+        font-size: 1.2rem;
+        padding: 5px 15px;
+    }
+    .status-badge {
+        font-size: 0.8rem;
+        padding: 3px 8px;
+    }
+</style>
+
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <div class="page-header">
+            <div class="row">
+                <div class="col-sm-12">
+                    <h3 class="page-title">All Transcripts</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Transcripts</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search and Filter -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Search</label>
+                                    <input type="text" class="form-control" 
+                                           placeholder="Search by student name or transcript number..."
+                                           id="searchInput">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label>GPA Range</label>
+                                    <select class="form-control" id="gpaFilter">
+                                        <option value="">All GPA</option>
+                                        <option value="3.5">3.5+ (Excellent)</option>
+                                        <option value="3.0">3.0+ (Good)</option>
+                                        <option value="2.5">2.5+ (Average)</option>
+                                        <option value="2.0">Below 2.0</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label>Issue Date</label>
+                                    <input type="date" class="form-control" id="dateFilter">
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>&nbsp;</label>
+                                    <button class="btn btn-primary btn-block" onclick="filterTranscripts()">
+                                        <i class="fas fa-filter"></i> Filter
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transcripts List -->
+        <div class="row">
+            {% if transcripts %}
+                {% for transcript in transcripts %}
+                <div class="col-md-6 col-lg-4 mb-4 transcript-item" 
+                     data-gpa="{{ transcript.cumulative_gpa|floatformat:2 }}"
+                     data-date="{{ transcript.issue_date|date:'Y-m-d' }}"
+                     data-name="{{ transcript.student.get_full_name|lower }} {{ transcript.student.student_id }}"
+                     data-number="{{ transcript.transcript_number }}">
+                    <div class="card transcript-card">
+                        <div class="card-header">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">{{ transcript.transcript_number }}</h5>
+                                <span class="badge {% if transcript.transcript_type == 'official' %}badge-primary{% else %}badge-secondary{% endif %} status-badge">
+                                    {{ transcript.transcript_type|title }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="text-center mb-3">
+                                <div class="gpa-badge badge 
+                                    {% if transcript.cumulative_gpa >= 3.5 %}badge-success
+                                    {% elif transcript.cumulative_gpa >= 3.0 %}badge-info
+                                    {% elif transcript.cumulative_gpa >= 2.5 %}badge-warning
+                                    {% else %}badge-danger{% endif %}">
+                                    GPA: {{ transcript.cumulative_gpa|floatformat:2 }}
+                                </div>
+                            </div>
+                            
+                            <div class="student-info text-center mb-3">
+                                <h5 class="mb-1">{{ transcript.student.get_full_name }}</h5>
+                                <p class="text-muted mb-1">{{ transcript.student.student_id }}</p>
+                                <div class="d-flex justify-content-center">
+                                    <span class="badge badge-light mr-2">{{ transcript.student.batch }}</span>
+                                    <span class="badge badge-light">{{ transcript.student.semester }}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="transcript-details">
+                                <table class="table table-sm table-borderless mb-0">
+                                    <tr>
+                                        <td><i class="fas fa-calendar-alt text-primary mr-2"></i> Issue Date:</td>
+                                        <td class="text-right">{{ transcript.issue_date|date:"d M Y" }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><i class="fas fa-book text-success mr-2"></i> Credits Earned:</td>
+                                        <td class="text-right">{{ transcript.total_credits_earned }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><i class="fas fa-check-circle text-info mr-2"></i> Status:</td>
+                                        <td class="text-right">
+                                            {% if transcript.is_issued %}
+                                            <span class="badge badge-success">Issued</span>
+                                            {% else %}
+                                            <span class="badge badge-warning">Pending</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <div class="btn-group w-100">
+                                <a href="{% url 'view_transcript' transcript.id %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                                <a href="{% url 'print_transcript' transcript.id %}" class="btn btn-sm btn-outline-success" target="_blank">
+                                    <i class="fas fa-print"></i> Print
+                                </a>
+                                {% if user.is_staff %}
+                                <a href="{% url 'delete_transcript' transcript.id %}" 
+                                   class="btn btn-sm btn-outline-danger"
+                                   onclick="return confirm('Delete this transcript?')">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body text-center py-5">
+                            <i class="fas fa-scroll fa-3x text-muted mb-3"></i>
+                            <h5>No Transcripts Found</h5>
+                            <p class="text-muted">No transcripts have been generated yet.</p>
+                            <a href="{% url 'select_student_for_results' %}" class="btn btn-primary">
+                                <i class="fas fa-user-graduate"></i> Select Student to Generate Transcript
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Pagination -->
+        {% if transcripts.has_other_pages %}
+        <div class="row">
+            <div class="col-12">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        {% if transcripts.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ transcripts.previous_page_number }}">
+                                &laquo; Previous
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for i in transcripts.paginator.page_range %}
+                            {% if transcripts.number == i %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ i }}</span>
+                            </li>
+                            {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ i }}">{{ i }}</a>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if transcripts.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ transcripts.next_page_number }}">
+                                Next &raquo;
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Summary Statistics -->
+        <div class="row mt-4">
+            <div class="col-md-3">
+                <div class="card bg-primary-light">
+                    <div class="card-body text-center">
+                        <h6 class="text-primary">Total Transcripts</h6>
+                        <h3>{{ transcripts|length }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success-light">
+                    <div class="card-body text-center">
+                        <h6 class="text-success">Official Transcripts</h6>
+                        {% comment %} <h3>{{ transcripts|filter_by:'transcript_type'|length }}</h3> {% endcomment %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info-light">
+                    <div class="card-body text-center">
+                        <h6 class="text-info">Average GPA</h6>
+                        <h3>
+                            {% comment %} {% with total=transcripts|length sum=transcripts|sum:'cumulative_gpa' %} {% endcomment %}
+                                {% if total > 0 %}
+                                    {% comment %} {{ sum|div:total|floatformat:2 }} {% endcomment %}
+                                {% else %}
+                                    0.00
+                                {% endif %}
+                            {% comment %} {% endwith %} {% endcomment %}
+                        </h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning-light">
+                    <div class="card-body text-center">
+                        <h6 class="text-warning">This Month</h6>
+                        {% comment %} <h3>{{ transcripts|filter_by_month|length }}</h3> {% endcomment %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
+<script>
+    $(document).ready(function() {
+        // Filter transcripts on input
+        $('#searchInput').on('keyup', function() {
+            filterTranscripts();
+        });
+
+        // Apply filters on change
+        $('#gpaFilter, #dateFilter').on('change', function() {
+            filterTranscripts();
+        });
+    });
+
+    function filterTranscripts() {
+        var searchText = $('#searchInput').val().toLowerCase();
+        var gpaFilter = parseFloat($('#gpaFilter').val()) || 0;
+        var dateFilter = $('#dateFilter').val();
+        
+        $('.transcript-item').each(function() {
+            var show = true;
+            var name = $(this).data('name');
+            var number = $(this).data('number');
+            var gpa = parseFloat($(this).data('gpa'));
+            var date = $(this).data('date');
+            
+            // Search filter
+            if (searchText && !name.includes(searchText) && !number.includes(searchText)) {
+                show = false;
+            }
+            
+            // GPA filter
+            if (gpaFilter > 0 && gpa < gpaFilter) {
+                show = false;
+            }
+            
+            // Date filter
+            if (dateFilter && date !== dateFilter) {
+                show = false;
+            }
+            
+            if (show) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    }
+</script>
+{% endblock %}

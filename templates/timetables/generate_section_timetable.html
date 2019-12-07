@@ -1,0 +1,60 @@
+{% extends 'timetables/base.html' %}
+{% load static %}
+
+{% block title %}Generate Timetable for Section {{ section.name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-sync-alt"></i> Generate Section Timetable
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <h5>Section: {{ section.name }}</h5>
+                    <p class="text-muted">Discipline: {{ section.discipline.field }}</p>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> This will automatically generate a timetable for the selected batch and semester.
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="batch" class="form-label">Batch</label>
+                            <select name="batch" id="batch" class="form-select" required>
+                                <option value="">Select Batch</option>
+                                {% for batch in batches %}
+                                <option value="{{ batch.id }}">{{ batch.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="semester" class="form-label">Semester</label>
+                            <select name="semester" id="semester" class="form-select" required>
+                                <option value="">Select Semester</option>
+                                {% for semester in semesters %}
+                                <option value="{{ semester.id }}">Semester {{ semester.number }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-play"></i> Generate Timetable
+                            </button>
+                            <a href="{% url 'timetables:section_timetable' section.id %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

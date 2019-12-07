@@ -1,0 +1,68 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+{% block body %}
+
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <div class="page-header">
+            <div class="row">
+                <div class="col-sm-12">
+                    <h3 class="page-title">Teacher details</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/teacher">teacher</a></li>
+                        <li class="breadcrumb-item active">Teacher Details</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="about-info">
+                            <h4>About us</h4>
+                            <div class="media mt-3">
+                                {% if teacher.teacher_image %}
+                                    <img src="{{ teacher.teacher_image.url }}" class="mr-3" alt="{{ teacher.first_name }}" style="max-width: 200px; max-height: 200px;">
+                                    
+                                {% else %}
+                                    <img src="{% static 'assets/img/default-teacher.png' %}" class="mr-3" alt="Default Image" style="max-width: 200px; max-height: 200px;">
+                                {% endif %}
+                                <div class="media-body">
+                                    <ul>
+                                        <li>
+                                            <span class="title-span">Full Name : </span>
+                                            <span class="info-span">{{ teacher.first_name }} {{ teacher.last_name }}</span>
+                                        </li>
+                                        <li>
+                                            <span class="title-span">Department : </span>
+                                            <span class="info-span">{{ teacher.department }}</span>
+                                        </li>
+                                        <li>
+                                            <span class="title-span">Mobile : </span>
+                                            <span class="info-span">{{ teacher.mobile_number }}</span>
+                                        </li>
+                                        <li>
+                                            <span class="title-span">Email : </span>
+                                            <span class="info-span">{{ teacher.email }}</span>
+                                        </li>
+                                        <li>
+                                            <span class="title-span">Gender : </span>
+                                            <span class="info-span">{{ teacher.gender }}</span>
+                                        </li>
+                                        <li>
+                                            <span class="title-span">DOB : </span>
+                                            <span class="info-span">{{ teacher.date_of_birth }}</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

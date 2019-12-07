@@ -1,0 +1,561 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+{% comment %} {% load custom_filters %} {% endcomment %}
+
+{% block title %}Comprehensive Results - Student Management System{% endblock %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <div class="page-header">
+            <div class="row">
+                <div class="col-sm-12">
+                    <h3 class="page-title">Comprehensive Results</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Comprehensive Results</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Card -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">Filter Results</h5>
+            </div>
+            <div class="card-body">
+                <form method="get" id="filterForm">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Batch</label>
+                                <select name="batch" class="form-control select2">
+                                    <option value="">All Batches</option>
+                                    {% for batch in batches %}
+                                    <option value="{{ batch.id }}" {% if selected_batch == batch.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ batch.name }} ({{ batch.start_session }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Semester</label>
+                                <select name="semester" class="form-control select2">
+                                    <option value="">All Semesters</option>
+                                    {% for semester in semesters %}
+                                    <option value="{{ semester.id }}" {% if selected_semester == semester.id|stringformat:"s" %}selected{% endif %}>
+                                        Semester {{ semester.number }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Student</label>
+                                <select name="student" class="form-control select2">
+                                    <option value="">All Students</option>
+                                    {% for student in students %}
+                                    <option value="{{ student.id }}" {% if selected_student == student.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ student.student_id }} - {{ student.get_full_name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Subject</label>
+                                <select name="subject" class="form-control select2">
+                                    <option value="">All Subjects</option>
+                                    {% for subject in subjects %}
+                                    <option value="{{ subject.id }}" {% if selected_subject == subject.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ subject.code }} - {{ subject.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-2">
+                        <div class="col-md-9">
+                            <div class="form-group">
+                                <input type="text" name="search" class="form-control" 
+                                       placeholder="Search by student name, ID, or subject..." 
+                                       value="{{ search_query }}">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="btn-group w-100">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-filter"></i> Filter Results
+                                </button>
+                                <a href="{% url 'comprehensive_results' %}" class="btn btn-secondary">
+                                    <i class="fas fa-redo"></i> Reset
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Results Summary -->
+        <div class="row mt-3">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body text-center">
+                        <h1 class="mb-0">{{ total_students }}</h1>
+                        <p class="mb-0">Students</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <h1 class="mb-0">{{ total_subjects }}</h1>
+                        <p class="mb-0">Subjects</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body text-center">
+                        <h1 class="mb-0">{{ semesters.count }}</h1>
+                        <p class="mb-0">Semesters</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body text-center">
+                        <h1 class="mb-0">{{ batches.count }}</h1>
+                        <p class="mb-0">Batches</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Results Table -->
+        <div class="card mt-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title">Student Results Summary</h5>
+                <div>
+                    <button class="btn btn-sm btn-outline-primary" onclick="printResults()">
+                        <i class="fas fa-print"></i> Print
+                    </button>
+                    <button class="btn btn-sm btn-outline-success" onclick="exportToExcel()">
+                        <i class="fas fa-file-excel"></i> Export
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                {% if page_obj %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="resultsTable">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th class="text-center">#</th>
+                                <th>Student Details</th>
+                                <th class="text-center">Semester</th>
+                                <th>Subjects & Marks</th>
+                                <th class="text-center">Total</th>
+                                <th class="text-center">CGPA</th>
+                                <th class="text-center">Transcript</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student_data in page_obj %}
+                            <tr class="student-row" data-toggle="collapse" data-target="#details-{{ forloop.counter }}">
+                                <td class="text-center align-middle">{{ forloop.counter }}</td>
+                                <td class="align-middle">
+                                    <div class="d-flex align-items-center">
+                                        <div class="mr-3">
+                                            <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                {{ student_data.student.get_full_name|first }}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <strong class="d-block">{{ student_data.student.get_full_name }}</strong>
+                                            <small class="text-muted">ID: {{ student_data.student.student_id }}</small><br>
+                                            <small class="text-muted">Batch: {{ student_data.student.batch.name }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center align-middle">
+                                    <h5 class="mb-0">Sem {{ student_data.semester.number }}</h5>
+                                    <small class="text-muted">{{ student_data.total_subjects }} subjects</small>
+                                </td>
+                                <td class="align-middle">
+                                    <div class="subject-marks-container">
+                                        {% for subject in student_data.subjects %}
+                                        <div class="subject-mark-item d-inline-block mr-2 mb-1">
+                                            <a href="{{ subject.detail_url }}" class="text-decoration-none" 
+                                               data-toggle="tooltip" data-placement="top" 
+                                               title="{{ subject.subject_name }} ({{ subject.subject_code }})">
+                                                <span class="badge {% if subject.is_passed %}badge-success{% else %}badge-danger{% endif %} p-2">
+                                                    {{ subject.subject_name|truncatechars:12 }}: {{ subject.obtained_marks|floatformat:1 }}
+                                                </span>
+                                            </a>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </td>
+                                <td class="text-center align-middle">
+                                    <div class="total-marks-display">
+                                        <h5 class="mb-0 text-primary">{{ student_data.total_obtained_marks|floatformat:1 }}/{{ student_data.total_max_marks }}</h5>
+                                        <small class="text-muted">{{ student_data.overall_percentage|floatformat:1 }}%</small><br>
+                                        <small>
+                                            <span class="badge badge-success">{{ student_data.passed_subjects }}P</span>
+                                            <span class="badge badge-danger">{{ student_data.failed_subjects }}F</span>
+                                        </small>
+                                    </div>
+                                </td>
+                                <td class="text-center align-middle">
+                                    <div class="cgpa-display">
+                                        <h4 class="mb-0 {% if student_data.cgpa >= 3.5 %}text-success{% elif student_data.cgpa >= 2.5 %}text-warning{% else %}text-danger{% endif %}">
+                                            {{ student_data.cgpa|floatformat:2 }}
+                                        </h4>
+                                        <small class="text-muted">CGPA</small>
+                                    </div>
+                                </td>
+                                <td class="text-center align-middle">
+                                    <a href="{% url 'generate_transcript' student_data.student.id %}" 
+                                       class="btn btn-sm btn-outline-primary" title="Generate Transcript">
+                                        <i class="fas fa-scroll"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            
+                            <!-- Detailed Row (Collapsible) -->
+                            <tr id="details-{{ forloop.counter }}" class="collapse">
+                                <td colspan="7" class="p-0">
+                                    <div class="card border-0">
+                                        <div class="card-body p-3">
+                                            <h6 class="card-title mb-3">Detailed Results for {{ student_data.student.get_full_name }} - Semester {{ student_data.semester.number }}</h6>
+                                            <div class="table-responsive">
+                                                <table class="table table-bordered table-sm">
+                                                    <thead class="bg-light">
+                                                        <tr>
+                                                            <th>#</th>
+                                                            <th>Subject Code</th>
+                                                            <th>Subject Name</th>
+                                                            <th class="text-center">Credit Hours</th>
+                                                            <th class="text-center">Obtained Marks</th>
+                                                            <th class="text-center">Percentage</th>
+                                                            <th class="text-center">Grade</th>
+                                                            <th class="text-center">G.P</th>
+                                                            <th class="text-center">Status</th>
+                                                            <th class="text-center">Action</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for subject in student_data.subjects %}
+                                                        <tr>
+                                                            <td>{{ forloop.counter }}</td>
+                                                            <td>{{ subject.subject_code }}</td>
+                                                            <td>{{ subject.subject_name }}</td>
+                                                            <td class="text-center">{{ subject.credit_hours }}</td>
+                                                            <td class="text-center">
+                                                                <strong>{{ subject.obtained_marks|floatformat:1 }}/100</strong>
+                                                            </td>
+                                                            <td class="text-center">
+                                                                <div class="progress" style="height: 20px;">
+                                                                    <div class="progress-bar 
+                                                                        {% if subject.percentage >= 80 %}bg-success
+                                                                        {% elif subject.percentage >= 60 %}bg-info
+                                                                        {% elif subject.percentage >= 40 %}bg-warning
+                                                                        {% else %}bg-danger{% endif %}" 
+                                                                        style="width: {{ subject.percentage }}%">
+                                                                        <span class="ml-2">{{ subject.percentage|floatformat:1 }}%</span>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            <td class="text-center">
+                                                                <span class="badge 
+                                                                    {% if subject.grade == 'A+' or subject.grade == 'A' %}badge-success
+                                                                    {% elif subject.grade == 'B+' or subject.grade == 'B' %}badge-info
+                                                                    {% elif subject.grade == 'C+' or subject.grade == 'C' %}badge-warning
+                                                                    {% elif subject.grade == 'D' %}badge-secondary
+                                                                    {% else %}badge-danger{% endif %}">
+                                                                    {{ subject.grade|default:"-" }}
+                                                                </span>
+                                                            </td>
+                                                            <td class="text-center">
+                                                                <strong>{{ subject.grade_point|floatformat:2 }}</strong>
+                                                            </td>
+                                                            <td class="text-center">
+                                                                {% if subject.is_passed %}
+                                                                <span class="badge badge-success">Passed</span>
+                                                                {% else %}
+                                                                <span class="badge badge-danger">Failed</span>
+                                                                {% endif %}
+                                                            </td>
+                                                            <td class="text-center">
+                                                                <a href="{{ subject.detail_url }}" class="btn btn-sm btn-outline-primary" title="View Details">
+                                                                    <i class="fas fa-eye"></i>
+                                                                </a>
+                                                            </td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                        <tr class="bg-light">
+                                                            <td colspan="3" class="text-right"><strong>Totals:</strong></td>
+                                                            <td class="text-center"><strong>{{ student_data.total_credits|floatformat:1 }}</strong></td>
+                                                            <td class="text-center"><strong>{{ student_data.total_obtained_marks|floatformat:1 }}/{{ student_data.total_max_marks }}</strong></td>
+                                                            <td class="text-center"><strong>{{ student_data.overall_percentage|floatformat:1 }}%</strong></td>
+                                                            <td class="text-center" colspan="2">
+                                                                <strong>GPA: {{ student_data.gpa|floatformat:2 }}</strong>
+                                                            </td>
+                                                            <td class="text-center">
+                                                                <strong>{{ student_data.passed_subjects }} Passed, {{ student_data.failed_subjects }} Failed</strong>
+                                                            </td>
+                                                            <td class="text-center">
+                                                                <a href="{% url 'generate_transcript' student_data.student.id %}" 
+                                                                   class="btn btn-sm btn-success">
+                                                                    <i class="fas fa-scroll"></i> Transcript
+                                                                </a>
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                {% if page_obj.has_other_pages %}
+                <nav class="mt-4 p-3">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET %}&{{ request.GET.urlencode }}{% endif %}">
+                                &laquo;
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for i in page_obj.paginator.page_range %}
+                        {% if page_obj.number == i %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ i }}</span>
+                        </li>
+                        {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ i }}{% if request.GET %}&{{ request.GET.urlencode }}{% endif %}">
+                                {{ i }}
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET %}&{{ request.GET.urlencode }}{% endif %}">
+                                &raquo;
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+                
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-clipboard-list fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted">No Results Found</h4>
+                    <p class="text-muted">Try changing your filter criteria</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Select2 CSS and JS -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+
+<!-- Add Bootstrap Tooltip JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        // Initialize Select2
+        $('.select2').select2({
+            width: '100%'
+        });
+        
+        // Initialize tooltips
+        $('[data-toggle="tooltip"]').tooltip({
+            trigger: 'hover'
+        });
+        
+        // Auto-submit form on filter change
+        $('select[name="batch"], select[name="semester"], select[name="student"], select[name="subject"]').on('change', function() {
+            $('#filterForm').submit();
+        });
+        
+        // Toggle detailed view on row click
+        $('.student-row').click(function() {
+            $(this).toggleClass('table-active');
+        });
+        
+        // Prevent collapse toggle when clicking on links
+        $('.student-row a, .subject-mark-item a').click(function(e) {
+            e.stopPropagation();
+        });
+    });
+    
+    function printResults() {
+        // Create a print-friendly version
+        var printWindow = window.open('', '_blank');
+        printWindow.document.write('<html><head><title>Comprehensive Results</title>');
+        printWindow.document.write('<style>');
+        printWindow.document.write('body { font-family: Arial, sans-serif; font-size: 12px; }');
+        printWindow.document.write('table { width: 100%; border-collapse: collapse; }');
+        printWindow.document.write('th, td { border: 1px solid #ddd; padding: 6px; }');
+        printWindow.document.write('th { background-color: #f2f2f2; font-weight: bold; }');
+        printWindow.document.write('.badge { padding: 2px 5px; border-radius: 3px; font-size: 11px; }');
+        printWindow.document.write('.badge-success { background-color: #28a745; color: white; }');
+        printWindow.document.write('.badge-danger { background-color: #dc3545; color: white; }');
+        printWindow.document.write('.text-primary { color: #007bff !important; }');
+        printWindow.document.write('.text-success { color: #28a745 !important; }');
+        printWindow.document.write('.text-danger { color: #dc3545 !important; }');
+        printWindow.document.write('</style>');
+        printWindow.document.write('</head><body>');
+        printWindow.document.write('<h3>Comprehensive Results Report</h3>');
+        printWindow.document.write('<p>Generated on: ' + new Date().toLocaleDateString() + '</p>');
+        printWindow.document.write(document.getElementById('resultsTable').outerHTML);
+        printWindow.document.write('</body></html>');
+        printWindow.document.close();
+        printWindow.print();
+    }
+    
+    function exportToExcel() {
+        // Simple export to CSV
+        var table = document.getElementById('resultsTable');
+        var rows = table.querySelectorAll('tr');
+        var csv = [];
+        
+        for (var i = 0; i < rows.length; i++) {
+            var row = [], cols = rows[i].querySelectorAll('td, th');
+            
+            for (var j = 0; j < cols.length; j++) {
+                // Clean the text (remove HTML tags, get only text content)
+                var text = cols[j].innerText.replace(/\n/g, ' ').trim();
+                row.push('"' + text + '"');
+            }
+            
+            csv.push(row.join(','));
+        }
+        
+        // Download CSV file
+        var csvString = csv.join('\n');
+        var blob = new Blob([csvString], { type: 'text/csv' });
+        var url = window.URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'comprehensive_results_' + new Date().toISOString().slice(0,10) + '.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    }
+</script>
+
+<style>
+    .table th {
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+    
+    .table td {
+        vertical-align: middle;
+    }
+    
+    .student-row {
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    
+    .student-row:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .student-row.table-active {
+        background-color: #e3f2fd;
+    }
+    
+    .subject-marks-container {
+        max-height: 60px;
+        overflow-y: auto;
+    }
+    
+    .subject-mark-item .badge {
+        font-size: 12px;
+        transition: all 0.2s;
+    }
+    
+    .subject-mark-item .badge:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    .avatar {
+        font-weight: bold;
+        font-size: 16px;
+    }
+    
+    .cgpa-display {
+        padding: 5px;
+        border-radius: 5px;
+        background-color: #f8f9fa;
+    }
+    
+    .total-marks-display {
+        padding: 5px;
+        border-radius: 5px;
+        background-color: #f8f9fa;
+    }
+    
+    @media print {
+        .card-header, .pagination, .btn, .collapse {
+            display: none !important;
+        }
+        
+        .student-row {
+            cursor: default;
+        }
+        
+        .table {
+            font-size: 10px;
+        }
+        
+        .badge {
+            border: 1px solid #000 !important;
+            background-color: white !important;
+            color: black !important;
+        }
+    }
+    
+    /* Tooltip customization */
+    .tooltip-inner {
+        max-width: 300px;
+        padding: 8px 12px;
+        text-align: left;
+    }
+</style>
+{% endblock %}

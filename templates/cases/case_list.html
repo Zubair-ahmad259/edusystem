@@ -1,0 +1,98 @@
+{% extends 'Home/index.html' %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row">
+                <div class="col-sm-12 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="page-title">📂 All Cases</h3>
+                        <ul class="breadcrumb">
+                            <li class="breadcrumb-item">
+                                <a href="#">Cases</a>
+                            </li>
+                            <li class="breadcrumb-item active">Cases List</li>
+                        </ul>
+                    </div>
+                    <!-- Print Button -->
+                    <button onclick="window.print()" class="btn btn-success">
+                        🖨️ Print
+                    </button>
+                </div>
+            </div>
+        </div>  
+
+        <!-- Cases Table -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-yellow">
+                <h5 class="card-title mb-0">Cases Overview</h5>
+            </div>
+           <div style="border:2px solid red; padding:15px; margin:15px 0; background:#ffe6e6; border-radius:8px;">
+    <h3 style="color:#cc0000; font-weight:bold; text-align:center;">
+        ⚠️ Important Notice
+    </h3>
+    <p style="font-size:20px; font-weight:bold; text-align:center; color:#000;">
+        All the below-mentioned students are involved in 
+        <span style="color:#cc0000;">Unfair Means (UFM) cases</span>. 
+        They are strictly instructed to appear before the 
+        <b>Department Discipline Committee (DDC)</b> 
+        on <u>15-feb-2026</u> without any excuse.
+    </p>
+</div>
+
+            <div class="card-body">
+                {% if cases %}
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>Student</th>
+                                <th>Teacher</th>
+                                <th>Subject</th>
+                                <th>Batch</th>
+                                <th>Semester</th>
+                                <th>Case Type</th>
+                                <th>Created At</th>
+                                <th>Fine</th>
+                                <th>Status</th>
+                                <th>Detail</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for case in cases %}
+                            <tr>
+                                <td>{{ case.student }}</td>
+                                <td>{{ case.teacher }}</td>
+                                <td>{{ case.subject }}</td>
+                                <td>{{ case.batch }}</td>
+                                <td>{{ case.semester }}</td>
+                                <td>
+                                    {{ case.get_case_type_display }}
+                                    {% if case.case_type == 'ddc' %}
+                                        <br>
+                                        <small class="text-danger fw-bold">
+                                            ⚠️ all student are show in decipline commette                                        </small>
+                                    {% endif %}
+                                </td>
+                                <td>{{ case.created_at|date:"d M Y, h:i A" }}</td>
+                                <td>{{ case.fine }}</td>
+                                <td>{{ case.status }}</td>
+                                <td>
+                                    <a class="btn btn-sm btn-primary" href="{% url 'case_detail' case.id %}">View</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-warning">No cases found.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,204 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}Edit Fee - {{ fee.student.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-edit me-2"></i>Edit Fee Record
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <strong>Student:</strong> {{ fee.student.name }} ({{ fee.student.student_id }})<br>
+                        <strong>Batch:</strong> {{ fee.batch.name }}<br>
+                        <strong>Semester:</strong> Semester {{ fee.semester.number }}
+                    </div>
+                    
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post" id="editFeeForm">
+                        {% csrf_token %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="semester_option" class="form-label">Semester Option *</label>
+                                <select class="form-select" id="semester_option" name="semester_option" required>
+                                    <option value="">Select Semester Option</option>
+                                    <option value="Spring" {% if fee.semester_option == 'Spring' %}selected{% endif %}>Spring</option>
+                                    <option value="Fall" {% if fee.semester_option == 'Fall' %}selected{% endif %}>Fall</option>
+                                    <option value="Summer" {% if fee.semester_option == 'Summer' %}selected{% endif %}>Summer</option>
+                                    <option value="Winter" {% if fee.semester_option == 'Winter' %}selected{% endif %}>Winter</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="due_date" class="form-label">Due Date *</label>
+                                <input type="date" class="form-control" id="due_date" name="due_date" 
+                                       value="{{ fee.due_date|date:'Y-m-d' }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="amount" class="form-label">Amount (PKR) *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">Rs.</span>
+                                    <input type="number" class="form-control" id="amount" name="amount" 
+                                           value="{{ fee.amount }}" step="0.01" min="0" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="fine" class="form-label">Fine (PKR)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">Rs.</span>
+                                    <input type="number" class="form-control" id="fine" name="fine" 
+                                           value="{{ fee.fine }}" step="0.01" min="0">
+                                </div>
+                                <small class="form-text text-muted">Late fine or other charges</small>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Fee Summary</h6>
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <strong>Base Amount:</strong> 
+                                                <span id="displayAmount">Rs. {{ fee.amount }}</span>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <strong>Fine Amount:</strong> 
+                                                <span id="displayFine">Rs. {{ fee.fine }}</span>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <strong>Total Amount:</strong> 
+                                                <span id="displayTotal" class="fw-bold">Rs. {% widthratio fee.amount|add:fee.fine 1 1 %}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'fee_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i> Back to Fee List
+                            </a>
+                            <div>
+                                <button type="button" class="btn btn-danger me-2" 
+                                        data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                    <i class="fas fa-trash me-1"></i> Delete
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-1"></i> Update Fee
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirm Deletion
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <h6><i class="fas fa-exclamation-circle me-2"></i>Warning!</h6>
+                    <p class="mb-0">Are you sure you want to delete this fee record?</p>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <p><strong>Student:</strong> {{ fee.student.name }}</p>
+                        <p><strong>Amount:</strong> Rs. {{ fee.amount }}</p>
+                        <p><strong>Semester:</strong> {{ fee.semester_option }}</p>
+                        <p class="text-danger"><small>This action cannot be undone.</small></p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i> Cancel
+                </button>
+                <form method="post" action="{% url 'delete_fee' fee.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i> Delete Fee
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Calculate and update totals
+    function updateTotals() {
+        var amount = parseFloat($('#amount').val()) || 0;
+        var fine = parseFloat($('#fine').val()) || 0;
+        var total = amount + fine;
+        
+        $('#displayAmount').text('Rs. ' + amount.toFixed(2));
+        $('#displayFine').text('Rs. ' + fine.toFixed(2));
+        $('#displayTotal').text('Rs. ' + total.toFixed(2));
+    }
+    
+    // Update totals when amount or fine changes
+    $('#amount, #fine').on('input', updateTotals);
+    
+    // Initialize totals on page load
+    updateTotals();
+    
+    // Form validation
+    $('#editFeeForm').on('submit', function(e) {
+        var amount = parseFloat($('#amount').val()) || 0;
+        
+        if (amount <= 0) {
+            e.preventDefault();
+            alert('Amount must be greater than 0.');
+            $('#amount').focus();
+            return false;
+        }
+        
+        var dueDate = new Date($('#due_date').val());
+        var today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (dueDate < today) {
+            if (!confirm('The due date is in the past. Are you sure you want to proceed?')) {
+                e.preventDefault();
+                return false;
+            }
+        }
+        
+        return true;
+    });
+});
+</script>
+{% endblock %}

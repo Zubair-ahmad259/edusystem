@@ -1,0 +1,333 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}Student Tokens - {{ student.first_name }} {{ student.last_name }}{% endblock %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Student Tokens</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'token_app:dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'token_app:token_generated_students' %}">Students with Tokens</a></li>
+                        <li class="breadcrumb-item active">Student Tokens</li>
+                    </ul>
+                </div>
+                <div class="col-auto float-right ml-auto">
+                    <a href="{% url 'token_app:create_token' %}" class="btn btn-primary mr-2">
+                        <i class="fas fa-plus-circle"></i> Create New Token
+                    </a>
+                    <a href="{% url 'token_app:dashboard' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student Selector -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-search"></i> Select Student
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="{% url 'token_app:student_tokens' %}" class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <select name="student" class="form-control" onchange="this.form.submit()">
+                                <option value="">-- Choose Student --</option>
+                                {% for s in students %}
+                                <option value="{{ s.id }}" {% if student.id == s.id %}selected{% endif %}>
+                                    {{ s.student_id }} - {{ s.first_name }} {{ s.last_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <i class="fas fa-search"></i> View Tokens
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{% url 'token_app:token_generated_students' %}" class="btn btn-info btn-block">
+                            <i class="fas fa-users"></i> All Students
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {% if student %}
+        <!-- Student Info Card -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Student Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <p><strong>Name:</strong><br> {{ student.first_name }} {{ student.last_name }}</p>
+                    </div>
+                    <div class="col-md-2">
+                        <p><strong>Student ID:</strong><br> {{ student.student_id }}</p>
+                    </div>
+                    <div class="col-md-2">
+                        <p><strong>Batch:</strong><br> {{ student.batch.name }}</p>
+                    </div>
+                    <div class="col-md-2">
+                        <p><strong>Semester:</strong><br> {{ student.semester.number }}</p>
+                    </div>
+                    <div class="col-md-3">
+                        <p><strong>Discipline:</strong><br> 
+                            {% if student.discipline %}
+                                {{ student.discipline.program }} in {{ student.discipline.field }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row mt-4">
+            <div class="col-xl-3 col-sm-6 col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="dash-widget-header">
+                            <span class="dash-widget-icon bg-primary">
+                                <i class="fas fa-ticket-alt"></i>
+                            </span>
+                            <div class="dash-count">
+                                <h3>{{ total_tokens }}</h3>
+                                <h5>Total Tokens</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-sm-6 col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="dash-widget-header">
+                            <span class="dash-widget-icon bg-success">
+                                <i class="fas fa-check-circle"></i>
+                            </span>
+                            <div class="dash-count">
+                                <h3>{{ active_tokens }}</h3>
+                                <h5>Active Tokens</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-sm-6 col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="dash-widget-header">
+                            <span class="dash-widget-icon bg-info">
+                                <i class="fas fa-check-double"></i>
+                            </span>
+                            <div class="dash-count">
+                                <h3>{{ used_tokens|default:0 }}</h3>
+                                <h5>Used Tokens</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-sm-6 col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="dash-widget-header">
+                            <span class="dash-widget-icon bg-warning">
+                                <i class="fas fa-clock"></i>
+                            </span>
+                            <div class="dash-count">
+                                <h3>{{ expired_tokens|default:0 }}</h3>
+                                <h5>Expired Tokens</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row mt-3">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <a href="{% url 'token_app:create_token_for_student' student.id %}" class="btn btn-primary">
+                            <i class="fas fa-plus-circle"></i> Create New Token for {{ student.first_name }}
+                        </a>
+                        <a href="{% url 'token_app:student_token_history' student.id %}" class="btn btn-info">
+                            <i class="fas fa-history"></i> View Full History
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tokens Table -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Token History</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover table-center mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Token #</th>
+                                <th>Issue Date</th>
+                                <th>Valid Until</th>
+                                <th>Status</th>
+                                <th>Days Left</th>
+                                <th>Verified By</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for token in tokens %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'token_app:token_detail' token.id %}">
+                                        <code>{{ token.token_number }}</code>
+                                    </a>
+                                </td>
+                                <td>{{ token.issue_date|date:"d M Y" }}</td>
+                                <td>{{ token.valid_until|date:"d M Y" }}</td>
+                                <td>
+                                    {% if token.status == 'generated' %}
+                                        <span class="badge badge-secondary">Generated</span>
+                                    {% elif token.status == 'printed' %}
+                                        <span class="badge badge-info">Printed</span>
+                                    {% elif token.status == 'verified' %}
+                                        <span class="badge badge-success">Verified</span>
+                                    {% elif token.status == 'used' %}
+                                        <span class="badge badge-primary">Used</span>
+                                    {% elif token.status == 'expired' %}
+                                        <span class="badge badge-danger">Expired</span>
+                                    {% elif token.status == 'cancelled' %}
+                                        <span class="badge badge-warning">Cancelled</span>
+                                    {% else %}
+                                        <span class="badge badge-secondary">{{ token.get_status_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% with days=token.days_until_expiry %}
+                                        {% if days > 0 %}
+                                            <span class="text-success">{{ days }} days</span>
+                                        {% elif days == 0 %}
+                                            <span class="text-warning">Today</span>
+                                        {% elif days < 0 %}
+                                            <span class="text-danger">Expired</span>
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    {% if token.verified_by %}
+                                        {{ token.verified_by.name }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'token_app:token_detail' token.id %}" class="btn btn-info" title="View">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'token_app:print_token' token.id %}" class="btn btn-secondary" title="Print" target="_blank">
+                                            <i class="fas fa-print"></i>
+                                        </a>
+                                        {% if token.status == 'generated' or token.status == 'printed' %}
+                                        <a href="{% url 'token_app:verify_token' token.id %}" class="btn btn-success" title="Verify" onclick="return confirm('Verify this token?')">
+                                            <i class="fas fa-check-circle"></i>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center py-5">
+                                    <i class="fas fa-ticket-alt fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">No tokens found for this student</p>
+                                    <a href="{% url 'token_app:create_token_for_student' student.id %}" class="btn btn-primary">
+                                        <i class="fas fa-plus"></i> Create Token for {{ student.first_name }}
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Token Status Summary -->
+        {% if tokens %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Token Status Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-2 col-6 mb-2">
+                        <div class="card bg-light">
+                            <div class="card-body text-center p-3">
+                                <h5 class="mb-1">{{ total_tokens }}</h5>
+                                <small class="text-muted">Total</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-6 mb-2">
+                        <div class="card bg-success text-white">
+                            <div class="card-body text-center p-3">
+                                <h5 class="mb-1">{{ active_tokens }}</h5>
+                                <small>Active</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-6 mb-2">
+                        <div class="card bg-info text-white">
+                            <div class="card-body text-center p-3">
+                                <h5 class="mb-1">{{ used_tokens|default:0 }}</h5>
+                                <small>Used</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-6 mb-2">
+                        <div class="card bg-danger text-white">
+                            <div class="card-body text-center p-3">
+                                <h5 class="mb-1">{{ expired_tokens }}</h5>
+                                <small>Expired</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-6 mb-2">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body text-center p-3">
+                                <h5 class="mb-1">{{ cancelled_tokens|default:0 }}</h5>
+                                <small>Cancelled</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,361 @@
+{% extends "Home/base.html" %}
+{% load static %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Clear Fee - {{ fee.student.first_name }} {{ fee.student.last_name }}</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'fee_list' %}">Fee Management</a></li>
+                        <!-- Remove student_fees link if it doesn't exist -->
+                        <li class="breadcrumb-item active">Clear Fee</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <!-- Payment History -->
+                <div class="card mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-history me-2"></i>Payment History
+                            {% if total_paid > 0 %}
+                            <span class="badge bg-light text-dark float-end">
+                                Paid: PKR {{ total_paid|floatformat:2 }}
+                            </span>
+                            {% endif %}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Summary -->
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h6 class="text-muted">Total Fee</h6>
+                                        <h4 class="text-primary">PKR {{ total_fee|floatformat:2 }}</h4>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h6 class="text-muted">Paid</h6>
+                                        <h4 class="text-success">PKR {{ total_paid|floatformat:2 }}</h4>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card {% if remaining_amount > 0 %}bg-warning text-white{% else %}bg-success text-white{% endif %}">
+                                    <div class="card-body text-center">
+                                        <h6>Balance</h6>
+                                        <h4>PKR {{ remaining_amount|floatformat:2 }}</h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Payment History Table -->
+                        {% if payment_history %}
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Receipt #</th>
+                                        <th>Amount</th>
+                                        <th>Method</th>
+                                        <th>Collector</th>
+                                        <th>Remarks</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for payment in payment_history %}
+                                    <tr>
+                                        <td>
+                                            {% if payment.created_at %}
+                                                {{ payment.created_at|date:"d/m/Y" }}
+                                            {% else %}
+                                                {{ payment.date|date:"d/m/Y"|default:"-" }}
+                                            {% endif %}
+                                        </td>
+                                        <td><strong>{{ payment.receipt_number }}</strong></td>
+                                        <td class="text-success fw-bold">PKR {{ payment.cleared_amount|floatformat:2 }}</td>
+                                        <td><span class="badge bg-secondary">{{ payment.payment_method }}</span></td>
+                                        <td>{{ payment.collector_name }}</td>
+                                        <td>{{ payment.remarks|default:"-" }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-warning text-center">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            No payments recorded yet.
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Payment Form -->
+                {% if remaining_amount > 0 %}
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-money-bill-wave me-2"></i>New Payment
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Fee Information -->
+                        <div class="alert alert-info mb-4">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Student:</strong> {{ fee.student.first_name }} {{ fee.student.last_name }}</p>
+                                    <p class="mb-1"><strong>ID:</strong> {{ fee.student.student_id }}</p>
+                                    <p class="mb-1"><strong>Semester:</strong> Semester {{ fee.semester_number }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Due Date:</strong> {{ fee.due_date|date:"d M, Y" }}</p>
+                                    <p class="mb-0"><strong>Balance Due:</strong> <span class="fw-bold text-danger">PKR {{ remaining_amount|floatformat:2 }}</span></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form method="POST">
+                            {% csrf_token %}
+                            
+                            <div class="row">
+                                <!-- Receipt Number -->
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">Receipt Number *</label>
+                                    <input type="text" name="receipt_number" class="form-control" required
+                                           value="REC-{{ fee.student.student_id }}-{{ fee.id }}-{{ payment_history.count|add:1 }}">
+                                    <small class="text-muted">Auto-generated receipt number</small>
+                                </div>
+
+                                <!-- Payment Amount -->
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">Payment Amount (PKR) *</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">PKR</span>
+                                        <input type="number" name="cleared_amount" 
+                                               id="paymentAmount"
+                                               class="form-control" 
+                                               min="1"
+                                               max="{{ remaining_amount|floatformat:2 }}"
+                                               step="0.01"
+                                               value="{{ remaining_amount|floatformat:2 }}"
+                                               required>
+                                    </div>
+                                    <div class="mt-2">
+                                        <small class="text-muted d-block mb-1">Quick Amounts:</small>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button type="button" class="btn btn-outline-primary" onclick="setAmount(1000)">1000</button>
+                                            <button type="button" class="btn btn-outline-primary" onclick="setAmount(2000)">2000</button>
+                                            <button type="button" class="btn btn-outline-primary" onclick="setAmount(5000)">5000</button>
+                                            <button type="button" class="btn btn-outline-success" onclick="setAmount({{ remaining_amount|floatformat:2 }})">Full</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Payment Method -->
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">Payment Method *</label>
+                                    <select name="payment_method" class="form-select">
+                                        <option value="Cash">Cash</option>
+                                        <option value="Bank Transfer">Bank Transfer</option>
+                                        <option value="Online">Online Payment</option>
+                                        <option value="Cheque">Cheque</option>
+                                    </select>
+                                </div>
+
+                                <!-- Collector Name -->
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">Collector Name *</label>
+                                    <select name="collector_name" class="form-select" required>
+                                        <option value="">Select Collector</option>
+                                        <option value="name1">Name 1</option>
+                                        <option value="name2">Name 2</option>
+                                        <option value="name3">Name 3</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+
+                                <!-- Remarks -->
+                                <div class="col-12 mb-3">
+                                    <label class="form-label fw-bold">Remarks</label>
+                                    <textarea name="remarks" class="form-control" rows="2" 
+                                              placeholder="Enter payment remarks (optional)"></textarea>
+                                </div>
+
+                                <!-- Payment Summary -->
+                                <div class="col-12 mb-4">
+                                    <div class="alert alert-warning">
+                                        <h6 class="alert-heading">Payment Summary</h6>
+                                        <div class="row mt-2">
+                                            <div class="col-md-3">
+                                                <p class="mb-1"><small>Current Balance:</small></p>
+                                                <h5>PKR {{ remaining_amount|floatformat:2 }}</h5>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <p class="mb-1"><small>This Payment:</small></p>
+                                                <h5 id="displayAmount">PKR {{ remaining_amount|floatformat:2 }}</h5>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <p class="mb-1"><small>New Balance:</small></p>
+                                                <h5 id="remainingAfter" class="text-success">PKR 0.00</h5>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <p class="mb-1"><small>Status:</small></p>
+                                                <h5 id="paymentStatus" class="text-success">Fully Paid</h5>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Submit Buttons -->
+                                <div class="col-12">
+                                    <div class="d-flex justify-content-between">
+                                        <a href="{% url 'fee_list' %}" class="btn btn-secondary">
+                                            <i class="fas fa-arrow-left me-1"></i> Back to Fee List
+                                        </a>
+                                        <div>
+                                            <button type="submit" class="btn btn-success px-4" id="submitBtn">
+                                                <i class="fas fa-check-circle me-1"></i> Record Payment
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                {% else %}
+                <div class="alert alert-success text-center">
+                    <i class="fas fa-check-circle fa-2x mb-3"></i>
+                    <h4>Fee Fully Paid!</h4>
+                    <p class="mb-0">Total paid: PKR {{ total_paid|floatformat:2 }}</p>
+                    <a href="{% url 'fee_list' %}" class="btn btn-outline-success mt-3">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Fee List
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const paymentAmount = document.getElementById('paymentAmount');
+    const displayAmount = document.getElementById('displayAmount');
+    const remainingAfter = document.getElementById('remainingAfter');
+    const paymentStatus = document.getElementById('paymentStatus');
+    const submitBtn = document.getElementById('submitBtn');
+    const totalDue = parseFloat('{{ remaining_amount|floatformat:2 }}');
+    
+    function setAmount(amount) {
+        paymentAmount.value = Math.min(amount, totalDue).toFixed(2);
+        updatePaymentSummary();
+    }
+    
+    function updatePaymentSummary() {
+        const payment = parseFloat(paymentAmount.value) || 0;
+        const remaining = totalDue - payment;
+        
+        // Update display
+        displayAmount.textContent = 'PKR ' + payment.toFixed(2);
+        remainingAfter.textContent = 'PKR ' + Math.max(0, remaining).toFixed(2);
+        
+        // Update status and colors
+        if (payment >= totalDue) {
+            remainingAfter.className = 'text-success';
+            paymentStatus.textContent = 'Fully Paid';
+            paymentStatus.className = 'text-success';
+            submitBtn.innerHTML = '<i class="fas fa-check-circle me-1"></i> Clear Full Fee';
+        } else if (payment > 0) {
+            remainingAfter.className = 'text-warning';
+            paymentStatus.textContent = 'Partial Payment';
+            paymentStatus.className = 'text-warning';
+            submitBtn.innerHTML = '<i class="fas fa-money-bill-wave me-1"></i> Record Partial Payment';
+        } else {
+            remainingAfter.className = 'text-danger';
+            paymentStatus.textContent = 'No Payment';
+            paymentStatus.className = 'text-danger';
+        }
+        
+        // Validate max amount
+        if (payment > totalDue) {
+            paymentAmount.value = totalDue.toFixed(2);
+            updatePaymentSummary();
+        }
+    }
+    
+    // Update summary when amount changes
+    paymentAmount.addEventListener('input', updatePaymentSummary);
+    
+    // Initial calculation
+    updatePaymentSummary();
+    
+    // Quick amount buttons
+    window.setAmount = setAmount;
+});
+</script>
+
+<style>
+.card {
+    border: none;
+    border-radius: 10px;
+}
+
+.card-header {
+    border-radius: 10px 10px 0 0 !important;
+}
+
+.btn-group-sm .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.alert h6 {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.btn-success {
+    background-color: #28a745;
+    border-color: #28a745;
+    font-weight: 600;
+}
+
+.btn-success:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+}
+
+.input-group-text {
+    background-color: #f8f9fa;
+    font-weight: 500;
+}
+
+.table th {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.table td {
+    vertical-align: middle;
+}
+</style>
+{% endblock %}

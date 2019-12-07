@@ -1,0 +1,199 @@
+{% extends 'assignment/base_assignment.html' %}
+
+{% block assignment_title %}Create Assignment{% endblock %}
+
+{% block assignment_content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">
+                        <i class="fas fa-plus-circle"></i> Create New Assignment
+                    </h3>
+                    <p class="text-muted mb-0 mt-2">Create assignments for your subjects</p>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" id="assignmentForm">
+                        {% csrf_token %}
+                        
+                        <!-- Assignment Title -->
+                        <div class="mb-3">
+                            <label for="title" class="form-label required">Assignment Title</label>
+                            <input type="text" class="form-control" id="title" name="title" 
+                                   placeholder="e.g., Python Programming Assignment 1" required>
+                            <small class="text-muted">Give a clear and descriptive title</small>
+                        </div>
+                        
+                        <!-- Description -->
+                        <div class="mb-3">
+                            <label for="description" class="form-label required">Description</label>
+                            <textarea class="form-control" id="description" name="description" 
+                                      rows="6" placeholder="Describe the assignment requirements, tasks, and expectations..." required></textarea>
+                            <small class="text-muted">Include all necessary instructions, guidelines, and expectations</small>
+                        </div>
+                        
+                        <!-- Subject Selection -->
+                        <div class="mb-3">
+                            <label for="subject_assign" class="form-label required">Subject</label>
+                            <select class="form-select" id="subject_assign" name="subject_assign" required>
+                                <option value="">-- Select Subject --</option>
+                                {% for assign in subject_assignments %}
+                                    <option value="{{ assign.id }}">
+                                        {{ assign.subject.code }} - {{ assign.subject.name }} 
+                                        (Semester {{ assign.semester.number }} | Batch: {{ assign.batch.name }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted">Select the subject for this assignment</small>
+                        </div>
+                        
+                        <!-- Assignment Type -->
+                        <div class="mb-3">
+                            <label for="assignment_type" class="form-label">Assignment Type</label>
+                            <select class="form-select" id="assignment_type" name="assignment_type">
+                                {% for type_code, type_name in assignment_types %}
+                                    <option value="{{ type_code }}">{{ type_name }}</option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted">Select the type of assignment</small>
+                        </div>
+                        
+                        <!-- Sections -->
+                        <div class="mb-3">
+                            <label for="sections" class="form-label required">Target Sections</label>
+                            <select class="form-select" id="sections" name="sections" multiple required size="5">
+                                <option value="">-- Select Subject First --</option>
+                            </select>
+                            <small class="text-muted">Hold Ctrl (Windows) or Cmd (Mac) to select multiple sections</small>
+                            <div id="sectionHelp" class="form-text text-muted"></div>
+                        </div>
+                        
+                        <!-- Due Date -->
+                        <div class="mb-3">
+                            <label for="due_date" class="form-label required">Due Date & Time</label>
+                            <input type="datetime-local" class="form-control" id="due_date" name="due_date" required>
+                            <small class="text-muted">Set the deadline for submission</small>
+                        </div>
+                        
+                        <!-- Total Marks -->
+                        <div class="mb-3">
+                            <label for="total_marks" class="form-label">Total Marks</label>
+                            <input type="number" class="form-control" id="total_marks" name="total_marks" 
+                                   value="100" min="1" max="1000" step="1">
+                            <small class="text-muted">Maximum marks for this assignment</small>
+                        </div>
+                        
+                        <!-- Assignment File -->
+                        <div class="mb-3">
+                            <label for="assignment_file" class="form-label">Assignment File (Optional)</label>
+                            <input type="file" class="form-control" id="assignment_file" name="assignment_file" 
+                                   accept=".pdf,.doc,.docx,.txt,.ppt,.pptx">
+                            <small class="text-muted">Upload assignment instructions or reference materials</small>
+                            <div id="filePreview" class="mt-2"></div>
+                        </div>
+                        
+                        <!-- Submit Buttons -->
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <a href="{% url 'assignment:teacher_assignment_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Create Assignment
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    // Preloaded sections data from Django
+    const sectionsData = {{ sections_json|safe }};
+    
+    // Get sections when subject is selected (No API call!)
+    document.getElementById('subject_assign').addEventListener('change', function() {
+        const subjectAssignId = this.value;
+        const sectionsSelect = document.getElementById('sections');
+        const sectionHelp = document.getElementById('sectionHelp');
+        
+        if (!subjectAssignId) {
+            sectionsSelect.innerHTML = '<option value="">-- Select Subject First --</option>';
+            sectionHelp.innerHTML = '';
+            return;
+        }
+        
+        // Clear and populate sections from preloaded data
+        sectionsSelect.innerHTML = '';
+        
+        if (sectionsData[subjectAssignId] && sectionsData[subjectAssignId].length > 0) {
+            sectionsData[subjectAssignId].forEach(section => {
+                const option = document.createElement('option');
+                option.value = section.id;
+                option.textContent = section.name;
+                sectionsSelect.appendChild(option);
+            });
+            sectionHelp.innerHTML = `<i class="fas fa-check-circle text-success"></i> ${sectionsData[subjectAssignId].length} sections available`;
+            sectionHelp.style.color = 'green';
+        } else {
+            sectionsSelect.innerHTML = '<option value="">No sections available</option>';
+            sectionHelp.innerHTML = '<i class="fas fa-exclamation-triangle text-warning"></i> No sections assigned to this subject';
+            sectionHelp.style.color = 'orange';
+        }
+    });
+    
+    // File preview
+    document.getElementById('assignment_file').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        const preview = document.getElementById('filePreview');
+        
+        if (file) {
+            const fileSize = (file.size / 1024).toFixed(2);
+            preview.innerHTML = `
+                <div class="alert alert-info">
+                    <i class="fas fa-file"></i>
+                    <strong>${file.name}</strong><br>
+                    Size: ${fileSize} KB
+                </div>
+            `;
+        } else {
+            preview.innerHTML = '';
+        }
+    });
+    
+    // Set minimum due date to tomorrow
+    const dueDateInput = document.getElementById('due_date');
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(23, 59, 0);
+    const minDateTime = tomorrow.toISOString().slice(0, 16);
+    dueDateInput.min = minDateTime;
+    
+    // Form validation
+    document.getElementById('assignmentForm').addEventListener('submit', function(e) {
+        const sectionsSelect = document.getElementById('sections');
+        const selectedSections = Array.from(sectionsSelect.selectedOptions).map(opt => opt.value);
+        
+        if (selectedSections.length === 0) {
+            e.preventDefault();
+            alert('Please select at least one section for this assignment');
+            return false;
+        }
+        
+        const dueDate = new Date(document.getElementById('due_date').value);
+        const now = new Date();
+        
+        if (dueDate < now) {
+            e.preventDefault();
+            alert('Due date cannot be in the past');
+            return false;
+        }
+        
+        return true;
+    });
+</script>
+{% endblock %}
+{% endblock %}

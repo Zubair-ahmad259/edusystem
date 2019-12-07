@@ -1,0 +1,449 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}Subject-wise Short Attendance - Student Management System{% endblock %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Subject-wise Short Attendance</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'attendance_dashboard' %}">Attendance</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'short_attendance' %}">Short Attendance</a></li>
+                        <li class="breadcrumb-item active">By Subject</li>
+                    </ul>
+                </div>
+                <div class="col-auto text-right float-right ml-auto">
+                    <a href="{% url 'short_attendance' %}" class="btn btn-outline-primary mr-2">
+                        <i class="fas fa-users"></i> View All Students
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title">Filter Subjects</h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="" class="row g-3" id="filterForm">
+                    <!-- Discipline -->
+                    <div class="col-md-4">
+                        <label class="form-label">Discipline</label>
+                        <select name="discipline" id="disciplineSelect" class="form-control">
+                            <option value="">All Disciplines</option>
+                            {% for discipline in disciplines %}
+                            <option value="{{ discipline.id }}" {% if selected_discipline == discipline.id|stringformat:"s" %}selected{% endif %}>
+                                {{ discipline.program }} in {{ discipline.field }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Semester -->
+                    <div class="col-md-3">
+                        <label class="form-label">Semester</label>
+                        <select name="semester" id="semesterSelect" class="form-control">
+                            <option value="">All Semesters</option>
+                            {% for semester_num in semesters %}
+                            <option value="{{ semester_num }}" {% if selected_semester == semester_num|stringformat:"s" %}selected{% endif %}>
+                                Semester {{ semester_num }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Threshold -->
+                    <div class="col-md-3">
+                        <label class="form-label">Threshold %</label>
+                        <select name="threshold" id="thresholdSelect" class="form-control">
+                            <option value="75" {% if selected_threshold == "75" %}selected{% endif %}>Below 75%</option>
+                            <option value="60" {% if selected_threshold == "60" %}selected{% endif %}>Below 60%</option>
+                            <option value="50" {% if selected_threshold == "50" %}selected{% endif %}>Below 50%</option>
+                            <option value="40" {% if selected_threshold == "40" %}selected{% endif %}>Below 40%</option>
+                            <option value="30" {% if selected_threshold == "30" %}selected{% endif %}>Below 30%</option>
+                        </select>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="col-md-2 d-flex align-items-end">
+                        <div class="d-flex w-100">
+                            <button type="submit" class="btn btn-primary mr-2 flex-grow-1">
+                                <i class="fas fa-filter"></i> Filter
+                            </button>
+                            <a href="{% url 'subject_short_attendance' %}" class="btn btn-secondary">
+                                <i class="fas fa-redo"></i>
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Summary Statistics -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h6 class="card-title">Total Subjects</h6>
+                        <h3>{{ total_subjects }}</h3>
+                        <p class="mb-0">All Subjects</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <h6 class="card-title">Subjects with Short Attendance</h6>
+                        <h3>{{ problem_subjects_count }}</h3>
+                        <p class="mb-0">Below {{ selected_threshold }}%</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-danger text-white">
+                    <div class="card-body">
+                        <h6 class="card-title">Total Students Affected</h6>
+                        <h3>{{ total_affected_students }}</h3>
+                        <p class="mb-0">Across all subjects</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Summary -->
+        {% if selected_discipline or selected_semester %}
+        <div class="alert alert-info mb-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>Active Filters:</strong>
+                    {% if selected_discipline %}
+                    <span class="badge badge-info mr-2">Discipline: {{ selected_discipline_name }}</span>
+                    {% endif %}
+                    {% if selected_semester %}
+                    <span class="badge badge-info mr-2">Semester: {{ selected_semester }}</span>
+                    {% endif %}
+                    <span class="badge badge-warning">Threshold: Below {{ selected_threshold }}%</span>
+                </div>
+                <div>
+                    <span class="text-muted">{{ problem_subjects_count }} of {{ total_subjects }} subjects</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Subjects Table -->
+        <div class="card">
+            <div class="card-header">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h5 class="card-title">
+                            <i class="fas fa-book text-primary"></i>
+                            Subjects with Short Attendance
+                            {% if problem_subjects_count > 0 %}
+                            ({{ problem_subjects_count }} Subjects)
+                            {% endif %}
+                        </h5>
+                        <p class="text-muted mb-0">Subjects with students below {{ selected_threshold }}% attendance</p>
+                    </div>
+                    <div class="col-auto">
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-warning" onclick="exportSubjectAttendance()">
+                                <i class="fas fa-download"></i> Export CSV
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if subject_stats %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-center mb-0" id="subjectTable">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Subject</th>
+                                <th>Code</th>
+                                <th>Semester</th>
+                                <th>Discipline</th>
+                                <th>Total Students</th>
+                                <th>Short Attendance</th>
+                                <th>Lowest %</th>
+                                <th>Average %</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat in subject_stats %}
+                            <tr class="{% if stat.lowest_percentage < 50 %}table-danger{% elif stat.lowest_percentage < 60 %}table-warning{% elif stat.average_percentage < 75 %}table-info{% endif %}">
+                                <td>{{ forloop.counter }}</td>
+                                <td>
+                                    <h6 class="mb-1">{{ stat.subject.name }}</h6>
+                                    <small class="text-muted">Credit Hours: {{ stat.subject.credit_hours }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge badge-light">{{ stat.subject.code }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-primary">Semester {{ stat.subject.semester }}</span>
+                                </td>
+                                <td>
+                                    {% if stat.subject.desciplain %}
+                                    <small>{{ stat.subject.desciplain.program }} in {{ stat.subject.desciplain.field }}</small>
+                                    {% else %}
+                                    <small class="text-muted">N/A</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="font-weight-bold">{{ stat.total_students }}</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress flex-grow-1" style="height: 20px; width: 100px;">
+                                            <div class="progress-bar bg-warning" 
+                                                 style="width: {{ stat.short_percentage }}%">
+                                            </div>
+                                        </div>
+                                        <span class="ml-2 font-weight-bold">{{ stat.short_students }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="font-weight-bold {% if stat.lowest_percentage < 50 %}text-danger{% elif stat.lowest_percentage < 60 %}text-warning{% else %}text-info{% endif %}">
+                                        {{ stat.lowest_percentage|floatformat:1 }}%
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress flex-grow-1" style="height: 20px; width: 100px;">
+                                            <div class="progress-bar 
+                                                {% if stat.average_percentage >= 75 %}bg-success
+                                                {% elif stat.average_percentage >= 60 %}bg-info
+                                                {% else %}bg-danger{% endif %}" 
+                                                style="width: {{ stat.average_percentage }}%">
+                                            </div>
+                                        </div>
+                                        <span class="ml-2 font-weight-bold">{{ stat.average_percentage|floatformat:1 }}%</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if stat.average_percentage < 60 %}
+                                    <span class="badge badge-danger">Critical</span>
+                                    {% elif stat.average_percentage < 75 %}
+                                    <span class="badge badge-warning">Warning</span>
+                                    {% else %}
+                                    <span class="badge badge-info">Low</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'subject_detail_short_attendance' stat.subject.id %}" 
+                                           class="btn btn-outline-primary" title="View Students">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                        <a href="{% url 'subject_attendance' stat.subject.id %}" 
+                                           class="btn btn-outline-info" title="View All Attendance">
+                                            <i class="fas fa-list"></i>
+                                        </a>
+                                        <a href="{% url 'bulk_attendance' %}?subject_id={{ stat.subject.id }}" 
+                                           class="btn btn-outline-success" title="bulk Attendance">
+                                            <i class="fas fa-check"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Top Problem Subjects -->
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header bg-warning text-white">
+                                <h6 class="card-title mb-0">
+                                    <i class="fas fa-exclamation-triangle"></i> Top 5 Most Problematic Subjects
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="list-group">
+                                    {% for stat in subject_stats|slice:":5" %}
+                                    <div class="list-group-item">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1">{{ stat.subject.code }} - {{ stat.subject.name|truncatechars:20 }}</h6>
+                                            <span class="badge badge-danger">{{ stat.short_students }} students</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <small>Lowest: {{ stat.lowest_percentage|floatformat:1 }}%</small>
+                                            <small>Average: {{ stat.average_percentage|floatformat:1 }}%</small>
+                                        </div>
+                                        <small>Semester {{ stat.subject.semester }}</small>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header bg-success text-white">
+                                <h6 class="card-title mb-0">
+                                    <i class="fas fa-trophy"></i> Top 5 Best Performing Subjects
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="list-group">
+                                    {% for stat in best_subjects|slice:":5" %}
+                                    <div class="list-group-item">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1">{{ stat.subject.code }} - {{ stat.subject.name|truncatechars:20 }}</h6>
+                                            <span class="badge badge-success">{{ stat.average_percentage|floatformat:1 }}%</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <small>Total Students: {{ stat.total_students }}</small>
+                                            <small class="text-success">No short attendance</small>
+                                        </div>
+                                        <small>Semester {{ stat.subject.semester }}</small>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    {% if total_subjects == 0 %}
+                    <i class="fas fa-book fa-4x text-muted mb-3"></i>
+                    <h4>No Subjects Found</h4>
+                    <p class="text-muted">No subjects match the selected criteria.</p>
+                    {% else %}
+                    <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+                    <h4>No Subjects with Short Attendance!</h4>
+                    <p class="text-muted">All subjects have attendance above {{ selected_threshold }}%</p>
+                    {% endif %}
+                    <a href="{% url 'short_attendance' %}" class="btn btn-primary">
+                        <i class="fas fa-users"></i> View Student-wise
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
+<script>
+    $(document).ready(function() {
+        // Initialize DataTable
+        if ($('#subjectTable').length) {
+            $('#subjectTable').DataTable({
+                pageLength: 25,
+                lengthMenu: [[25, 50, 100, -1], [25, 50, 100, "All"]],
+                dom: 'Bfrtip',
+                buttons: [
+                    'copy', 'csv', 'excel', 'pdf', 'print'
+                ],
+                order: [[6, 'desc']] // Sort by short students count by default
+            });
+        }
+
+        // Filter form AJAX updates
+        const disciplineSelect = $('#disciplineSelect');
+        const semesterSelect = $('#semesterSelect');
+
+        // When discipline changes, filter semesters via AJAX
+        disciplineSelect.change(function() {
+            const disciplineId = $(this).val();
+            
+            if (!disciplineId) {
+                // Reset semester select
+                semesterSelect.find('option[value!=""]').show();
+                return;
+            }
+
+            // Load subjects for this discipline to get available semesters
+            $.ajax({
+                url: "{% url 'get_subjects_by_semester' %}",
+                data: { 
+                    semester_id: '', // Get all semesters
+                    discipline_id: disciplineId
+                },
+                method: 'GET',
+                success: function(response) {
+                    // Extract unique semesters from subjects
+                    const semesters = new Set();
+                    response.forEach(subject => {
+                        if (subject.semester) {
+                            semesters.add(subject.semester);
+                        }
+                    });
+                    
+                    // Update semester select
+                    semesterSelect.find('option[value!=""]').hide();
+                    semesters.forEach(semester => {
+                        const option = semesterSelect.find(`option[value="${semester}"]`);
+                        if (option.length) {
+                            option.show();
+                        }
+                    });
+                    
+                    // If no specific semester found, show all
+                    if (semesters.size === 0) {
+                        semesterSelect.find('option[value!=""]').show();
+                    }
+                },
+                error: function() {
+                    console.error('Error loading semesters');
+                    semesterSelect.find('option[value!=""]').show();
+                }
+            });
+        });
+    });
+
+    function exportSubjectAttendance() {
+        // Create CSV content
+        let csvContent = "data:text/csv;charset=utf-8,";
+        
+        // Headers
+        csvContent += "Subject Code,Subject Name,Semester,Discipline,Total Students,Short Attendance Students,Short Attendance %,Lowest %,Average %,Status\n";
+        
+        // Data
+        {% for stat in subject_stats %}
+        csvContent += `"{{ stat.subject.code }}","{{ stat.subject.name }}","Semester {{ stat.subject.semester }}","{% if stat.subject.desciplain %}{{ stat.subject.desciplain.program }} in {{ stat.subject.desciplain.field }}{% else %}N/A{% endif %}",{{ stat.total_students }},{{ stat.short_students }},{{ stat.short_percentage|floatformat:1 }},{{ stat.lowest_percentage|floatformat:1 }},{{ stat.average_percentage|floatformat:1 }},"{% if stat.average_percentage < 60 %}Critical{% elif stat.average_percentage < 75 %}Warning{% else %}Low{% endif %}"\n`;
+        {% endfor %}
+        
+        // Create download link
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `subject_short_attendance_{{ selected_threshold }}_percent_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
+
+<style>
+.table-avatar {
+    margin-bottom: 0;
+}
+select:disabled {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+}
+#filterForm .form-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+.progress {
+    min-width: 80px;
+}
+</style>
+{% endblock %}

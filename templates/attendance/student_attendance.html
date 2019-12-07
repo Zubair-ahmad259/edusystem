@@ -1,0 +1,392 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}{{ student.get_full_name }} - Attendance - Student Management System{% endblock %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Student Attendance Record</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'attendance_dashboard' %}">Attendance</a></li>
+                        <li class="breadcrumb-item active">{{ student.first_name }}</li>
+                    </ul>
+                </div>
+                <div class="col-auto text-right float-right ml-auto">
+                    <button class="btn btn-outline-primary mr-2" onclick="printAttendance()">
+                        <i class="fas fa-print"></i> Print
+                    </button>
+                    <a href="{% url 'attendance_list' %}" class="btn btn-primary">
+                        <i class="fas fa-arrow-left"></i> Back to List
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student Profile Card -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-2 text-center">
+                                <div class="student-avatar">
+                                    {% if student.image %}
+                                    <img class="avatar-img rounded-circle" src="{{ student.image.url }}" alt="{{ student.first_name }}" width="100" height="100">
+                                    {% else %}
+                                    <img class="avatar-img rounded-circle" src="{% static 'assets/img/user.jpg' %}" alt="Default" width="100" height="100">
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-10">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h4>{{ student.get_full_name }}</h4>
+                                        <p class="text-muted mb-1">
+                                            <i class="fas fa-id-card"></i> {{ student.student_id }}
+                                        </p>
+                                        <p class="text-muted mb-1">
+                                            <i class="fas fa-graduation-cap"></i> {{ student.discipline }}
+                                        </p>
+                                        <p class="text-muted mb-1">
+                                            <i class="fas fa-users"></i> {{ student.batch.name }} - {{ student.section.name }}
+                                        </p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <div class="card bg-light">
+                                                    <div class="card-body text-center p-2">
+                                                        <h6 class="mb-0">Semester</h6>
+                                                        <h4 class="mb-0 text-primary">{{ student.semester.number }}</h4>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="card bg-light">
+                                                    <div class="card-body text-center p-2">
+                                                        <h6 class="mb-0">Status</h6>
+                                                        <h4 class="mb-0">
+                                                            {% if student.is_active %}
+                                                            <span class="text-success">Active</span>
+                                                            {% else %}
+                                                            <span class="text-danger">Inactive</span>
+                                                            {% endif %}
+                                                        </h4>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attendance Statistics -->
+        <div class="row mb-4">
+            <div class="col-xl-3 col-sm-6 col-12 d-flex">
+                <div class="card bg-primary w-100">
+                    <div class="card-body">
+                        <div class="db-widgets d-flex justify-content-between align-items-center">
+                            <div class="db-icon">
+                                <i class="fas fa-calendar-alt"></i>
+                            </div>
+                            <div class="db-info">
+                                <h3>{{ total_days }}</h3>
+                                <h6>Total Days</h6>
+                                <p class="text-white mb-0">Attendance tracked</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-sm-6 col-12 d-flex">
+                <div class="card bg-success w-100">
+                    <div class="card-body">
+                        <div class="db-widgets d-flex justify-content-between align-items-center">
+                            <div class="db-icon">
+                                <i class="fas fa-user-check"></i>
+                            </div>
+                            <div class="db-info">
+                                <h3>{{ present_days }}</h3>
+                                <h6>Present Days</h6>
+                                <p class="text-white mb-0">{{ present_percentage|floatformat:1 }}% of total</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-sm-6 col-12 d-flex">
+                <div class="card bg-danger w-100">
+                    <div class="card-body">
+                        <div class="db-widgets d-flex justify-content-between align-items-center">
+                            <div class="db-icon">
+                                <i class="fas fa-user-times"></i>
+                            </div>
+                            <div class="db-info">
+                                <h3>{{ absent_days }}</h3>
+                                <h6>Absent Days</h6>
+                                <p class="text-white mb-0">{{ absent_percentage|floatformat:1 }}% of total</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-sm-6 col-12 d-flex">
+                <div class="card bg-info w-100">
+                    <div class="card-body">
+                        <div class="db-widgets d-flex justify-content-between align-items-center">
+                            <div class="db-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="db-info">
+                                <h3>{{ attendance_percentage|floatformat:1 }}%</h3>
+                                <h6>Attendance %</h6>
+                                <p class="text-white mb-0">
+                                    {% if attendance_percentage >= 75 %}
+                                    Good
+                                    {% elif attendance_percentage >= 50 %}
+                                    Average
+                                    {% else %}
+                                    Poor
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attendance Details -->
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">Attendance Details</h5>
+                        <div class="text-muted">Showing {{ attendances|length }} attendance records</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-center mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Day</th>
+                                        <th>Subject</th>
+                                        <th>Subject Code</th>
+                                        <th>Batch</th>
+                                        <th>Section</th>
+                                        <th>Status</th>
+                                        <th>Time</th>
+                                        <th>Remarks</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for attendance in attendances %}
+                                    <tr>
+                                        <td>{{ attendance.date|date:"d M Y" }}</td>
+                                        <td>{{ attendance.date|date:"l" }}</td>
+                                        <td>{{ attendance.subject.name }}</td>
+                                        <td>{{ attendance.subject.code }}</td>
+                                        <td>{{ attendance.batch.name }}</td>
+                                        <td>{{ attendance.section.name }}</td>
+                                        <td>
+                                            {% if attendance.status == 'P' %}
+                                            <span class="badge badge-success">Present</span>
+                                            {% else %}
+                                            <span class="badge badge-danger">Absent</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ attendance.created_at|date:"h:i A" }}</td>
+                                        <td>
+                                            {% if attendance.remarks %}
+                                            <span class="text-muted" title="{{ attendance.remarks }}">
+                                                <i class="fas fa-comment"></i>
+                                            </span>
+                                            {% else %}
+                                            <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="9" class="text-center text-muted">
+                                            <i class="fas fa-clipboard-list fa-3x mb-3"></i>
+                                            <p class="mb-0">No attendance records found for this student</p>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Attendance Chart -->
+                        {% if attendances %}
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="card-title">Attendance Trend</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="studentAttendanceChart" height="100"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    $(document).ready(function() {
+        {% if attendances %}
+        // Prepare chart data - group by month
+        const monthlyData = {};
+        
+        {% for attendance in attendances %}
+            const date = new Date('{{ attendance.date|date:"Y-m-d" }}');
+            const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            
+            if (!monthlyData[monthYear]) {
+                monthlyData[monthYear] = { present: 0, total: 0 };
+            }
+            
+            monthlyData[monthYear].total++;
+            {% if attendance.status == 'P' %}
+            monthlyData[monthYear].present++;
+            {% endif %}
+        {% endfor %}
+        
+        const sortedMonths = Object.keys(monthlyData).sort();
+        const labels = sortedMonths.map(month => {
+            const [year, monthNum] = month.split('-');
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                               'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            return `${monthNames[parseInt(monthNum) - 1]} ${year}`;
+        });
+        
+        const percentages = sortedMonths.map(month => {
+            const data = monthlyData[month];
+            return ((data.present / data.total) * 100).toFixed(1);
+        });
+        
+        // Create student attendance chart
+        const studentCtx = document.getElementById('studentAttendanceChart').getContext('2d');
+        const studentChart = new Chart(studentCtx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Attendance %',
+                    data: percentages,
+                    backgroundColor: percentages.map(p => {
+                        const percent = parseFloat(p);
+                        if (percent >= 80) return '#28a745';
+                        if (percent >= 60) return '#17a2b8';
+                        if (percent >= 40) return '#ffc107';
+                        return '#dc3545';
+                    }),
+                    borderColor: '#343a40',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `Attendance: ${context.parsed.y}%`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: 'Attendance Percentage (%)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Month'
+                        }
+                    }
+                }
+            }
+        });
+        {% endif %}
+    });
+    
+    function printAttendance() {
+        window.print();
+    }
+</script>
+
+<style>
+    .avatar-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+    }
+    
+    @media print {
+        .page-header, .card-header, .btn, .breadcrumb {
+            display: none !important;
+        }
+        .card {
+            border: none !important;
+            box-shadow: none !important;
+        }
+        .card-body {
+            padding: 0 !important;
+        }
+        .student-avatar {
+            display: block !important;
+        }
+        h4, h5, h6 {
+            color: #000 !important;
+        }
+    }
+    
+    .db-widgets {
+        padding: 10px;
+    }
+    
+    .db-icon {
+        font-size: 30px;
+        opacity: 0.8;
+    }
+    
+    .avatar-img {
+        object-fit: cover;
+    }
+</style>
+{% endblock %}

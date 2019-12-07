@@ -1,0 +1,78 @@
+<!-- timetables/templates/timetables/teacher_list_for_generate.html -->
+
+{% extends 'timetables/base.html' %}
+{% load static %}
+
+{% block title %}Select Teacher to Generate Timetable{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="text-primary">
+                <i class="fas fa-chalkboard-teacher"></i> Generate Teacher Timetable
+            </h2>
+            <p class="text-muted">Select a teacher to generate their timetable</p>
+        </div>
+        <div class="col text-end">
+            <a href="{% url 'timetables:dashboard' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        {% for teacher_data in teachers_with_subjects %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user"></i> {{ teacher_data.teacher.first_name }} {{ teacher_data.teacher.last_name }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-2">
+                        <i class="fas fa-id-card"></i> ID: {{ teacher_data.teacher.teacher_id }}
+                    </p>
+                    <p class="mb-3">
+                        <i class="fas fa-book"></i> Subjects: {{ teacher_data.subject_count }}
+                    </p>
+                    
+                    <div class="mb-3">
+                        <strong>Assigned Subjects:</strong>
+                        <ul class="list-group list-group-flush mt-2">
+                            {% for assignment in teacher_data.assigned_subjects|slice:":3" %}
+                            <li class="list-group-item px-0">
+                                <strong>{{ assignment.subject.code }}</strong> - {{ assignment.subject.name }}
+                                <br>
+                                <small class="text-muted">
+                                    Batch: {{ assignment.batch.name }} | 
+                                    Semester: {{ assignment.semester.number }}
+                                </small>
+                            </li>
+                            {% endfor %}
+                            {% if teacher_data.subject_count > 3 %}
+                            <li class="list-group-item px-0 text-muted">
+                                + {{ teacher_data.subject_count|add:"-3" }} more subjects
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    
+                    <a href="{% url 'timetables:generate_teacher_timetable' teacher_data.teacher.id %}" 
+                       class="btn btn-primary w-100">
+                        <i class="fas fa-sync-alt"></i> Generate Timetable
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <i class="fas fa-info-circle"></i> No teachers with assigned subjects found.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

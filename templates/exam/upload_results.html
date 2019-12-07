@@ -1,0 +1,245 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}Upload Results - {{ exam.subject_mark_component.subject.code }}{% endblock %}
+
+{% block body %}
+<style>
+    .marks-input {
+        width: 100px;
+        text-align: center;
+    }
+    .absent-checkbox {
+        transform: scale(1.2);
+    }
+    .student-photo {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+</style>
+
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <div class="page-header">
+            <div class="row">
+                <div class="col-sm-12">
+                    <h3 class="page-title">
+                        Upload Results - {{ exam.subject_mark_component.subject.code }}
+                    </h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'exam_list' %}">Exams</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'exam_dashboard' exam.id %}">{{ exam.subject_mark_component.subject.code }}</a></li>
+                        <li class="breadcrumb-item active">Upload Results</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Exam Info -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">Exam Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <p><strong>Subject:</strong> {{ exam.subject_mark_component.subject.code }}</p>
+                            </div>
+                            <div class="col-md-3">
+                                <p><strong>Exam Type:</strong> {{ exam.get_exam_type_display }}</p>
+                            </div>
+                            <div class="col-md-3">
+                                <p><strong>Total Marks:</strong> {{ exam.total_marks }}</p>
+                            </div>
+                            <div class="col-md-3">
+                                <p><strong>Passing Marks:</strong> {{ exam.passing_marks }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Form -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">Enter Student Results ({{ students|length }} students)</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="{% url 'upload_results' exam.id %}">
+                            {% csrf_token %}
+                            
+                            <div class="table-responsive">
+                                <table class="table table-hover table-center mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Student ID</th>
+                                            <th>Name</th>
+                                            <th>Marks Obtained</th>
+                                            <th>Absent</th>
+                                            <th>Remarks</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for student in students %}
+                                        <tr>
+                                            <td>{{ forloop.counter }}</td>
+                                            <td>
+                                                <h2 class="table-avatar">
+                                                    <a href="#">{{ student.student_id }}</a>
+                                                </h2>
+                                            </td>
+                                            <td>{{ student.get_full_name }}</td>
+                                            <td>
+                                                <input type="number" 
+                                                       name="marks_{{ student.id }}" 
+                                                       class="form-control marks-input" 
+                                                       step="0.01" 
+                                                       min="0" 
+                                                       max="{{ exam.total_marks }}"
+                                                       value="{% if results.student.id %}{{ results.student.id.marks_obtained|default:'' }}{% endif %}">
+                                                <small class="text-muted">Max: {{ exam.total_marks }}</small>
+                                            </td>
+                                            <td>
+                                                <div class="custom-control custom-checkbox">
+                                                    <input type="checkbox" 
+                                                           class="custom-control-input absent-checkbox" 
+                                                           id="absent_{{ student.id }}" 
+                                                           name="absent_{{ student.id }}"
+                                                           {% if results.student.id and results.student.id.is_absent %}checked{% endif %}>
+                                                    <label class="custom-control-label" for="absent_{{ student.id }}"></label>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <input type="text" 
+                                                       name="remarks_{{ student.id }}" 
+                                                       class="form-control" 
+                                                       placeholder="Remarks"
+                                                       value="{% if results.student.id %}{{ results.student.id.remarks|default:'' }}{% endif %}">
+                                            </td>
+                                            <td>
+                                                {% if results.student.id %}
+                                                <span class="badge badge-success">Entered</span>
+                                                {% else %}
+                                                <span class="badge badge-warning">Pending</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="7" class="text-center">No students found for this exam</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Quick Fill Options</label>
+                                        <div class="btn-group">
+                                            <button type="button" class="btn btn-outline-secondary" onclick="fillAllAbsent()">
+                                                Mark All Absent
+                                            </button>
+                                            <button type="button" class="btn btn-outline-secondary" onclick="clearAll()">
+                                                Clear All
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 text-right">
+                                    <a href="{% url 'exam_dashboard' exam.id %}" class="btn btn-secondary">Cancel</a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Save All Results
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">Instructions</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul>
+                            <li>Enter marks between 0 and {{ exam.total_marks }}</li>
+                            <li>Check "Absent" checkbox if student was absent</li>
+                            <li>Absent students will automatically get 0 marks</li>
+                            <li>You can add remarks for any special cases</li>
+                            <li>Results will be automatically calculated (percentage, grade, etc.)</li>
+                            <li>Once saved, results can be viewed in the exam dashboard</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
+<script>
+    $(document).ready(function() {
+        // Disable marks input when absent is checked
+        $('.absent-checkbox').change(function() {
+            var studentId = $(this).attr('id').replace('absent_', '');
+            var marksInput = $('input[name="marks_' + studentId + '"]');
+            
+            if ($(this).is(':checked')) {
+                marksInput.val('0').prop('disabled', true);
+            } else {
+                marksInput.prop('disabled', false);
+            }
+        });
+
+        // Initialize disabled state
+        $('.absent-checkbox').each(function() {
+            if ($(this).is(':checked')) {
+                var studentId = $(this).attr('id').replace('absent_', '');
+                $('input[name="marks_' + studentId + '"]').prop('disabled', true);
+            }
+        });
+
+        // Validate marks input
+        $('.marks-input').on('input', function() {
+            var maxMarks = parseFloat('{{ exam.total_marks }}');
+            var enteredMarks = parseFloat($(this).val()) || 0;
+            
+            if (enteredMarks > maxMarks) {
+                $(this).val(maxMarks);
+                alert('Marks cannot exceed ' + maxMarks);
+            }
+        });
+    });
+
+    function fillAllAbsent() {
+        if (confirm('Mark all students as absent? This will set all marks to 0.')) {
+            $('.absent-checkbox').prop('checked', true).trigger('change');
+        }
+    }
+
+    function clearAll() {
+        if (confirm('Clear all marks and absent status?')) {
+            $('.absent-checkbox').prop('checked', false);
+            $('.marks-input').val('').prop('disabled', false);
+            $('input[name^="remarks_"]').val('');
+        }
+    }
+</script>
+{% endblock %}

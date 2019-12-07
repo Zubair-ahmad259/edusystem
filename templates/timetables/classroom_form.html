@@ -1,0 +1,180 @@
+<!-- timetables/templates/timetables/classroom_form.html -->
+
+{% extends 'timetables/base.html' %}
+{% load static %}
+
+{% block title %}{% if classroom %}Edit Classroom{% else %}Add New Classroom{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-building"></i> 
+                        {% if classroom %}Edit Classroom{% else %}Add New Classroom{% endif %}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- Room Information -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="room_number" class="form-label">Room Number *</label>
+                                <input type="text" name="room_number" id="room_number" class="form-control" 
+                                       value="{% if classroom %}{{ classroom.room_number }}{% endif %}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="building" class="form-label">Building *</label>
+                                <input type="text" name="building" id="building" class="form-control" 
+                                       value="{% if classroom %}{{ classroom.building }}{% endif %}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="capacity" class="form-label">Capacity *</label>
+                                <input type="number" name="capacity" id="capacity" class="form-control" 
+                                       value="{% if classroom %}{{ classroom.capacity }}{% else %}30{% endif %}" required>
+                            </div>
+                        </div>
+                        
+                        <!-- Facilities -->
+                        <h5 class="mt-3 mb-3">Facilities</h5>
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input type="checkbox" name="has_projector" id="has_projector" class="form-check-input"
+                                           {% if classroom and classroom.has_projector %}checked{% endif %}>
+                                    <label for="has_projector" class="form-check-label">
+                                        <i class="fas fa-video"></i> Projector
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input type="checkbox" name="has_smartboard" id="has_smartboard" class="form-check-input"
+                                           {% if classroom and classroom.has_smartboard %}checked{% endif %}>
+                                    <label for="has_smartboard" class="form-check-label">
+                                        <i class="fas fa-chalkboard"></i> Smart Board
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input type="checkbox" name="is_lab" id="is_lab" class="form-check-input"
+                                           {% if classroom and classroom.is_lab %}checked{% endif %}>
+                                    <label for="is_lab" class="form-check-label">
+                                        <i class="fas fa-laptop-code"></i> Computer Lab
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Association Fields (Optional) -->
+                        <h5 class="mt-3 mb-3">Association (Optional)</h5>
+                        <p class="text-muted small">These fields help filter classrooms by discipline, batch, semester, and section</p>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="discipline" class="form-label">Discipline</label>
+                                <select name="discipline" id="discipline" class="form-select">
+                                    <option value="">-- Select Discipline --</option>
+                                    {% for discipline in disciplines %}
+                                    <option value="{{ discipline.id }}" {% if classroom and classroom.discipline and classroom.discipline.id == discipline.id %}selected{% endif %}>
+                                        {{ discipline.program }} in {{ discipline.field }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="batch" class="form-label">Batch</label>
+                                <select name="batch" id="batch" class="form-select">
+                                    <option value="">-- Select Batch --</option>
+                                    {% for batch in batches %}
+                                    <option value="{{ batch.id }}" {% if classroom and classroom.batch and classroom.batch.id == batch.id %}selected{% endif %}>
+                                        {{ batch.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="semester" class="form-label">Semester</label>
+                                <select name="semester" id="semester" class="form-select">
+                                    <option value="">-- Select Semester --</option>
+                                    {% for semester in semesters %}
+                                    <option value="{{ semester.id }}" {% if classroom and classroom.semester and classroom.semester.id == semester.id %}selected{% endif %}>
+                                        Semester {{ semester.number }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="section" class="form-label">Section</label>
+                                <select name="section" id="section" class="form-select">
+                                    <option value="">-- Select Section --</option>
+                                    {% for section in sections %}
+                                    <option value="{{ section.id }}" {% if classroom and classroom.section and classroom.section.id == section.id %}selected{% endif %}>
+                                        {{ section.name }} ({{ section.batch.name }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Status -->
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <div class="form-check">
+                                    <input type="checkbox" name="is_active" id="is_active" class="form-check-input"
+                                           {% if not classroom or classroom.is_active %}checked{% endif %}>
+                                    <label for="is_active" class="form-check-label">
+                                        Active (Inactive classrooms won't appear in timetable generation)
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> 
+                                {% if classroom %}Update Classroom{% else %}Create Classroom{% endif %}
+                            </button>
+                            <a href="{% url 'timetables:classroom_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Optional: Filter sections based on selected batch
+    document.getElementById('batch').addEventListener('change', function() {
+        var batchId = this.value;
+        var sectionSelect = document.getElementById('section');
+        
+        if (batchId) {
+            fetch(`/timetables/get-sections-by-batch/?batch_id=${batchId}`)
+                .then(response => response.json())
+                .then(data => {
+                    sectionSelect.innerHTML = '<option value="">-- Select Section --</option>';
+                    data.sections.forEach(section => {
+                        sectionSelect.innerHTML += `<option value="${section.id}">${section.name}</option>`;
+                    });
+                });
+        }
+    });
+</script>
+{% endblock %}

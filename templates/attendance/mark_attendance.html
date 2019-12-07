@@ -1,0 +1,227 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}Mark Attendance - Student Management System{% endblock %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Mark Attendance</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'attendance_dashboard' %}">Attendance</a></li>
+                        <li class="breadcrumb-item active">Mark Single</li>
+                    </ul>
+                </div>
+                <div class="col-auto text-right float-right ml-auto">
+                    <a href="{% url 'bulk_attendance' %}" class="btn btn-outline-success mr-2">
+                        <i class="fas fa-users"></i> Bulk Attendance
+                    </a>
+                    <a href="{% url 'attendance_list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-list"></i> View All
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        {% if messages %}
+        <div class="row mb-4">
+            <div class="col-12">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Mark Attendance Form -->
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">Mark Attendance Form</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{% url 'mark_attendance' %}">
+                            {% csrf_token %}
+                            <div class="row g-3">
+                                <!-- Student Selection -->
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label">Select Student <span class="text-danger">*</span></label>
+                                        <select name="student_id" class="form-control select2" required>
+                                            <option value="">Select Student</option>
+                                            {% for student in students %}
+                                            <option value="{{ student.id }}">
+                                                {{ student.student_id }} - {{ student.first_name }} {{ student.last_name }}
+                                                ({{ student.batch.name }})
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Subject Selection -->
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label">Select Subject <span class="text-danger">*</span></label>
+                                        <select name="subject_id" class="form-control select2" required>
+                                            <option value="">Select Subject</option>
+                                            {% for subject in subjects %}
+                                            <option value="{{ subject.id }}">
+                                                {{ subject.code }} - {{ subject.name }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Date -->
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label class="form-label">Date <span class="text-danger">*</span></label>
+                                        <input type="date" name="date" class="form-control" 
+                                               value="{{ today|date:'Y-m-d' }}" required>
+                                    </div>
+                                </div>
+
+                                <!-- Status -->
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label class="form-label">Status <span class="text-danger">*</span></label>
+                                        <select name="status" class="form-control" required>
+                                            <option value="P" selected>Present</option>
+                                            <option value="A">Absent</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Submit Button -->
+                                <div class="col-md-4 d-flex align-items-end">
+                                    <div class="form-group w-100">
+                                        <button type="submit" class="btn btn-primary btn-block">
+                                            <i class="fas fa-check-circle"></i> Mark Attendance
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Info Sidebar -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">Quick Info</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Total Students
+                                <span class="badge badge-primary badge-pill">{{ students.count }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Total Subjects
+                                <span class="badge badge-primary badge-pill">{{ subjects.count }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Today's Date
+                                <span class="badge badge-info badge-pill">{{ today|date:"d M Y" }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Current Time
+                                <span class="badge badge-info badge-pill" id="currentTime"></span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Recent Marks -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="card-title">Recently Marked</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            {% for attendance in recent_attendance %}
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ attendance.student.first_name }}</h6>
+                                    <small class="text-{% if attendance.status == 'P' %}success{% else %}danger{% endif %}">
+                                        {{ attendance.get_status_display }}
+                                    </small>
+                                </div>
+                                <small class="text-muted">
+                                    {{ attendance.subject.code }} | {{ attendance.date|date:"d M Y" }}
+                                </small>
+                            </div>
+                            {% empty %}
+                            <div class="text-center text-muted py-3">
+                                <i class="fas fa-clock fa-2x mb-2"></i>
+                                <p>No recent marks</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
+<script src="{% static 'assets/plugins/select2/js/select2.min.js' %}"></script>
+<script>
+    $(document).ready(function() {
+        // Initialize Select2
+        $('.select2').select2({
+            placeholder: 'Select an option',
+            allowClear: true
+        });
+
+        // Update current time
+        function updateTime() {
+            var now = new Date();
+            var timeString = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            $('#currentTime').text(timeString);
+        }
+        updateTime();
+        setInterval(updateTime, 1000);
+
+        // Form validation
+        $('form').submit(function(e) {
+            var student = $('select[name="student_id"]').val();
+            var subject = $('select[name="subject_id"]').val();
+            
+            if (!student || !subject) {
+                e.preventDefault();
+                alert('Please select both student and subject');
+            }
+        });
+
+        // Auto-focus on first field
+        $('select[name="student_id"]').focus();
+    });
+</script>
+
+<style>
+    .select2-container .select2-selection--single {
+        height: 40px;
+        padding: 5px;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 30px;
+    }
+</style>
+{% endblock %}

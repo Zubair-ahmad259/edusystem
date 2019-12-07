@@ -1,0 +1,114 @@
+<!-- timetables/templates/timetables/classroom_list.html -->
+
+{% extends 'timetables/base.html' %}
+{% load static %}
+
+{% block title %}Classrooms{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="text-primary">
+                <i class="fas fa-building"></i> Classroom Management
+            </h2>
+            <p class="text-muted">Manage all classrooms and their facilities</p>
+        </div>
+        <div class="col text-end">
+            <a href="{% url 'timetables:classroom_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus-circle"></i> Add Classroom
+            </a>
+        </div>
+    </div>
+    
+    <div class="card shadow">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Room Number</th>
+                            <th>Building</th>
+                            <th>Capacity</th>
+                            <th>Discipline</th>
+                            <th>Batch</th>
+                            <th>Semester</th>
+                            <th>Section</th>
+                            <th>Facilities</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                         </tr>
+                    </thead>
+                    <tbody>
+                        {% for classroom in classrooms %}
+                        <tr>
+                            <td><strong>{{ classroom.room_number }}</strong></td>
+                            <td>{{ classroom.building }}</td>
+                            <td>{{ classroom.capacity }} students</td>
+                            <td>
+                                {% if classroom.discipline %}
+                                <span class="badge bg-info">{{ classroom.discipline }}</span>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if classroom.batch %}
+                                <span class="badge bg-success">{{ classroom.batch.name }}</span>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if classroom.semester %}
+                                <span class="badge bg-warning">Sem {{ classroom.semester.number }}</span>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if classroom.section %}
+                                <span class="badge bg-danger">{{ classroom.section.name }}</span>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if classroom.has_projector %}📽️ {% endif %}
+                                {% if classroom.has_smartboard %}🖥️ {% endif %}
+                                {% if classroom.is_lab %}💻 {% endif %}
+                                {% if not classroom.has_projector and not classroom.has_smartboard and not classroom.is_lab %}
+                                Basic
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if classroom.is_active %}
+                                <span class="badge bg-success">Active</span>
+                                {% else %}
+                                <span class="badge bg-danger">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'timetables:classroom_edit' classroom.id %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                                <a href="{% url 'timetables:classroom_delete' classroom.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')">
+                                    <i class="fas fa-trash"></i> Delete
+                                </a>
+                                <a href="{% url 'timetables:classroom_timetable' classroom.id %}" class="btn btn-sm btn-outline-info">
+                                    <i class="fas fa-calendar-alt"></i> Timetable
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="10" class="text-center text-muted">No classrooms found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

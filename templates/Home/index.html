@@ -1,0 +1,235 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+{% block body %}
+<style>
+   /* Defaulter Student Card Styling */
+.card.bg-danger {
+    background-color: #dc3545 !important; /* Deep red background */
+    color: white !important; /* White text for contrast */
+}
+
+.card.bg-danger .db-icon i {
+    color: white !important; /* White icon */
+}
+
+.card.bg-danger .db-info h3,
+.card.bg-danger .db-info h6,
+.card.bg-danger .db-info p {
+    color: white !important; /* White text for all elements */
+}
+
+.card.bg-danger .db-info h3 {
+    font-weight: 700; /* Bolder number */
+    font-size: 1.8rem; /* Slightly larger number */
+}
+
+.card.bg-danger .db-info h6 {
+    font-weight: 600; /* Semi-bold heading */
+    margin-bottom: 0.25rem; /* Tighter spacing */
+}
+
+.card.bg-danger .db-info p {
+    opacity: 0.9; /* Slightly transparent for subtlety */
+    font-size: 0.85rem; /* Smaller subtext */
+}
+
+/* Hover effect for emphasis */
+.card.bg-danger:hover {
+    box-shadow: 0 0 15px rgba(220, 53, 69, 0.5);
+    transform: translateY(-2px);
+    transition: all 0.3s ease;
+  
+}
+</style>
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <div class="page-header">
+            <div class="row">
+                <div class="col-sm-12">
+                    <h3 class="page-title">Welcome Admin!</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item active">Dashboard</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Statistics Row -->
+        <div class="row">
+            <!-- Students Count Card -->
+            <div class="col-xl-3 col-sm-6 col-12 d-flex">
+                <div class="card bg-primary w-100">
+                    <div class="card-body">
+                        <div class="db-widgets d-flex justify-content-between align-items-center">
+                            <div class="db-icon">
+                                <i class="fas fa-user-graduate"></i>
+                            </div>
+                            <div class="db-info">
+                                <h3>{{ total_students }}</h3>
+                                <h6>Total Students</h6>
+                                <p class="text-white mb-0">{{ new_students_today }} new today</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Teachers Count Card -->
+            <div class="col-xl-3 col-sm-6 col-12 d-flex">
+                <div class="card bg-info w-100">
+                    <div class="card-body">
+                        <div class="db-widgets d-flex justify-content-between align-items-center">
+                            <div class="db-icon">
+                                <i class="fas fa-chalkboard-teacher"></i>
+                            </div>
+                            <div class="db-info">
+                                <h3>{{ total_teachers }}</h3>
+                                <h6>Total Teachers</h6>
+                                <p class="text-white mb-0">{{ active_teachers }} active</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Defaulter Students Card -->
+            <div class="col-xl-3 col-sm-6 col-12 d-flex">
+                <div class="card bg-danger w-100">
+                    <div class="card-body">
+                        <div class="db-widgets d-flex justify-content-between align-items-center">
+                            <div class="db-icon">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="db-info">
+                                <h3>{{ defaulter_students }}</h3>
+                                <h6>Defaulter Students</h6>
+                                <p class="text-white mb-0">{{ critical_defaulters }} critical</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timetable Status Card -->
+            <div class="col-xl-3 col-sm-6 col-12 d-flex">
+                <div class="card bg-success w-100">
+                    <div class="card-body">
+                        <div class="db-widgets d-flex justify-content-between align-items-center">
+                            <div class="db-icon">
+                                <i class="fas fa-calendar-alt"></i>
+                            </div>
+                            <div class="db-info">
+                                <h3>{{ active_timetables }}</h3>
+                                <h6>Active Timetables</h6>
+                                <p class="text-white mb-0">{{ classes_today }} classes today</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions Row -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">Quick Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <!-- Send Email -->
+                            <div class="col-md-3 col-6 mb-3">
+                                {% comment %} <a href="{% url 'send_email' %}" class="btn btn-primary btn-block py-3"> {% endcomment %}
+                                    <i class="fas fa-envelope fa-2x mb-2"></i><br>
+                                    Send Email
+                                </a>
+                            </div>
+                            
+                            <!-- Send Notification -->
+                            <div class="col-md-3 col-6 mb-3">
+                                {% comment %} <a href="{% url 'send_notification' %}" class="btn btn-info btn-block py-3"> {% endcomment %}
+                                    <i class="fas fa-bell fa-2x mb-2"></i><br>
+                                    Send Notification
+                                </a>
+                            </div>
+                            
+                            <!-- Generate Reports -->
+                            <div class="col-md-3 col-6 mb-3">
+                                {% comment %} <a href="{% url 'generate_reports' %}" class="btn btn-success btn-block py-3"> {% endcomment %}
+                                    <i class="fas fa-file-alt fa-2x mb-2"></i><br>
+                                    Generate Reports
+                                </a>
+                            </div>
+                            
+                            <!-- Send Notice -->
+                            <div class="col-md-3 col-6 mb-3">
+                                {% comment %} <a href="{% url 'send_notice' %}" class="btn btn-warning btn-block py-3"> {% endcomment %}
+                                    <i class="fas fa-bullhorn fa-2x mb-2"></i><br>
+                                    Send Notice
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timetable Section -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="row align-items-center">
+                            <div class="col-6">
+                                <h5 class="card-title">Today's Timetable</h5>
+                            </div>
+                            <div class="col-6 text-right">
+                                {% comment %} <a href="{% url 'view_timetable' %}" class="btn btn-sm btn-outline-primary"> {% endcomment %}
+                                    View Full Timetable
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-center">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Class</th>
+                                        <th>Subject</th>
+                                        <th>Teacher</th>
+                                        <th>Room</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for entry in todays_timetable %}
+                                    <tr>
+                                        <td>{{ entry.time }}</td>
+                                        <td>{{ entry.class }}</td>
+                                        <td>{{ entry.subject }}</td>
+                                        <td>{{ entry.teacher }}</td>
+                                        <td>{{ entry.room }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="text-center">No classes scheduled for today</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
+<script src="{% static 'assets/js/popper.min.js' %}"></script>
+<script src="{% static 'assets/plugins/bootstrap/js/bootstrap.min.js' %}"></script>
+<script src="{% static 'assets/plugins/slimscroll/jquery.slimscroll.min.js' %}"></script>
+<script src="{% static 'assets/js/script.js' %}"></script>
+{% endblock %}

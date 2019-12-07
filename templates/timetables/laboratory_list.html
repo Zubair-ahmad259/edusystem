@@ -1,0 +1,177 @@
+
+<!-- timetables/templates/timetables/laboratory_list.html -->
+
+{% extends 'timetables/base.html' %}
+{% load static %}
+
+{% block title %}Laboratories{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="text-primary">
+                <i class="fas fa-flask"></i> Computer Laboratories
+            </h2>
+            <p class="text-muted">Manage all computer labs with batch, section, and semester associations</p>
+        </div>
+        <div class="col text-end">
+            <a href="{% url 'timetables:laboratory_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus-circle"></i> Add Laboratory
+            </a>
+        </div>
+    </div>
+    
+    <div class="row">
+        {% for lab in laboratories %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header {% if lab.is_active %}bg-primary{% else %}bg-secondary{% endif %} text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-laptop-code"></i> {{ lab.lab_code }} - {{ lab.lab_name }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Location -->
+                    <div class="row mb-2">
+                        <div class="col-6">
+                            <small class="text-muted">Building:</small>
+                            <div><strong>{{ lab.building }}</strong></div>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Floor:</small>
+                            <div><strong>{{ lab.floor|default:"-" }}</strong></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Capacity & Computers -->
+                    <div class="row mb-2">
+                        <div class="col-6">
+                            <small class="text-muted">Capacity:</small>
+                            <div><strong>{{ lab.capacity }} students</strong></div>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Computers:</small>
+                            <div><strong>{{ lab.computer_count }}</strong></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Primary Assignment -->
+                    <div class="mb-2">
+                        <small class="text-muted">Primary Assignment:</small>
+                        <div>
+                            {% if lab.primary_batch %}
+                            <span class="badge bg-success">Batch: {{ lab.primary_batch.name }}</span>
+                            {% endif %}
+                            {% if lab.primary_section %}
+                            <span class="badge bg-danger">Section: {{ lab.primary_section.name }}</span>
+                            {% endif %}
+                            {% if lab.primary_semester %}
+                            <span class="badge bg-warning">Semester: {{ lab.primary_semester.number }}</span>
+                            {% endif %}
+                            {% if not lab.primary_batch and not lab.primary_section %}
+                            <span class="text-muted">Not assigned</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- All Assigned Batches -->
+                    {% if lab.batches.all %}
+                    <div class="mb-2">
+                        <small class="text-muted">Assigned Batches:</small>
+                        <div>
+                            {% for batch in lab.batches.all|slice:":3" %}
+                            <span class="badge bg-info me-1">{{ batch.name }}</span>
+                            {% endfor %}
+                            {% if lab.batches.count > 3 %}
+                            <span class="badge bg-secondary">+{{ lab.batches.count|add:"-3" }} more</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- All Assigned Sections -->
+                    {% if lab.sections.all %}
+                    <div class="mb-2">
+                        <small class="text-muted">Assigned Sections:</small>
+                        <div>
+                            {% for section in lab.sections.all|slice:":3" %}
+                            <span class="badge bg-danger me-1">{{ section.name }}</span>
+                            {% endfor %}
+                            {% if lab.sections.count > 3 %}
+                            <span class="badge bg-secondary">+{{ lab.sections.count|add:"-3" }} more</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- All Assigned Semesters -->
+                    {% if lab.semesters.all %}
+                    <div class="mb-2">
+                        <small class="text-muted">Assigned Semesters:</small>
+                        <div>
+                            {% for semester in lab.semesters.all|slice:":3" %}
+                            <span class="badge bg-warning me-1">Sem {{ semester.number }}</span>
+                            {% endfor %}
+                            {% if lab.semesters.count > 3 %}
+                            <span class="badge bg-secondary">+{{ lab.semesters.count|add:"-3" }} more</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Facilities -->
+                    <div class="mb-2">
+                        <small class="text-muted">Facilities:</small>
+                        <div>
+                            {% for facility in lab.facilities_list %}
+                            <span class="badge bg-info me-1">{{ facility }}</span>
+                            {% empty %}
+                            <span class="text-muted">Basic</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <!-- OS -->
+                    <div class="mb-2">
+                        <small class="text-muted">OS:</small>
+                        <div><strong>{{ lab.operating_system|default:"-" }}</strong></div>
+                    </div>
+                    
+                    <!-- Status -->
+                    <div class="mt-3">
+                        <span class="badge {% if lab.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                            {% if lab.is_active %}Active{% else %}Inactive{% endif %}
+                        </span>
+                        {% if lab.next_maintenance %}
+                        <span class="badge bg-warning ms-2">
+                            Next Maintenance: {{ lab.next_maintenance|date:"M d, Y" }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-footer bg-white">
+                    <div class="btn-group w-100">
+                        <a href="{% url 'timetables:laboratory_edit' lab.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                        <a href="{% url 'timetables:laboratory_timetable' lab.id %}" class="btn btn-sm btn-outline-info">
+                            <i class="fas fa-calendar-alt"></i> Timetable
+                        </a>
+                        <a href="{% url 'timetables:laboratory_delete' lab.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')">
+                            <i class="fas fa-trash"></i> Delete
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <i class="fas fa-info-circle"></i> No laboratories found. Click "Add Laboratory" to create one.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,184 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Add Teacher</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'teacher_list' %}">Teachers</a></li>
+                        <li class="breadcrumb-item active">Add Teacher</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Display Messages -->
+        {% if messages %}
+        <div class="row">
+            <div class="col-12">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="card">
+                    <div class="card-body">
+                        <form method="POST" enctype="multipart/form-data" id="teacherForm">
+                            {% csrf_token %}
+                            <div class="row">
+                                <div class="col-12">
+                                    <h5 class="form-title"><span>Teacher Information</span></h5>
+                                </div>
+
+                                <!-- Personal Information -->
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>First Name *</label>
+                                        <input type="text" class="form-control" name="first_name" required 
+                                               pattern="[A-Za-z ]+" title="Only alphabets allowed">
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Last Name *</label>
+                                        <input type="text" class="form-control" name="last_name" required
+                                               pattern="[A-Za-z ]+" title="Only alphabets allowed">
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Father's Name *</label>
+                                        <input type="text" class="form-control" name="father_name" required
+                                               pattern="[A-Za-z ]+" title="Only alphabets allowed">
+                                    </div>
+                                </div>
+
+                                <!-- Professional Information -->
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Teacher ID *</label>
+                                        <input type="text" class="form-control" name="teacher_id" required
+                                               pattern="[A-Za-z0-9-]+" title="Alphanumeric characters and hyphens only">
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Field/Specialization *</label>
+                                        <input type="text" class="form-control" name="field" required>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Years of Experience *</label>
+                                        <input type="number" class="form-control" name="experience" min="0" max="50" required>
+                                    </div>
+                                </div>
+
+                                <!-- Contact Information -->
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Mobile Number *</label>
+                                        <input type="tel" class="form-control" name="mobile_number" required
+                                               pattern="[0-9]{10,15}" title="10-15 digit phone number">
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Email *</label>
+                                        <input type="email" class="form-control" name="email" required>
+                                    </div>
+                                </div>
+
+                                <!-- Additional Information -->
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Gender *</label>
+                                        <select class="form-control" name="gender" required>
+                                            <option value="">Select Gender</option>
+                                            <option value="Female">Female</option>
+                                            <option value="Male">Male</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Date of Birth *</label>
+                                        <input type="date" class="form-control" name="date_of_birth" required
+                                               max="{{ max_dob|date:'Y-m-d' }}">
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Joining Date *</label>
+                                        <input type="date" class="form-control" name="joining_date" required>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Salary (PKR) *</label>
+                                        <input type="number" class="form-control" name="salary" min="0" step="1000" required>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Religion</label>
+                                        <input type="text" class="form-control" name="religion">
+                                    </div>
+                                </div>
+
+                                <!-- Image Upload -->
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Teacher Photo</label>
+                                        <div class="custom-file">
+                                            <input type="file" class="custom-file-input" id="teacherImage" name="teacher_image" accept="image/*">
+                                            <label class="custom-file-label" for="teacherImage">Choose file</label>
+                                        </div>
+                                        <small class="form-text text-muted">Max size: 2MB | Formats: JPG, PNG</small>
+                                    </div>
+                                </div>
+
+                                <div class="col-12 mt-3">
+                                    <button type="submit" class="btn btn-primary">Add Teacher</button>
+                                    <a href="{% url 'teacher_list' %}" class="btn btn-secondary ml-2">Cancel</a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for enhanced functionality -->
+<script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
+<script>
+    $(document).ready(function() {
+        // Show selected file name in file input
+        $('.custom-file-input').on('change', function() {
+            let fileName = $(this).val().split('\\').pop();
+            $(this).next('.custom-file-label').addClass("selected").html(fileName);
+        });
+
+        // Form validation
+        $('#teacherForm').on('submit', function() {
+            // Additional client-side validation can be added here
+            return true;
+        });
+    });
+</script>
+{% endblock %}

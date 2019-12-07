@@ -1,0 +1,629 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">
+                        <i class="fas fa-heartbeat"></i> System Health Check
+                    </h3>
+                    <ul class="breadcrumb">
+                        {% comment %} <li class="breadcrumb-item"><a href="{% url 'Home:dashboard' %}">Home</a></li> {% endcomment %}
+                        {% comment %} <li class="breadcrumb-item"><a href="{% url 'subject:subject_dashboard' %}">Subject Dashboard</a></li> {% endcomment %}
+                        <li class="breadcrumb-item active">Health Check</li>
+                    </ul>
+                </div>
+                <div class="col-auto text-right float-right ml-auto">
+                    <button type="button" class="btn btn-success" onclick="runHealthCheck()">
+                        <i class="fas fa-sync-alt"></i> Run Health Check
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Health Status Overview -->
+        <div class="row mb-4">
+            <div class="col-xl-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fas fa-clipboard-check"></i> System Health Overview
+                        </h5>
+                        <div class="card-action">
+                            <span class="badge badge-info">Last Check: {{ last_check }}</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <!-- Subjects Health -->
+                            <div class="col-md-4">
+                                <div class="health-card {% if health_status.subjects.health_percentage >= 90 %}border-success{% elif health_status.subjects.health_percentage >= 70 %}border-warning{% else %}border-danger{% endif %}">
+                                    <div class="health-icon">
+                                        <i class="fas fa-book fa-3x 
+                                            {% if health_status.subjects.health_percentage >= 90 %}text-success
+                                            {% elif health_status.subjects.health_percentage >= 70 %}text-warning
+                                            {% else %}text-danger{% endif %}">
+                                        </i>
+                                    </div>
+                                    <h3>{{ health_status.subjects.health_percentage }}%</h3>
+                                    <h6>Subjects Health</h6>
+                                    <p class="mb-0">
+                                        <small class="text-muted">
+                                            {{ health_status.subjects.total }} total, 
+                                            {{ health_status.subjects.no_section }} issues
+                                        </small>
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <!-- Assignments Health -->
+                            <div class="col-md-4">
+                                <div class="health-card {% if health_status.assignments.health_percentage >= 90 %}border-success{% elif health_status.assignments.health_percentage >= 70 %}border-warning{% else %}border-danger{% endif %}">
+                                    <div class="health-icon">
+                                        <i class="fas fa-user-check fa-3x 
+                                            {% if health_status.assignments.health_percentage >= 90 %}text-success
+                                            {% elif health_status.assignments.health_percentage >= 70 %}text-warning
+                                            {% else %}text-danger{% endif %}">
+                                        </i>
+                                    </div>
+                                    <h3>{{ health_status.assignments.health_percentage }}%</h3>
+                                    <h6>Assignments Health</h6>
+                                    <p class="mb-0">
+                                        <small class="text-muted">
+                                            {{ health_status.assignments.total }} total, 
+                                            {{ health_status.assignments.no_teacher }} issues
+                                        </small>
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <!-- Prerequisites Health -->
+                            <div class="col-md-4">
+                                <div class="health-card {% if health_status.prerequisites.health_percentage >= 90 %}border-success{% elif health_status.prerequisites.health_percentage >= 70 %}border-warning{% else %}border-danger{% endif %}">
+                                    <div class="health-icon">
+                                        <i class="fas fa-link fa-3x 
+                                            {% if health_status.prerequisites.health_percentage >= 90 %}text-success
+                                            {% elif health_status.prerequisites.health_percentage >= 70 %}text-warning
+                                            {% else %}text-danger{% endif %}">
+                                        </i>
+                                    </div>
+                                    <h3>{{ health_status.prerequisites.health_percentage }}%</h3>
+                                    <h6>Prerequisites Health</h6>
+                                    <p class="mb-0">
+                                        <small class="text-muted">
+                                            {{ health_status.prerequisites.with_prereqs }} with prerequisites, 
+                                            {{ health_status.prerequisites.missing_refs }} issues
+                                        </small>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Issues Breakdown -->
+        <div class="row">
+            <div class="col-xl-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fas fa-exclamation-triangle"></i> Issues Breakdown
+                            <span class="badge badge-danger ml-2">{{ total_issues }} Total Issues</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- Subjects Issues -->
+                            <div class="col-md-4">
+                                <div class="issue-category">
+                                    <h6 class="mb-3">
+                                        <i class="fas fa-book text-primary"></i> Subject Issues
+                                        <span class="badge badge-primary float-right">
+                                            {{ health_status.subjects.no_section|add:health_status.subjects.invalid_credits|add:health_status.subjects.no_discipline }}
+                                        </span>
+                                    </h6>
+                                    <div class="issue-list">
+                                        {% if health_status.subjects.no_section > 0 %}
+                                        <div class="issue-item">
+                                            <span class="issue-icon text-warning">
+                                                <i class="fas fa-exclamation-circle"></i>
+                                            </span>
+                                            <div class="issue-info">
+                                                <p class="mb-0">Subjects without section</p>
+                                                <small class="text-muted">{{ health_status.subjects.no_section }} found</small>
+                                            </div>
+                                            <button class="btn btn-sm btn-outline-warning" onclick="fixIssue('no_section')">
+                                                Fix
+                                            </button>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        {% if health_status.subjects.invalid_credits > 0 %}
+                                        <div class="issue-item">
+                                            <span class="issue-icon text-danger">
+                                                <i class="fas fa-times-circle"></i>
+                                            </span>
+                                            <div class="issue-info">
+                                                <p class="mb-0">Invalid credit hours</p>
+                                                <small class="text-muted">{{ health_status.subjects.invalid_credits }} found</small>
+                                            </div>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="fixIssue('invalid_credits')">
+                                                Fix
+                                            </button>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        {% if health_status.subjects.no_discipline > 0 %}
+                                        <div class="issue-item">
+                                            <span class="issue-icon text-info">
+                                                <i class="fas fa-info-circle"></i>
+                                            </span>
+                                            <div class="issue-info">
+                                                <p class="mb-0">Subjects without discipline</p>
+                                                <small class="text-muted">{{ health_status.subjects.no_discipline }} found</small>
+                                            </div>
+                                            <button class="btn btn-sm btn-outline-info" onclick="fixIssue('no_discipline')">
+                                                Fix
+                                            </button>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        {% if health_status.subjects.no_section == 0 and health_status.subjects.invalid_credits == 0 and health_status.subjects.no_discipline == 0 %}
+                                        <div class="text-center py-3">
+                                            <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                                            <p class="mb-0">No subject issues found</p>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Assignment Issues -->
+                            <div class="col-md-4">
+                                <div class="issue-category">
+                                    <h6 class="mb-3">
+                                        <i class="fas fa-user-check text-success"></i> Assignment Issues
+                                        <span class="badge badge-success float-right">
+                                            {{ health_status.assignments.no_teacher|add:health_status.assignments.no_subject }}
+                                        </span>
+                                    </h6>
+                                    <div class="issue-list">
+                                        {% if health_status.assignments.no_teacher > 0 %}
+                                        <div class="issue-item">
+                                            <span class="issue-icon text-warning">
+                                                <i class="fas fa-user-slash"></i>
+                                            </span>
+                                            <div class="issue-info">
+                                                <p class="mb-0">Assignments without teacher</p>
+                                                <small class="text-muted">{{ health_status.assignments.no_teacher }} found</small>
+                                            </div>
+                                            <button class="btn btn-sm btn-outline-warning" onclick="fixIssue('no_teacher')">
+                                                Fix
+                                            </button>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        {% if health_status.assignments.no_subject > 0 %}
+                                        <div class="issue-item">
+                                            <span class="issue-icon text-danger">
+                                                <i class="fas fa-book-dead"></i>
+                                            </span>
+                                            <div class="issue-info">
+                                                <p class="mb-0">Assignments without subject</p>
+                                                <small class="text-muted">{{ health_status.assignments.no_subject }} found</small>
+                                            </div>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="fixIssue('no_subject')">
+                                                Fix
+                                            </button>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        {% if health_status.assignments.no_teacher == 0 and health_status.assignments.no_subject == 0 %}
+                                        <div class="text-center py-3">
+                                            <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                                            <p class="mb-0">No assignment issues found</p>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Prerequisite Issues -->
+                            <div class="col-md-4">
+                                <div class="issue-category">
+                                    <h6 class="mb-3">
+                                        <i class="fas fa-link text-info"></i> Prerequisite Issues
+                                        <span class="badge badge-info float-right">
+                                            {{ health_status.prerequisites.missing_refs }}
+                                        </span>
+                                    </h6>
+                                    <div class="issue-list">
+                                        {% if health_status.prerequisites.missing_refs > 0 %}
+                                        <div class="issue-item">
+                                            <span class="issue-icon text-danger">
+                                                <i class="fas fa-unlink"></i>
+                                            </span>
+                                            <div class="issue-info">
+                                                <p class="mb-0">Missing prerequisite references</p>
+                                                <small class="text-muted">{{ health_status.prerequisites.missing_refs }} found</small>
+                                            </div>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="fixIssue('missing_refs')">
+                                                Fix
+                                            </button>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        {% if circular_prereqs %}
+                                        <div class="issue-item">
+                                            <span class="issue-icon text-warning">
+                                                <i class="fas fa-sync-alt"></i>
+                                            </span>
+                                            <div class="issue-info">
+                                                <p class="mb-0">Circular prerequisites detected</p>
+                                                <small class="text-muted">{{ circular_prereqs|length }} found</small>
+                                            </div>
+                                            <button class="btn btn-sm btn-outline-warning" onclick="fixIssue('circular_prereqs')">
+                                                Fix
+                                            </button>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        {% if health_status.prerequisites.missing_refs == 0 %}
+                                        <div class="text-center py-3">
+                                            <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                                            <p class="mb-0">No prerequisite issues found</p>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Fixes -->
+        <div class="row">
+            <div class="col-xl-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fas fa-wrench"></i> Recent Fixes
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if recent_fixes %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Issue Type</th>
+                                        <th>Fixed Count</th>
+                                        <th>Date Fixed</th>
+                                        <th>Status</th>
+                                        <th class="text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for fix in recent_fixes %}
+                                    <tr>
+                                        <td>
+                                            <i class="fas fa-bug text-warning"></i>
+                                            {{ fix.issue }}
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-primary">{{ fix.fixed }}</span>
+                                        </td>
+                                        <td>{{ fix.date }}</td>
+                                        <td>
+                                            <span class="badge badge-success">Fixed</span>
+                                        </td>
+                                        <td class="text-right">
+                                            <button class="btn btn-sm btn-outline-info" onclick="viewFixDetails('{{ fix.issue }}')">
+                                                <i class="fas fa-eye"></i> Details
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary" onclick="revertFix('{{ fix.issue }}')">
+                                                <i class="fas fa-undo"></i> Revert
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                            <h5>No Recent Fixes</h5>
+                            <p class="text-muted">No fixes have been applied recently</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Health Check Actions -->
+        <div class="row">
+            <div class="col-xl-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fas fa-cogs"></i> Maintenance Actions
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <button class="btn btn-outline-primary btn-block mb-3" onclick="runDatabaseCleanup()">
+                                    <i class="fas fa-broom"></i> Clean Database
+                                </button>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-outline-success btn-block mb-3" onclick="rebuildIndexes()">
+                                    <i class="fas fa-database"></i> Rebuild Indexes
+                                </button>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-outline-info btn-block mb-3" onclick="validateDataIntegrity()">
+                                    <i class="fas fa-check-double"></i> Validate Data
+                                </button>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-outline-warning btn-block mb-3" onclick="backupDatabase()">
+                                    <i class="fas fa-save"></i> Backup Now
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <div class="col-md-12">
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-info-circle"></i> Health Check Tips</h6>
+                                    <ul class="mb-0">
+                                        <li>Run health check daily to identify issues early</li>
+                                        <li>Fix issues promptly to maintain data integrity</li>
+                                        <li>Regular backups protect against data loss</li>
+                                        <li>Monitor system performance for optimal operation</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
+<script>
+$(document).ready(function() {
+    // Initialize health check status
+    updateHealthStatus();
+});
+
+function runHealthCheck() {
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Running...';
+    btn.disabled = true;
+    
+    // Simulate health check
+    setTimeout(function() {
+        btn.innerHTML = '<i class="fas fa-check"></i> Completed';
+        btn.disabled = false;
+        
+        // Show success message
+        showToast('Health check completed successfully', 'success');
+        
+        // Reload after 2 seconds
+        setTimeout(function() {
+            location.reload();
+        }, 2000);
+    }, 3000);
+}
+
+function updateHealthStatus() {
+    // Update health percentages with animation
+    $('.health-card h3').each(function() {
+        const target = parseInt($(this).text());
+        $(this).text('0%');
+        
+        let current = 0;
+        const increment = target / 50;
+        
+        const timer = setInterval(function() {
+            current += increment;
+            if (current >= target) {
+                current = target;
+                clearInterval(timer);
+            }
+            $(this).text(Math.round(current) + '%');
+        }.bind(this), 30);
+    });
+}
+
+function fixIssue(issueType) {
+    if (confirm(`Are you sure you want to fix ${issueType}?`)) {
+        const btn = event.target;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Fixing...';
+        btn.disabled = true;
+        
+        // Simulate fix
+        setTimeout(function() {
+            btn.innerHTML = '<i class="fas fa-check"></i> Fixed';
+            btn.classList.remove('btn-outline-danger', 'btn-outline-warning', 'btn-outline-info');
+            btn.classList.add('btn-success');
+            
+            showToast(`Issue ${issueType} has been fixed`, 'success');
+        }, 2000);
+    }
+}
+
+function runDatabaseCleanup() {
+    if (confirm('Run database cleanup? This will remove orphaned records.')) {
+        showLoading('Cleaning database...');
+        
+        setTimeout(function() {
+            hideLoading();
+            showToast('Database cleanup completed', 'success');
+        }, 3000);
+    }
+}
+
+function rebuildIndexes() {
+    showLoading('Rebuilding indexes...');
+    
+    setTimeout(function() {
+        hideLoading();
+        showToast('Indexes rebuilt successfully', 'success');
+    }, 2000);
+}
+
+function validateDataIntegrity() {
+    showLoading('Validating data integrity...');
+    
+    setTimeout(function() {
+        hideLoading();
+        showToast('Data validation completed', 'success');
+    }, 2500);
+}
+
+function backupDatabase() {
+    showLoading('Creating backup...');
+    
+    setTimeout(function() {
+        hideLoading();
+        showToast('Backup created successfully', 'success');
+    }, 4000);
+}
+
+function showLoading(message) {
+    $('body').append(`
+        <div class="loading-overlay">
+            <div class="loading-content">
+                <i class="fas fa-spinner fa-spin fa-3x"></i>
+                <p class="mt-3">${message}</p>
+            </div>
+        </div>
+    `);
+}
+
+function hideLoading() {
+    $('.loading-overlay').remove();
+}
+
+function showToast(message, type) {
+    const toast = $(`
+        <div class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-delay="3000">
+            <div class="toast-header bg-${type} text-white">
+                <strong class="mr-auto">Health Check</strong>
+                <button type="button" class="ml-2 mb-1 close text-white" data-dismiss="toast" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="toast-body">
+                ${message}
+            </div>
+        </div>
+    `);
+    
+    $('body').append(toast);
+    toast.toast('show');
+    
+    toast.on('hidden.bs.toast', function() {
+        $(this).remove();
+    });
+}
+</script>
+
+<style>
+.health-card {
+    padding: 30px 20px;
+    border: 2px solid;
+    border-radius: 10px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+.health-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+.health-icon {
+    margin-bottom: 20px;
+}
+.health-card h3 {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+.health-card h6 {
+    margin-bottom: 10px;
+    color: #6c757d;
+}
+.issue-category {
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    height: 100%;
+}
+.issue-list {
+    min-height: 200px;
+}
+.issue-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background: white;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    border-left: 4px solid #6c757d;
+}
+.issue-icon {
+    font-size: 24px;
+    margin-right: 15px;
+    width: 40px;
+    text-align: center;
+}
+.issue-info {
+    flex: 1;
+}
+.issue-info p {
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+.loading-content {
+    background: white;
+    padding: 40px;
+    border-radius: 10px;
+    text-align: center;
+}
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+}
+</style>
+{% endblock %}

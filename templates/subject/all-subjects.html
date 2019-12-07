@@ -1,0 +1,204 @@
+{% extends "Home/base.html" %}
+{% load static %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">📚 All Subjects in Database (Debug View)</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'subject:view_subject' %}">Subjects</a></li>
+                        <li class="breadcrumb-item active">All Subjects</li>
+                    </ul>
+                </div>
+                <div class="col-auto">
+                    <a href="{% url 'subject:debug_prerequisites' %}" class="btn btn-info">
+                        <i class="fas fa-bug"></i> Debug Prerequisites
+                    </a>
+                    <a href="{% url 'subject:add_subject' %}" class="btn btn-primary ml-2">
+                        <i class="fas fa-plus"></i> Add New Subject
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fas fa-database"></i> Database Statistics
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="card bg-primary text-white">
+                                    <div class="card-body text-center">
+                                        <h2>{{ total_subjects }}</h2>
+                                        <p>Total Subjects</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-success text-white">
+                                    <div class="card-body text-center">
+                                        <h2>{{ disciplines.count }}</h2>
+                                        <p>Disciplines</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-info text-white">
+                                    <div class="card-body text-center">
+                                        <h2>{{ semesters.count }}</h2>
+                                        <p>Semesters</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-warning text-white">
+                                    <div class="card-body text-center">
+                                        <h2>{{ sections.count }}</h2>
+                                        <p>Sections</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filter Form -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="card-title">Filter Subjects</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="get" class="row">
+                            <div class="col-md-5">
+                                <label>Discipline</label>
+                                <select name="discipline" class="form-control">
+                                    <option value="">All Disciplines</option>
+                                    {% for discipline in disciplines %}
+                                    <option value="{{ discipline.id }}" {% if selected_discipline and selected_discipline.id == discipline.id %}selected{% endif %}>
+                                        {{ discipline.field }} ({{ discipline.program }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-5">
+                                <label>Semester</label>
+                                <select name="semester" class="form-control">
+                                    <option value="">All Semesters</option>
+                                    {% for semester in semesters %}
+                                    <option value="{{ semester.id }}" {% if selected_semester and selected_semester.id == semester.id %}selected{% endif %}>
+                                        Semester {{ semester.number }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary btn-block">Filter</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Subjects Table -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fas fa-list"></i> All Subjects ({{ total_subjects }} found)
+                            {% if selected_discipline %}
+                            <span class="badge badge-info ml-2">Discipline: {{ selected_discipline.field }}</span>
+                            {% endif %}
+                            {% if selected_semester %}
+                            <span class="badge badge-info ml-2">Semester: {{ selected_semester.number }}</span>
+                            {% endif %}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if subjects %}
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover">
+                                <thead class="thead-dark">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Code</th>
+                                        <th>Name</th>
+                                        <th>Semester</th>
+                                        <th>Section</th>
+                                        <th>Discipline</th>
+                                        <th>Type</th>
+                                        <th>Credits</th>
+                                        <th>Prerequisites</th>
+                                        <th>Active</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for subject in subjects %}
+                                    <tr>
+                                        <td>{{ subject.id }}</td>
+                                        <td><strong>{{ subject.code }}</strong></td>
+                                        <td>{{ subject.name }}</td>
+                                        <td>Sem {{ subject.semester.number }}</td>
+                                        <td>{{ subject.section.name|default:"-" }}</td>
+                                        <td>{{ subject.desciplain.field }}</td>
+                                        <td>
+                                            <span class="badge {% if subject.subject_type == 'core' %}badge-primary{% else %}badge-success{% endif %}">
+                                                {{ subject.subject_type|title }}
+                                            </span>
+                                        </td>
+                                        <td>{{ subject.credit_hours }}</td>
+                                        <td>
+                                            {% if subject.prerequisites.all %}
+                                            <div class="prereq-list">
+                                                {% for prereq in subject.prerequisites.all %}
+                                                <span class="badge badge-secondary">{{ prereq.code }}</span>
+                                                {% endfor %}
+                                            </div>
+                                            {% else %}
+                                            <span class="text-muted">None</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if subject.is_active %}
+                                            <span class="badge badge-success">Active</span>
+                                            {% else %}
+                                            <span class="badge badge-danger">Inactive</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-book fa-4x text-muted mb-3"></i>
+                            <h4>No subjects found in database</h4>
+                            <p class="text-muted">Add your first subject using the button above</p>
+                            <a href="{% url 'subject:add_subject' %}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Add First Subject
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.prereq-list .badge {
+    margin: 2px;
+    font-size: 0.8em;
+}
+.table td {
+    vertical-align: middle;
+}
+</style>
+{% endblock %}

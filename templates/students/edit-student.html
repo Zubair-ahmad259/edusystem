@@ -1,0 +1,177 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Edit Students</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/students">Students</a></li>
+                        <li class="breadcrumb-item active">Edit Students</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="card">
+                    <div class="card-body">
+                        <form method="POST" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="row">
+                                <div class="col-12">
+                                    <h5 class="form-title"><span>Student Information</span></h5>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>First Name</label>
+                                        <input type="text" name="first_name" class="form-control" value="{{ student.first_name }}" required>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Last Name</label>
+                                        <input type="text" name="last_name" class="form-control" value="{{ student.last_name }}" required>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Student ID</label>
+                                        <input type="text" name="student_id" class="form-control" value="{{ student.student_id }}" required>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Gender</label>
+                                        <select name="gender" class="form-control" required>
+                                            {% for value, label in gender_choices %}
+                                            <option value="{{ value }}" {% if student.gender == value %}selected{% endif %}>{{ label }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Date of Birth</label>
+                                        <input type="date" name="dob" class="form-control" value="{{ student.dob|date:'Y-m-d' }}" required>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Batch</label>
+                                        <select name="batch" class="form-control" required>
+                                            {% for batch in batches %}
+                                            <option value="{{ batch.id }}" {% if student.batch.id == batch.id %}selected{% endif %}>{{ batch.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Semester</label>
+                                        <select name="semester" class="form-control" required>
+                                            {% for semester in semesters %}
+                                            <option value="{{ semester.id }}" {% if student.semester.id == semester.id %}selected{% endif %}>{{ semester.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Section</label>
+                                        <select name="section" class="form-control" required>
+                                            {% for section in sections %}
+                                            <option value="{{ section.id }}" {% if student.section.id == section.id %}selected{% endif %}>{{ section.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Email</label>
+                                        <input type="email" name="email" class="form-control" value="{{ student.email }}">
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Contact Number</label>
+                                        <input type="text" name="contact_number" class="form-control" value="{{ student.contact_number }}">
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Admission Number</label>
+                                        <input type="text" name="admission_number" class="form-control" value="{{ student.admission_number }}">
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Student Image</label>
+                                        <input type="file" name="image" class="form-control">
+                                        {% if student.image %}
+                                        <small>Current Image: <a href="{{ student.image.url }}" target="_blank">{{ student.image.name }}</a></small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-12">
+                                    <div class="form-group">
+                                        <label>Address</label>
+                                        <textarea name="address" class="form-control">{{ student.address }}</textarea>
+                                    </div>
+                                </div>
+                                
+                                {% if student.parent %}
+                                <div class="col-12">
+                                    <h5 class="form-title"><span>Parent Information</span></h5>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Father's Name</label>
+                                        <input type="text" name="father_name" class="form-control" value="{{ student.parent.father_name }}">
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Mother's Name</label>
+                                        <input type="text" name="mother_name" class="form-control" value="{{ student.parent.mother_name }}">
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Father's Email</label>
+                                        <input type="email" name="father_email" class="form-control" value="{{ student.parent.father_email }}">
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Father's Contact</label>
+                                        <input type="text" name="father_contact" class="form-control" value="{{ student.parent.father_contact }}">
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-12">
+                                    <div class="form-group">
+                                        <label>Parent Address</label>
+                                        <textarea name="parent_address" class="form-control">{{ student.parent.address }}</textarea>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-primary">Update Student</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
+<script src="{% static 'assets/js/popper.min.js' %}"></script>
+<script src="{% static 'assets/plugins/bootstrap/js/bootstrap.min.js' %}"></script>
+<script src="{% static 'assets/plugins/slimscroll/jquery.slimscroll.min.js' %}"></script>
+<script src="{% static 'assets/js/script.js' %}"></script>
+{% endblock %}

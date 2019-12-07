@@ -1,0 +1,167 @@
+{% extends 'Home/index.html' %}
+{% load static %}
+
+{% block body %}
+<style>
+:root {
+    --primary-color: #3498db;   /* Blue for active/hover links */
+    --secondary-color: #2ecc71; /* Green for success cards */
+    --info-color: #17a2b8;      /* Teal for info cards */
+    --warning-color: #f39c12;   /* Amber for warning cards */
+    --danger-color: #e74c3c;    /* Red for errors/danger */
+    --light-color: #ffffff;     /* Pure white background */
+    --dark-color: #2c3e50;      /* Dark gray text */
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f8f9fc;
+}
+
+/* Sidebar */
+.sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 260px;
+    background: var(--light-color); /* White sidebar */
+    color: var(--dark-color);
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+    transition: all 0.3s;
+    overflow-y: auto;
+}
+
+.sidebar-menu {
+    padding: 20px 0;
+}
+
+.sidebar-menu ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.menu-header {
+    color: #6c757d;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    padding: 15px 20px 10px;
+}
+
+.sidebar-menu li a {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    color: var(--dark-color);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    border-radius: 6px;
+    margin: 4px 12px;
+}
+
+.sidebar-menu li a:hover {
+    background-color: rgba(52, 152, 219, 0.1); /* Light blue hover */
+    color: var(--primary-color);
+}
+
+.sidebar-menu li a.active {
+    background-color: var(--primary-color);
+    color: #fff;
+}
+
+.sidebar-menu li a i {
+    margin-right: 12px;
+    font-size: 16px;
+    width: 20px;
+    text-align: center;
+}
+
+/* Page content */
+.page-wrapper {
+    margin-left: 260px;
+    padding: 20px;
+    min-height: 100vh;
+    background-color: #f8f9fc;
+    transition: all 0.3s;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .sidebar {
+        transform: translateX(-100%);
+    }
+
+    .sidebar.active {
+        transform: translateX(0);
+    }
+
+    .page-wrapper {
+        margin-left: 0;
+    }
+}
+</style>
+
+
+<div class="page-wrapper">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-menu">
+            <ul>
+                <li class="menu-header">Main Menu</li>
+                <li>
+                    <a href="{% url 'teacher_dashboard' %}" class="{% if request.resolver_match.url_name == 'teacher_dashboard' %}active{% endif %}">
+                        <i class="fas fa-home"></i> Dashboard
+                    </a>
+                </li>
+                
+                <li class="menu-header">Attendance</li>
+                {% comment %} <li><a href="{% url 'add_attendance' %}"><i class="fas fa-chart-bar"></i>  attendance</a></li> {% endcomment %}
+                <li><a href="{% url 'attendance_list' %}"><i class="fas fa-chart-bar"></i>  attendance_list</a></li>
+                {% comment %} <li><a href="{% url 'attendance_record' %}"><i class="fas fa-chart-bar"></i>  attendance_record</a></li> {% endcomment %}
+                {% comment %} <li><a href="{% url 'attendance_report' %}"><i class="fas fa-chart-bar"></i>  attendance_record</a></li> {% endcomment %}
+
+                <li class="menu-header">Results</li>
+                {% comment %} <li><a href="{% url 'exam:create_exam_view' %}" class="{% if request.resolver_match.url_name == 'create_exam_view' %}active{% endif %}"><i class="fas fa-clipboard-list"></i> Create Exam</a></li> {% endcomment %}
+                {% comment %} <li><a href="{% url 'exam:exam_filter_view' %}"><i class="fas fa-edit"></i> Manage Exams</a></li> {% endcomment %}
+                {% comment %} <li><a href="{% url 'exam:comprehensive_results_view' %}"><i class="fas fa-chart-bar"></i> Results Analysis</a></li> {% endcomment %}
+                <!-- For Teachers -->
+<li class="nav-item">
+    <a class="nav-link" href="{% url 'assignment:teacher_assignment_list' %}">
+        <i class="fas fa-tasks"></i> Assignments
+    </a>
+</li>
+
+<!-- For Students -->
+<li class="nav-item">
+    <a class="nav-link" href="{% url 'assignment:student_assignment_list' %}">
+        <i class="fas fa-tasks"></i> My Assignments
+    </a>
+</li>
+                <li class="menu-header">DDC</li>
+                <li><a href="{% url 'case_list' %}"><i class="fas fa-briefcase"></i> View All Cases</a></li>
+
+                <li class="menu-header">Assignments</li>
+                {% comment %} <li><a href="{% url 'assignment_create' %}"><i class="fas fa-plus-circle"></i> Create Assignment</a></li> {% endcomment %}
+                {% comment %} <li><a href="{% url 'assignment_list' %}"><i class="fas fa-list"></i> List Assignments</a></li> {% endcomment %}
+                <li><a href="#"><i class="fas fa-file-upload"></i> Submissions</a></li>
+                <li><a href="#"><i class="fas fa-check-circle"></i> Grade Assignments</a></li>
+                
+                <li class="menu-header">Account</li>
+                <li><a href="#"><i class="fas fa-user-tie"></i> Profile</a></li>
+                <li><a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content container-fluid">
+        {% block teacher_content %}
+        {% endblock %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,94 @@
+{% extends 'timetables/base.html' %}
+{% load static %}
+
+{% block title %}Timetable Conflicts{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chalkboard-teacher"></i> Teacher Conflicts
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if teacher_conflicts %}
+                    <div class="list-group">
+                        {% for conflict in teacher_conflicts %}
+                        <div class="list-group-item">
+                            <strong>Teacher ID: {{ conflict.teacher }}</strong><br>
+                            <small>Day: {{ conflict.time_slot__day }}</small><br>
+                            <small>Time: {{ conflict.time_slot__start_time }}</small><br>
+                            <span class="badge bg-danger">{{ conflict.count }} conflicts</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i> No teacher conflicts found.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users"></i> Section Conflicts
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if section_conflicts %}
+                    <div class="list-group">
+                        {% for conflict in section_conflicts %}
+                        <div class="list-group-item">
+                            <strong>Section ID: {{ conflict.section }}</strong><br>
+                            <small>Day: {{ conflict.time_slot__day }}</small><br>
+                            <small>Time: {{ conflict.time_slot__start_time }}</small><br>
+                            <span class="badge bg-warning">{{ conflict.count }} conflicts</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i> No section conflicts found.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-door-open"></i> Classroom Conflicts
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if classroom_conflicts %}
+                    <div class="list-group">
+                        {% for conflict in classroom_conflicts %}
+                        <div class="list-group-item">
+                            <strong>Classroom ID: {{ conflict.classroom }}</strong><br>
+                            <small>Day: {{ conflict.time_slot__day }}</small><br>
+                            <small>Time: {{ conflict.time_slot__start_time }}</small><br>
+                            <span class="badge bg-info">{{ conflict.count }} conflicts</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i> No classroom conflicts found.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

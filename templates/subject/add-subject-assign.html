@@ -1,0 +1,403 @@
+{% extends "Home/base.html" %}
+{% load static %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Assign Subject to Multiple Sections</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'subject:view_subject' %}">Subjects</a></li>
+                        <li class="breadcrumb-item active">Assign Subject</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        {% if messages %}
+            <div class="mb-3">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="card">
+            <div class="card-body">
+                <form method="post" class="p-3" id="assignmentForm">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <!-- Discipline Field -->
+                        <div class="col-md-6 mb-3">
+                            <div class="form-group">
+                                <label class="form-label">Discipline <span class="text-danger">*</span></label>
+                                <select name="disciplines" id="disciplineSelect" class="form-control form-select" required>
+                                    <option value="">Select Discipline</option>
+                                    {% for discipline in disciplines %}
+                                        <option value="{{ discipline.id }}">
+                                            {{ discipline.field }} ({{ discipline.program }})
+                                        </option>
+                                    {% empty %}
+                                        <option value="" disabled>No disciplines available</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Teacher Field -->
+                        <div class="col-md-6 mb-3">
+                            <div class="form-group">
+                                <label class="form-label">Teacher <span class="text-danger">*</span></label>
+                                <select name="teacher" class="form-control form-select" required>
+                                    <option value="">Select Teacher</option>
+                                    {% for t in teachers %}
+                                        <option value="{{ t.id }}">
+                                            {% if t.first_name and t.last_name %}
+                                                {{ t.first_name }} {{ t.last_name }}
+                                            {% elif t.first_name %}
+                                                {{ t.first_name }}
+                                            {% else %}
+                                                {{ t.username }}
+                                            {% endif %}
+                                        </option>
+                                    {% empty %}
+                                        <option value="" disabled>No teachers available</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Subject Field -->
+                        <div class="col-md-6 mb-3">
+                            <div class="form-group">
+                                <label class="form-label">Subject <span class="text-danger">*</span></label>
+                                <select name="subject" class="form-control form-select" required>
+                                    <option value="">Select Subject</option>
+                                    {% for s in subjects %}
+                                        <option value="{{ s.id }}">
+                                            {{ s.name }} 
+                                            {% if s.desciplain %}
+                                                ({{ s.desciplain.field }})
+                                            {% endif %}
+                                        </option>
+                                    {% empty %}
+                                        <option value="" disabled>No subjects available</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Batch Field -->
+                        <div class="col-md-3 mb-3">
+                            <div class="form-group">
+                                <label class="form-label">Batch <span class="text-danger">*</span></label>
+                                <select name="batch" id="batchSelect" class="form-control form-select" required>
+                                    <option value="">Select Batch</option>
+                                    {% for b in batches %}
+                                        <option value="{{ b.id }}">{{ b.name }}</option>
+                                    {% empty %}
+                                        <option value="" disabled>No batches available</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Semester Field -->
+                        <div class="col-md-3 mb-3">
+                            <div class="form-group">
+                                <label class="form-label">Semester <span class="text-danger">*</span></label>
+                                <select name="semester" id="semesterSelect" class="form-control form-select" required>
+                                    <option value="">Select Semester</option>
+                                    {% for s in semesters %}
+                                        <option value="{{ s.id }}">{{ s.number }}</option>
+                                    {% empty %}
+                                        <option value="" disabled>No semesters available</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Sections Field (Multiple Selection) -->
+                        <div class="col-md-6 mb-3">
+                            <div class="form-group">
+                                <label class="form-label">Sections <span class="text-danger">*</span></label>
+                                <select name="sections" id="sectionSelect" class="form-control form-select" multiple required size="5">
+                                    <option value="" disabled>First select Discipline, Batch, and Semester</option>
+                                </select>
+                                <small class="form-text text-muted">
+                                    Hold Ctrl (Windows) or Cmd (Mac) to select multiple sections
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Selected Sections Preview -->
+                    <div class="row mt-2" id="selectedSectionsPreview" style="display: none;">
+                        <div class="col-md-12">
+                            <div class="alert alert-info">
+                                <strong>Selected Sections:</strong>
+                                <span id="selectedSectionsList"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-md-12">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-plus-circle"></i> Assign Subject to Sections
+                            </button>
+                            <a href="{% url 'subject:view_subject' %}" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-arrow-left"></i> Back to Subjects
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const disciplineSelect = document.getElementById('disciplineSelect');
+    const batchSelect = document.getElementById('batchSelect');
+    const semesterSelect = document.getElementById('semesterSelect');
+    const sectionSelect = document.getElementById('sectionSelect');
+    const selectedSectionsPreview = document.getElementById('selectedSectionsPreview');
+    const selectedSectionsList = document.getElementById('selectedSectionsList');
+
+    // Function to load sections
+    function loadSections() {
+        const disciplineId = disciplineSelect.value;
+        const batchId = batchSelect.value;
+        const semesterId = semesterSelect.value;
+        
+        console.log('Loading sections for:', {disciplineId, batchId, semesterId});
+        
+        if (disciplineId && batchId && semesterId) {
+            // Clear current options
+            sectionSelect.innerHTML = '';
+            
+            // Show loading state
+            const loadingOption = document.createElement('option');
+            loadingOption.textContent = 'Loading sections...';
+            loadingOption.disabled = true;
+            sectionSelect.appendChild(loadingOption);
+            
+            // Fetch sections
+            fetch(`/subject/api/get-sections-for-assignment/?discipline_id=${disciplineId}&batch_id=${batchId}&semester_id=${semesterId}`)
+                .then(response => response.json())
+                .then(data => {
+                    sectionSelect.innerHTML = ''; // Clear loading
+                    
+                    if (data.sections && data.sections.length > 0) {
+                        data.sections.forEach(section => {
+                            const option = document.createElement('option');
+                            option.value = section.id;
+                            option.textContent = `${section.name} - ${section.batch}`;
+                            sectionSelect.appendChild(option);
+                        });
+                    } else {
+                        const noOption = document.createElement('option');
+                        noOption.textContent = 'No sections available';
+                        noOption.disabled = true;
+                        sectionSelect.appendChild(noOption);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading sections:', error);
+                    sectionSelect.innerHTML = '';
+                    const errorOption = document.createElement('option');
+                    errorOption.textContent = 'Error loading sections';
+                    errorOption.disabled = true;
+                    sectionSelect.appendChild(errorOption);
+                });
+        } else {
+            sectionSelect.innerHTML = '';
+            const placeholderOption = document.createElement('option');
+            placeholderOption.textContent = 'Select Discipline, Batch, and Semester first';
+            placeholderOption.disabled = true;
+            sectionSelect.appendChild(placeholderOption);
+        }
+    }
+
+    // Event listeners for dependent selects
+    disciplineSelect.addEventListener('change', loadSections);
+    batchSelect.addEventListener('change', loadSections);
+    semesterSelect.addEventListener('change', loadSections);
+
+    // Preview selected sections
+    sectionSelect.addEventListener('change', function() {
+        const selectedOptions = Array.from(this.selectedOptions).map(opt => opt.textContent);
+        
+        if (selectedOptions.length > 0) {
+            selectedSectionsList.textContent = selectedOptions.join(', ');
+            selectedSectionsPreview.style.display = 'block';
+        } else {
+            selectedSectionsPreview.style.display = 'none';
+        }
+    });
+
+    // Form validation
+    const form = document.getElementById('assignmentForm');
+    form.addEventListener('submit', function(e) {
+        // Check if sections are selected
+        if (sectionSelect.selectedOptions.length === 0) {
+            e.preventDefault();
+            alert('Please select at least one section.');
+            sectionSelect.focus();
+            return;
+        }
+        
+        // Log selected sections for debugging
+        console.log('Selected sections:', Array.from(sectionSelect.selectedOptions).map(opt => opt.value));
+    });
+});
+</script>
+
+<style>
+    /* Style for multiple select */
+    select[multiple] {
+        min-height: 120px;
+        padding: 8px;
+    }
+    
+    select[multiple] option {
+        padding: 8px;
+        margin: 2px 0;
+        border-radius: 4px;
+    }
+    
+    select[multiple] option:hover {
+        background-color: #f0f0f0;
+    }
+    
+    select[multiple] option:checked {
+        background-color: #007bff;
+        color: white;
+    }
+    
+    /* Loading state */
+    .loading-sections {
+        opacity: 0.6;
+        pointer-events: none;
+    }
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const disciplineSelect = document.getElementById('disciplineSelect');
+    const batchSelect = document.getElementById('batchSelect');
+    const semesterSelect = document.getElementById('semesterSelect');
+    const sectionSelect = document.getElementById('sectionSelect');
+    const selectedSectionsPreview = document.getElementById('selectedSectionsPreview');
+    const selectedSectionsList = document.getElementById('selectedSectionsList');
+
+    // Function to load sections
+    function loadSections() {
+        const disciplineId = disciplineSelect.value;
+        const batchId = batchSelect.value;
+        const semesterId = semesterSelect.value;
+        
+        console.log('Loading sections for:', {disciplineId, batchId, semesterId});
+        
+        if (disciplineId && batchId && semesterId) {
+            // Clear current options
+            sectionSelect.innerHTML = '';
+            
+            // Add loading option
+            const loadingOption = document.createElement('option');
+            loadingOption.textContent = 'Loading sections...';
+            loadingOption.disabled = true;
+            loadingOption.selected = true;
+            sectionSelect.appendChild(loadingOption);
+            
+            // Use Django URL template tag to generate the correct URL
+const baseUrl = "{% url 'subject:get_sections_for_discipline' %}";
+            const url = `${baseUrl}?discipline_id=${disciplineId}&batch_id=${batchId}`;
+            console.log('Fetching from URL:', url);
+            
+            // Fetch sections
+            fetch(url)
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Received data:', data);
+                    
+                    // Clear loading option
+                    sectionSelect.innerHTML = '';
+                    
+                    if (data.sections && data.sections.length > 0) {
+                        data.sections.forEach(section => {
+                            const option = document.createElement('option');
+                            option.value = section.id;
+                            option.textContent = section.display || `${section.name} - ${section.batch}`;
+                            sectionSelect.appendChild(option);
+                        });
+                    } else {
+                        const noOption = document.createElement('option');
+                        noOption.textContent = 'No sections available';
+                        noOption.disabled = true;
+                        noOption.selected = true;
+                        sectionSelect.appendChild(noOption);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading sections:', error);
+                    sectionSelect.innerHTML = '';
+                    const errorOption = document.createElement('option');
+                    errorOption.textContent = `Error: ${error.message}`;
+                    errorOption.disabled = true;
+                    errorOption.selected = true;
+                    sectionSelect.appendChild(errorOption);
+                });
+        } else {
+            sectionSelect.innerHTML = '';
+            const placeholderOption = document.createElement('option');
+            placeholderOption.textContent = 'Select Discipline, Batch, and Semester first';
+            placeholderOption.disabled = true;
+            placeholderOption.selected = true;
+            sectionSelect.appendChild(placeholderOption);
+        }
+    }
+
+    // Event listeners
+    disciplineSelect.addEventListener('change', loadSections);
+    batchSelect.addEventListener('change', loadSections);
+    semesterSelect.addEventListener('change', loadSections);
+
+    // Preview selected sections
+    sectionSelect.addEventListener('change', function() {
+        const selectedOptions = Array.from(this.selectedOptions).map(opt => opt.textContent);
+        
+        if (selectedOptions.length > 0) {
+            selectedSectionsList.textContent = selectedOptions.join(', ');
+            selectedSectionsPreview.style.display = 'block';
+        } else {
+            selectedSectionsPreview.style.display = 'none';
+        }
+    });
+
+    // Form validation
+    const form = document.getElementById('assignmentForm');
+    form.addEventListener('submit', function(e) {
+        if (sectionSelect.selectedOptions.length === 0) {
+            e.preventDefault();
+            alert('Please select at least one section.');
+            sectionSelect.focus();
+        }
+    });
+});
+</script>
+{% endblock %}

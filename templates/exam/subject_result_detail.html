@@ -1,0 +1,399 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}Subject Result - {{ student.get_full_name }}{% endblock %}
+
+{% block body %}
+<style>
+    .exam-breakdown td, .exam-breakdown th {
+        padding: 8px;
+        text-align: center;
+    }
+    .component-card {
+        border-left: 4px solid;
+        margin-bottom: 10px;
+    }
+    .mid-term { border-color: #007bff; }
+    .final { border-color: #28a745; }
+    .quiz { border-color: #ffc107; }
+    .assignment { border-color: #17a2b8; }
+    .presentation { border-color: #6f42c1; }
+    .lab { border-color: #fd7e14; }
+    .viva { border-color: #e83e8c; }
+    .attendance { border-color: #6c757d; }
+</style>
+
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <div class="page-header">
+            <div class="row">
+                <div class="col-sm-12">
+                    <h3 class="page-title">
+                        {{ subject_mark_component.subject.code }} - {{ student.get_full_name }}
+                    </h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'comprehensive_results' %}">Results</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'student_comprehensive_results' student.id %}">{{ student.get_full_name }}</a></li>
+                        <li class="breadcrumb-item active">Subject Detail</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student and Subject Info -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">Student Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="mr-3">
+                                <i class="fas fa-user-graduate fa-3x text-primary"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-1">{{ student.get_full_name }}</h5>
+                                <p class="text-muted mb-1">{{ student.student_id }}</p>
+                                <span class="badge badge-primary">{{ student.batch }}</span>
+                                <span class="badge badge-info ml-1">{{ student.semester }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">Subject Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h5 class="mb-1">{{ subject_mark_component.subject.code }}</h5>
+                                <p class="text-muted mb-1">{{ subject_mark_component.subject.name }}</p>
+                                <span class="badge badge-secondary">{{ subject_mark_component.subject.credit_hours }} Credit Hours</span>
+                            </div>
+                            <div class="text-right">
+                                <p class="mb-1"><strong>Teacher:</strong></p>
+                                <p class="text-muted">{{ subject_mark_component.teacher.get_full_name }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comprehensive Result Summary -->
+        {% if comp_result %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">Overall Subject Result</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-3">
+                                <div class="p-3 border rounded bg-light">
+                                    <h3 class="text-primary">{{ comp_result.total_marks|floatformat:2 }}</h3>
+                                    <small class="text-muted">Total Marks</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="p-3 border rounded bg-light">
+                                    <h3 class="text-success">{{ comp_result.percentage|floatformat:2 }}%</h3>
+                                    <small class="text-muted">Percentage</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="p-3 border rounded bg-light">
+                                    <h3>
+                                        <span class="badge 
+                                            {% if comp_result.grade == 'A+' or comp_result.grade == 'A' %}badge-success
+                                            {% elif comp_result.grade == 'B+' or comp_result.grade == 'B' %}badge-info
+                                            {% elif comp_result.grade == 'C+' or comp_result.grade == 'C' %}badge-warning
+                                            {% elif comp_result.grade == 'D' %}badge-warning
+                                            {% elif comp_result.grade == 'F' %}badge-danger
+                                            {% else %}badge-secondary{% endif %}">
+                                            {{ comp_result.grade|default:"-" }}
+                                        </span>
+                                    </h3>
+                                    <small class="text-muted">Grade</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="p-3 border rounded bg-light">
+                                    <h3 class="text-info">{{ comp_result.grade_point|floatformat:2 }}</h3>
+                                    <small class="text-muted">Grade Point</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Mark Distribution Breakdown -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">Mark Distribution</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered exam-breakdown">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Component</th>
+                                        <th>Weightage %</th>
+                                        <th>Max Marks</th>
+                                        <th>Obtained Marks</th>
+                                        <th>Weighted Marks</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for exam_result in exam_results %}
+                                    <tr>
+                                        <td>{{ exam_result.exam.get_exam_type_display }}</td>
+                                        <td>{{ exam_result.exam.weightage_percentage }}%</td>
+                                        <td>{{ exam_result.exam.total_marks }}</td>
+                                        <td>
+                                            {% if exam_result.result %}
+                                                {% if exam_result.result.is_absent %}
+                                                <span class="badge badge-danger">Absent</span>
+                                                {% else %}
+                                                {{ exam_result.result.marks_obtained|floatformat:2 }}
+                                                {% endif %}
+                                            {% else %}
+                                            <span class="badge badge-warning">Not Taken</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if exam_result.result %}
+                                                {{ exam_result.result.weighted_marks|floatformat:2|default:"-" }}
+                                            {% else %}
+                                            -
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if exam_result.result %}
+                                            <span class="badge badge-success">Completed</span>
+                                            {% else %}
+                                            <span class="badge badge-secondary">Pending</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center">No exams configured for this subject</td>
+                                    </tr>
+                                    {% endfor %}
+                                    <!-- Total Row -->
+                                    {% if comp_result %}
+                                    <tr class="table-primary">
+                                        <td><strong>Total</strong></td>
+                                        <td><strong>100%</strong></td>
+                                        <td><strong>100</strong></td>
+                                        <td><strong>{{ comp_result.total_marks|floatformat:2 }}</strong></td>
+                                        <td><strong>{{ comp_result.total_marks|floatformat:2 }}</strong></td>
+                                        <td>
+                                            {% if comp_result.grade != 'F' %}
+                                            <span class="badge badge-success">Passed</span>
+                                            {% else %}
+                                            <span class="badge badge-danger">Failed</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <!-- Component Breakdown -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">Component Breakdown</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="component-card mid-term p-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Mid Term</span>
+                                <strong>{{ comp_result.mid_term_marks|floatformat:2 }}</strong>
+                            </div>
+                        </div>
+                        <div class="component-card final p-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Final Term</span>
+                                <strong>{{ comp_result.final_marks|floatformat:2 }}</strong>
+                            </div>
+                        </div>
+                        <div class="component-card quiz p-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Quiz</span>
+                                <strong>{{ comp_result.quiz_marks|floatformat:2 }}</strong>
+                            </div>
+                        </div>
+                        <div class="component-card assignment p-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Assignment</span>
+                                <strong>{{ comp_result.assignment_marks|floatformat:2 }}</strong>
+                            </div>
+                        </div>
+                        <div class="component-card presentation p-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Presentation</span>
+                                <strong>{{ comp_result.presentation_marks|floatformat:2 }}</strong>
+                            </div>
+                        </div>
+                        {% if subject_mark_component.lab_percentage > 0 %}
+                        <div class="component-card lab p-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Lab</span>
+                                <strong>{{ comp_result.lab_marks|floatformat:2 }}</strong>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if subject_mark_component.viva_percentage > 0 %}
+                        <div class="component-card viva p-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Viva</span>
+                                <strong>{{ comp_result.viva_marks|floatformat:2 }}</strong>
+                            </div>
+                        </div>
+                        {% endif %}
+                        <div class="component-card attendance p-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Attendance</span>
+                                <strong>{{ comp_result.attendance_marks|floatformat:2 }}</strong>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="p-3 bg-light rounded">
+                            <div class="d-flex justify-content-between">
+                                <span><strong>Total Marks</strong></span>
+                                <strong>{{ comp_result.total_marks|floatformat:2 }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Analysis -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">Performance Analysis</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Grade Interpretation</h6>
+                                <ul class="list-unstyled">
+                                    <li class="mb-2">
+                                        <span class="badge badge-success mr-2">A+/A/A-</span>
+                                        <small>Excellent performance</small>
+                                    </li>
+                                    <li class="mb-2">
+                                        <span class="badge badge-info mr-2">B+/B/B-</span>
+                                        <small>Good performance</small>
+                                    </li>
+                                    <li class="mb-2">
+                                        <span class="badge badge-warning mr-2">C+/C</span>
+                                        <small>Satisfactory performance</small>
+                                    </li>
+                                    <li class="mb-2">
+                                        <span class="badge badge-warning mr-2">D</span>
+                                        <small>Minimum passing grade</small>
+                                    </li>
+                                    <li class="mb-2">
+                                        <span class="badge badge-danger mr-2">F</span>
+                                        <small>Failed - must repeat</small>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Recommendations</h6>
+                                {% if comp_result.grade == 'F' %}
+                                <div class="alert alert-danger">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    <strong>Needs Improvement:</strong> Student has failed this subject. Consider:
+                                    <ul class="mt-2 mb-0">
+                                        <li>Re-taking the subject next semester</li>
+                                        <li>Additional tutoring sessions</li>
+                                        <li>Review of study materials</li>
+                                    </ul>
+                                </div>
+                                {% elif comp_result.grade == 'D' %}
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    <strong>Borderline Pass:</strong> Student barely passed. Consider:
+                                    <ul class="mt-2 mb-0">
+                                        <li>Additional practice exercises</li>
+                                        <li>Review of weak areas</li>
+                                        <li>Regular progress checks</li>
+                                    </ul>
+                                </div>
+                                {% else %}
+                                <div class="alert alert-success">
+                                    <i class="fas fa-check-circle"></i>
+                                    <strong>Good Performance:</strong> Student is performing well in this subject.
+                                    <ul class="mt-2 mb-0">
+                                        <li>Continue current study habits</li>
+                                        <li>Consider advanced topics</li>
+                                        <li>Maintain consistent performance</li>
+                                    </ul>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="row mt-4">
+            <div class="col-12 text-center">
+                <a href="{% url 'student_comprehensive_results' student.id %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to All Results
+                </a>
+                <button onclick="window.print()" class="btn btn-primary">
+                    <i class="fas fa-print"></i> Print Result
+                </button>
+                <a href="{% url 'generate_transcript' student.id %}" class="btn btn-success">
+                    <i class="fas fa-scroll"></i> Generate Transcript
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
+<script>
+    $(document).ready(function() {
+        // Add animation to component cards
+        $('.component-card').hover(
+            function() {
+                $(this).css('transform', 'scale(1.02)');
+                $(this).css('transition', 'transform 0.3s');
+            },
+            function() {
+                $(this).css('transform', 'scale(1)');
+            }
+        );
+    });
+</script>
+{% endblock %}

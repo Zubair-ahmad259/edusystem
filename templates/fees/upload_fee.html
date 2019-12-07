@@ -1,0 +1,896 @@
+{% extends "Home/base.html" %}
+{% load static %}
+
+{% block body %}
+<div class="page-wrapper">
+<div class="content container-fluid">
+
+<div class="card">
+    <div class="card-header bg-gradient-primary text-white">
+        <div class="d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">
+                <i class="fas fa-file-invoice-dollar me-2"></i>
+                Upload Student Fees
+            </h4>
+            <span class="badge bg-white text-primary fs-6">
+                <i class="fas fa-info-circle me-1"></i>
+                Step by Step Process
+            </span>
+        </div>
+    </div>
+    
+    <div class="card-body">
+        <div class="row mb-4">
+            <div class="col-12">
+                <!-- Progress Steps -->
+                <div class="steps-container">
+                    <div class="steps">
+                        <div class="step active">
+                            <div class="step-icon">
+                                <i class="fas fa-filter"></i>
+                            </div>
+                            <div class="step-label">Select Group</div>
+                        </div>
+                        <div class="step {% if students %}active{% endif %}">
+                            <div class="step-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="step-label">Review Students</div>
+                        </div>
+                        <div class="step {% if students %}active{% endif %}">
+                            <div class="step-icon">
+                                <i class="fas fa-upload"></i>
+                            </div>
+                            <div class="step-label">Upload Fees</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <form method="post" id="feeUploadForm" class="needs-validation" novalidate>
+        {% csrf_token %}
+        
+        <!-- Step 1: Selection Criteria -->
+        <div class="selection-card mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0 text-primary">
+                    <i class="fas fa-sliders-h me-2"></i>
+                    Step 1: Select Student Group
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <!-- Discipline -->
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-graduation-cap me-1 text-primary"></i>
+                                Discipline
+                                <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-primary text-white">
+                                    <i class="fas fa-university"></i>
+                                </span>
+                                <select name="discipline" id="disciplineSelect" 
+                                        class="form-select shadow-sm" required>
+                                    <option value="">Select Discipline</option>
+                                    {% for disc in disciplines %}
+                                    <option value="{{ disc.id }}" 
+                                            {% if selected_discipline == disc.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ disc.field }} ({{ disc.program }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <small class="form-text text-muted mt-1">
+                                <i class="fas fa-lightbulb me-1"></i>
+                                Select the academic discipline first
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <!-- Batch -->
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-calendar-alt me-1 text-primary"></i>
+                                Batch
+                                <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-primary text-white">
+                                    <i class="fas fa-calendar"></i>
+                                </span>
+                                <select name="batch" id="batchSelect" 
+                                        class="form-select shadow-sm" required>
+                                    <option value="">Select Batch</option>
+                                    {% for b in batches %}
+                                    <option value="{{ b.id }}"
+                                            data-discipline="{{ b.discipline.id }}"
+                                            {% if selected_batch == b.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ b.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <small class="form-text text-muted mt-1" id="batchHelpText">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Select discipline first
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <!-- Semester -->
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-book-open me-1 text-primary"></i>
+                                Semester
+                                <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-primary text-white">
+                                    <i class="fas fa-book"></i>
+                                </span>
+                                <select name="semester" class="form-select shadow-sm" required>
+                                    <option value="">Select Semester</option>
+                                    {% for sem in semesters %}
+                                    <option value="{{ sem.id }}" 
+                                            {% if selected_semester == sem.id|stringformat:"s" %}selected{% endif %}>
+                                        Semester {{ sem.number }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <small class="form-text text-muted mt-1">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Current academic semester
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <!-- Section -->
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-users me-1 text-primary"></i>
+                                Section
+                                <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-primary text-white">
+                                    <i class="fas fa-user-friends"></i>
+                                </span>
+                                <select name="section" id="sectionSelect" 
+                                        class="form-select shadow-sm" required>
+                                    <option value="">Select Section</option>
+                                    {% for s in sections %}
+                                    <option value="{{ s.id }}"
+                                            data-batch="{{ s.batch.id }}"
+                                            {% if selected_section == s.id|stringformat:"s" %}selected{% endif %}>
+                                        Section {{ s.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <small class="form-text text-muted mt-1" id="sectionHelpText">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Select batch first
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Step 2: Fee Details -->
+        <div class="fee-details-card mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0 text-primary">
+                    <i class="fas fa-money-bill-wave me-2"></i>
+                    Step 2: Set Fee Details
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <!-- Tuition Fee -->
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-rupee-sign me-1 text-success"></i>
+                                Tuition Fee Amount
+                                <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-success text-white">
+                                    <i class="fas fa-dollar-sign"></i>
+                                </span>
+                                <input type="number" name="amount" 
+                                       class="form-control shadow-sm" 
+                                       value="{{ request.POST.amount|default:'' }}" 
+                                       required min="1" step="0.01"
+                                       placeholder="0.00"
+                                       id="feeAmount">
+                                <span class="input-group-text bg-light">PKR</span>
+                            </div>
+                            <small class="form-text text-muted mt-1">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Amount per student in Pakistani Rupees
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <!-- Due Date -->
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-calendar-day me-1 text-warning"></i>
+                                Due Date
+                                <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-warning text-dark">
+                                    <i class="fas fa-calendar-check"></i>
+                                </span>
+                                <input type="date" name="due_date" 
+                                       class="form-control shadow-sm" 
+                                       value="{{ default_due_date }}" required
+                                       id="dueDate">
+                            </div>
+                            <small class="form-text text-muted mt-1">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Payment deadline (default: 1 month from today)
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <!-- Grace Period -->
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-clock me-1 text-info"></i>
+                                Grace Period
+                            </label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-info text-white">
+                                    <i class="fas fa-hourglass-half"></i>
+                                </span>
+                                <input type="number" name="grace_period" 
+                                       class="form-control shadow-sm" 
+                                       value="5" min="0" max="30"
+                                       id="gracePeriod">
+                                <span class="input-group-text bg-light">Days</span>
+                            </div>
+                            <small class="form-text text-muted mt-1">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Extra days after due date (0-30 days)
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="action-buttons mb-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <button type="submit" name="load_students" 
+                            class="btn btn-primary btn-lg px-4" id="loadBtn">
+                        <i class="fas fa-search me-2"></i>
+                        Load Students
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-lg px-4" 
+                            onclick="resetForm()">
+                        <i class="fas fa-redo me-2"></i>
+                        Reset Form
+                    </button>
+                </div>
+                <div class="text-end">
+                    <div class="alert alert-info mb-0 py-2 px-3" style="max-width: 300px;">
+                        <small>
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            All fields marked with <span class="text-danger">*</span> are required
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <input type="hidden" name="action" id="actionField" value="">
+
+        {% if students %}
+        <!-- Step 3: Student List -->
+        <div class="students-list-card">
+            <div class="card-header bg-success text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users me-2"></i>
+                        Step 3: Review & Upload Fees
+                    </h5>
+                    <span class="badge bg-white text-success fs-6">
+                        <i class="fas fa-user-graduate me-1"></i>
+                        {{ students|length }} Students Found
+                    </span>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                <!-- Summary Card -->
+                <div class="alert alert-success mb-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h6 class="mb-1">
+                                <i class="fas fa-check-circle me-2"></i>
+                                Selection Summary
+                            </h6>
+                            <p class="mb-0">
+                                <span class="badge bg-primary me-2">{{ selected_discipline_name }}</span>
+                                <span class="badge bg-secondary me-2">{{ selected_batch_name }}</span>
+                                <span class="badge bg-info me-2">Section {{ selected_section_name }}</span>
+                                <span class="badge bg-dark">Semester {{ selected_semester_name }}</span>
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="d-flex align-items-center justify-content-end">
+                                <div class="me-3">
+                                    <h5 class="mb-0 text-success" id="totalAmount">
+                                        PKR {{ total_fee|default:"0.00" }}
+                                    </h5>
+                                    <small class="text-muted">Total Amount</small>
+                                </div>
+                                <div>
+                                    <h5 class="mb-0 text-primary">{{ students|length }}</h5>
+                                    <small class="text-muted">Students</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Students Table -->
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered">
+                        <thead class="table-primary">
+                            <tr>
+                                <th width="5%" class="text-center">#</th>
+                                <th width="15%">
+                                    <i class="fas fa-id-card me-1"></i>
+                                    Student ID
+                                </th>
+                                <th width="40%">
+                                    <i class="fas fa-user me-1"></i>
+                                    Student Name
+                                </th>
+                                <th width="25%">
+                                    <i class="fas fa-money-bill me-1"></i>
+                                    Tuition Fee
+                                </th>
+                                <th width="15%" class="text-center">
+                                    <i class="fas fa-tasks me-1"></i>
+                                    Status
+                                </th>
+                            </tr>
+                        </thead>
+                        
+                        <tbody>
+                            {% for student in students %}
+                            <tr class="align-middle">
+                                <td class="text-center fw-bold">{{ forloop.counter }}</td>
+                                <td>
+                                    <span class="badge bg-dark fs-6">{{ student.student_id }}</span>
+                                </td>
+                                <td>
+                                    <h6 class="mb-1">
+                                        {{ student.first_name }} {{ student.last_name }}
+                                    </h6>
+                                    <small class="text-muted">
+                                        <i class="fas fa-envelope me-1"></i>
+                                        {{ student.email|default:"No email" }}
+                                    </small>
+                                </td>
+                                <td>
+                                    <div class="input-group input-group-sm" style="max-width: 200px;">
+                                        <span class="input-group-text bg-success text-white">
+                                            <i class="fas fa-rupee-sign"></i>
+                                        </span>
+                                        <input type="number"
+                                               name="base_amount_{{ student.id }}"
+                                               value="{{ request.POST.amount|default:'' }}"
+                                               class="form-control fee-input"
+                                               min="1"
+                                               step="0.01"
+                                               required
+                                               oninput="updateTotal()">
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-success rounded-pill py-2 px-3">
+                                        <i class="fas fa-check me-1"></i>
+                                        Ready
+                                    </span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-5">
+                                    <div class="empty-state">
+                                        <i class="fas fa-users-slash fa-3x text-muted mb-3"></i>
+                                        <h5 class="text-muted">No Students Found</h5>
+                                        <p class="text-muted mb-0">Try adjusting your selection criteria</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Final Action Buttons -->
+                <div class="mt-4 pt-3 border-top">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <button type="button" class="btn btn-outline-primary" onclick="scrollToTop()">
+                                <i class="fas fa-arrow-up me-2"></i>
+                                Back to Top
+                            </button>
+                        </div>
+                        <div>
+                            <button type="submit" name="submit_all" class="btn btn-success btn-lg px-5">
+                                <i class="fas fa-cloud-upload-alt me-2"></i>
+                                Upload Fees for All Students
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        </form>
+    </div>
+</div>
+
+</div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Set default due date to 1 month from today
+    const dueDateInput = document.getElementById('dueDate');
+    if (dueDateInput && !dueDateInput.value) {
+        const today = new Date();
+        const oneMonthLater = new Date(today.setMonth(today.getMonth() + 1));
+        dueDateInput.value = oneMonthLater.toISOString().split('T')[0];
+    }
+    
+    const disciplineSelect = document.getElementById('disciplineSelect');
+    const batchSelect = document.getElementById('batchSelect');
+    const sectionSelect = document.getElementById('sectionSelect');
+    const batchHelpText = document.getElementById('batchHelpText');
+    const sectionHelpText = document.getElementById('sectionHelpText');
+    const loadBtn = document.getElementById('loadBtn');
+    const feeAmount = document.getElementById('feeAmount');
+
+    function filterBatches() {
+        const disciplineId = disciplineSelect.value;
+        const selectedDisciplineText = disciplineSelect.options[disciplineSelect.selectedIndex].text;
+        
+        batchSelect.querySelectorAll('option').forEach(option => {
+            if (!option.value) return; // Keep "Select Batch" option
+            
+            if (option.dataset.discipline === disciplineId) {
+                option.style.display = '';
+                option.disabled = false;
+            } else {
+                option.style.display = 'none';
+                option.disabled = true;
+            }
+        });
+
+        // Update help text
+        if (disciplineId) {
+            batchHelpText.innerHTML = `<i class="fas fa-info-circle me-1"></i>Batches for ${selectedDisciplineText}`;
+            batchHelpText.classList.remove('text-muted');
+            batchHelpText.classList.add('text-primary');
+        } else {
+            batchHelpText.innerHTML = `<i class="fas fa-info-circle me-1"></i>Select discipline first`;
+            batchHelpText.classList.remove('text-primary');
+            batchHelpText.classList.add('text-muted');
+        }
+
+        // Clear batch if it doesn't belong to selected discipline
+        if (batchSelect.selectedOptions.length && batchSelect.selectedOptions[0].style.display === 'none') {
+            batchSelect.value = '';
+        }
+        
+        filterSections();
+        updateLoadButton();
+    }
+
+    function filterSections() {
+        const batchId = batchSelect.value;
+        const selectedBatchText = batchSelect.options[batchSelect.selectedIndex].text;
+        
+        sectionSelect.querySelectorAll('option').forEach(option => {
+            if (!option.value) return; // Keep "Select Section" option
+            
+            if (option.dataset.batch === batchId) {
+                option.style.display = '';
+                option.disabled = false;
+            } else {
+                option.style.display = 'none';
+                option.disabled = true;
+            }
+        });
+
+        // Update help text
+        if (batchId) {
+            sectionHelpText.innerHTML = `<i class="fas fa-info-circle me-1"></i>Sections for ${selectedBatchText}`;
+            sectionHelpText.classList.remove('text-muted');
+            sectionHelpText.classList.add('text-primary');
+        } else {
+            sectionHelpText.innerHTML = `<i class="fas fa-info-circle me-1"></i>Select batch first`;
+            sectionHelpText.classList.remove('text-primary');
+            sectionHelpText.classList.add('text-muted');
+        }
+
+        // Clear section if it doesn't belong to selected batch
+        if (sectionSelect.selectedOptions.length && sectionSelect.selectedOptions[0].style.display === 'none') {
+            sectionSelect.value = '';
+        }
+        
+        updateLoadButton();
+    }
+    
+    function updateLoadButton() {
+        const isFormValid = disciplineSelect.value && 
+                           batchSelect.value && 
+                           sectionSelect.value &&
+                           feeAmount.value && 
+                           parseFloat(feeAmount.value) > 0;
+        
+        loadBtn.disabled = !isFormValid;
+        
+        if (isFormValid) {
+            loadBtn.classList.remove('btn-secondary');
+            loadBtn.classList.add('btn-primary');
+            loadBtn.innerHTML = `<i class="fas fa-search me-2"></i>Load Students (Ready)`;
+        } else {
+            loadBtn.classList.remove('btn-primary');
+            loadBtn.classList.add('btn-secondary');
+            loadBtn.innerHTML = `<i class="fas fa-search me-2"></i>Load Students`;
+        }
+    }
+    
+    function updateTotal() {
+        let total = 0;
+        document.querySelectorAll('.fee-input').forEach(input => {
+            const value = parseFloat(input.value) || 0;
+            total += value;
+        });
+        
+        const totalElement = document.getElementById('totalAmount');
+        if (totalElement) {
+            totalElement.textContent = `PKR ${total.toFixed(2)}`;
+        }
+    }
+    
+    function resetForm() {
+        disciplineSelect.value = '';
+        batchSelect.value = '';
+        sectionSelect.value = '';
+        feeAmount.value = '';
+        
+        // Reset all options to visible
+        batchSelect.querySelectorAll('option').forEach(option => {
+            option.style.display = '';
+            option.disabled = false;
+        });
+        
+        sectionSelect.querySelectorAll('option').forEach(option => {
+            option.style.display = '';
+            option.disabled = false;
+        });
+        
+        // Reset help text
+        batchHelpText.innerHTML = `<i class="fas fa-info-circle me-1"></i>Select discipline first`;
+        batchHelpText.classList.remove('text-primary');
+        batchHelpText.classList.add('text-muted');
+        
+        sectionHelpText.innerHTML = `<i class="fas fa-info-circle me-1"></i>Select batch first`;
+        sectionHelpText.classList.remove('text-primary');
+        sectionHelpText.classList.add('text-muted');
+        
+        updateLoadButton();
+    }
+    
+    function scrollToTop() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Event listeners
+    disciplineSelect.addEventListener('change', filterBatches);
+    batchSelect.addEventListener('change', filterSections);
+    sectionSelect.addEventListener('change', updateLoadButton);
+    feeAmount.addEventListener('input', updateLoadButton);
+    
+    // Initialize on page load
+    if (disciplineSelect.value) {
+        filterBatches();
+    }
+    if (batchSelect.value) {
+        filterSections();
+    }
+    
+    // Calculate total if students are loaded
+    if (document.querySelectorAll('.fee-input').length > 0) {
+        updateTotal();
+    }
+});
+</script>
+
+<style>
+/* Card Styling */
+.card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    margin-bottom: 25px;
+}
+
+.card-header {
+    border-bottom: none;
+    padding: 20px 25px;
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
+/* Steps Progress Bar */
+.steps-container {
+    padding: 20px 0;
+}
+
+.steps {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+}
+
+.steps::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 10%;
+    right: 10%;
+    height: 3px;
+    background-color: #e9ecef;
+    z-index: 1;
+}
+
+.step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+    flex: 1;
+}
+
+.step.active .step-icon {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    transform: scale(1.1);
+}
+
+.step-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+    font-size: 18px;
+    transition: all 0.3s ease;
+}
+
+.step-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #6c757d;
+    text-align: center;
+}
+
+.step.active .step-label {
+    color: #667eea;
+}
+
+/* Form Styling */
+.selection-card, .fee-details-card, .students-list-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.form-label {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #495057;
+}
+
+.input-group-sm {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.input-group-text {
+    border: none;
+    font-weight: 600;
+}
+
+.form-select, .form-control {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 10px 15px;
+    transition: all 0.3s ease;
+}
+
+.form-select:focus, .form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
+    transform: translateY(-2px);
+}
+
+.form-text {
+    font-size: 13px;
+}
+
+/* Button Styling */
+.btn {
+    border-radius: 10px;
+    font-weight: 600;
+    padding: 10px 25px;
+    transition: all 0.3s ease;
+}
+
+.btn-lg {
+    padding: 12px 30px;
+    font-size: 16px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #5a6fd8 0%, #65418f 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(102, 126, 234, 0.3);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    border: none;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #218838 0%, #17a2b8 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(40, 167, 69, 0.3);
+}
+
+.btn-secondary {
+    background-color: #6c757d !important;
+    border-color: #6c757d !important;
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.btn-secondary:hover {
+    background-color: #6c757d !important;
+    border-color: #6c757d !important;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Table Styling */
+.table {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.table thead th {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+}
+
+.table tbody tr {
+    transition: all 0.3s ease;
+}
+
+.table tbody tr:hover {
+    background-color: #f8f9fa;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* Badge Styling */
+.badge {
+    font-weight: 600;
+    padding: 8px 15px;
+    border-radius: 20px;
+}
+
+.badge.rounded-pill {
+    border-radius: 50px;
+}
+
+/* Alert Styling */
+.alert {
+    border: none;
+    border-radius: 10px;
+    padding: 15px 20px;
+}
+
+/* Empty State */
+.empty-state {
+    padding: 40px 20px;
+    text-align: center;
+}
+
+.empty-state i {
+    opacity: 0.3;
+}
+
+/* Action Buttons Container */
+.action-buttons {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #dee2e6;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .steps {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .steps::before {
+        display: none;
+    }
+    
+    .card-header {
+        padding: 15px 20px;
+    }
+    
+    .btn {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    
+    .action-buttons .d-flex {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .table-responsive {
+        border: 1px solid #dee2e6;
+        border-radius: 10px;
+    }
+}
+</style>
+{% endblock %}

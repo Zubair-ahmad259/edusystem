@@ -1,0 +1,1039 @@
+{% extends "Home/base.html" %}
+{% load static %}
+{% load humanize %}
+{% block body %}
+<div class="main-wrapper">
+    <div class="page-wrapper">
+        <div class="content container-fluid">
+
+            <!-- Page Header -->
+            <div class="page-header">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h3 class="page-title">Student Fee Management</h3>
+                        <ul class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="#">Dashboard</a></li>
+                            <li class="breadcrumb-item active">Fee Records</li>
+                        </ul>
+                    </div>
+                    <div class="col-auto">
+
+                                    <a href="{% url 'export_fees_excel' %}" class="btn btn-success me-2" target="_blank">
+                                        <i class="fas fa-file-excel"></i> Export to Excel
+                                    </a>
+                                <a href="{% url 'upload_fee' %}" class="btn btn-primary me-2">
+                            <i class="fas fa-cloud-upload-alt"></i> Upload Fee
+                        </a>
+                        <a href="{% url 'defaulter_student' %}" class="btn btn-danger">
+                            <i class="fas fa-exclamation-circle"></i> Defaulters
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-xl-3 col-sm-6">
+                    <div class="card card-statistic">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">Total Students</h6>
+                                    <h3 class="mb-0">{{ student_fees|length }}</h3>
+                                </div>
+                                <div class="card-icon bg-primary">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                            </div>
+                            <p class="mt-2 mb-0 text-muted small">
+                                <i class="fas fa-info-circle me-1"></i>Total enrolled students
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-sm-6">
+                    <div class="card card-statistic">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">Total Fee Amount</h6>
+                                    <h3 class="mb-0">PKR {{ total_fee_all|floatformat:0|intcomma }}</h3>
+                                </div>
+                                <div class="card-icon bg-info">
+                                    <i class="fas fa-rupee-sign"></i>
+                                </div>
+                            </div>
+                            <p class="mt-2 mb-0 text-muted small">
+                                <i class="fas fa-calendar me-1"></i>Total fee across all students
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-sm-6">
+                    <div class="card card-statistic">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">Paid Amount</h6>
+                                    <h3 class="mb-0">PKR {{ total_cleared_all|floatformat:0|intcomma }}</h3>
+                                </div>
+                                <div class="card-icon bg-success">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                            </div>
+                            <div class="progress mt-2" style="height: 5px;">
+                                {% if total_fee_all > 0 %}
+                                {% widthratio total_cleared_all total_fee_all 100 as paid_percentage %}
+                                <div class="progress-bar bg-success" style="width: {{ paid_percentage }}%"></div>
+                                {% endif %}
+                            </div>
+                            <p class="mt-2 mb-0 text-muted small">
+                                {% if total_fee_all > 0 %}
+                                {{ paid_percentage|floatformat:0 }}% of total fee collected
+                                {% else %}
+                                No fee records available
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-sm-6">
+                    <div class="card card-statistic">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">Pending Amount</h6>
+                                    <h3 class="mb-0">PKR {{ total_pending_all|floatformat:0|intcomma }}</h3>
+                                </div>
+                                <div class="card-icon bg-warning">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                            </div>
+                            <div class="progress mt-2" style="height: 5px;">
+                                {% if total_fee_all > 0 %}
+                                {% widthratio total_pending_all total_fee_all 100 as pending_percentage %}
+                                <div class="progress-bar bg-warning" style="width: {{ pending_percentage }}%"></div>
+                                {% endif %}
+                            </div>
+                            <p class="mt-2 mb-0 text-muted small">
+                                {% if total_fee_all > 0 %}
+                                {{ pending_percentage|floatformat:0 }}% of total fee pending
+                                {% else %}
+                                No pending amount
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Card with Toggle -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-filter me-2"></i> Filter Students</h5>
+                    <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse">
+                        <i class="fas fa-chevron-down"></i> Toggle Filters
+                    </button>
+                </div>
+                <div class="collapse show" id="filterCollapse">
+                    <div class="card-body">
+                        <form method="get" class="row g-3" id="filterForm">
+                            <div class="col-md-3">
+                                <label class="form-label"><i class="fas fa-graduation-cap me-1"></i> Discipline</label>
+                                <select name="discipline" class="form-select form-select-sm" id="disciplineSelect">
+                                    <option value="">All Disciplines</option>
+                                    {% for disc in disciplines %}
+                                    <option value="{{ disc.id }}" {% if selected_discipline == disc.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ disc.field }} ({{ disc.program }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label"><i class="fas fa-calendar-alt me-1"></i> Batch</label>
+                                <select name="batch" class="form-select form-select-sm" id="batchSelect">
+                                    <option value="">All Batches</option>
+                                    {% for b in batches %}
+                                    <option value="{{ b.id }}" 
+                                            data-discipline="{{ b.discipline.id }}"
+                                            {% if selected_batch == b.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ b.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label"><i class="fas fa-book-open me-1"></i> Semester</label>
+                                <select name="semester" class="form-select form-select-sm" id="semesterSelect">
+                                    <option value="">All Semesters</option>
+                                    {% for sem in semesters %}
+                                    <option value="{{ sem.id }}" {% if selected_semester == sem.id|stringformat:"s" %}selected{% endif %}>
+                                        Semester {{ sem.number }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label"><i class="fas fa-users me-1"></i> Section</label>
+                                <select name="section" class="form-select form-select-sm" id="sectionSelect">
+                                    <option value="">All Sections</option>
+                                    {% for s in sections %}
+                                    <option value="{{ s.id }}" 
+                                            data-batch="{{ s.batch.id }}"
+                                            {% if selected_section == s.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ s.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-search me-1"></i> Apply Filters
+                                    </button>
+                                    <a href="{% url 'fee_list' %}" class="btn btn-outline-secondary btn-sm">
+                                        <i class="fas fa-redo me-1"></i> Reset Filters
+                                    </a>
+                                    <div class="ms-auto">
+                                        <span class="badge bg-light text-dark">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            Showing {{ student_fees|length }} students
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Filters Display -->
+            {% if selected_discipline or selected_batch or selected_semester or selected_section %}
+            <div class="alert alert-info mb-4 py-2">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <div class="flex-grow-1">
+                        <strong>Active Filters:</strong>
+                        {% if selected_discipline %}
+                        <span class="badge bg-primary me-2">
+                            Discipline: {{ selected_discipline_name|default:selected_discipline }}
+                        </span>
+                        {% endif %}
+                        {% if selected_batch %}
+                        <span class="badge bg-primary me-2">
+                            Batch: {{ selected_batch_name|default:selected_batch }}
+                        </span>
+                        {% endif %}
+                        {% if selected_semester %}
+                        <span class="badge bg-primary me-2">
+                            Semester: {{ selected_semester_name|default:selected_semester }}
+                        </span>
+                        {% endif %}
+                        {% if selected_section %}
+                        <span class="badge bg-primary me-2">
+                            Section: {{ selected_section_name|default:selected_section }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    <a href="{% url 'fee_list' %}" class="btn btn-sm btn-outline-info">
+                        Clear All
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Messages -->
+            {% if messages %}
+            <div class="mb-4">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    <i class="fas 
+                        {% if message.tags == 'success' %}fa-check-circle
+                        {% elif message.tags == 'warning' %}fa-exclamation-triangle
+                        {% elif message.tags == 'error' or message.tags == 'danger' %}fa-times-circle
+                        {% else %}fa-info-circle{% endif %}
+                        me-2"></i>
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Overdue Fine Notice -->
+            <div class="alert alert-danger mb-4">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                    <div>
+                        <h5 class="mb-1"><strong>OVERDUE FEE NOTICE</strong></h5>
+                        <p class="mb-0">
+                            <i class="fas fa-money-bill-wave me-1"></i>
+                            <strong>PKR 5,000 late fine</strong> is automatically applied to all overdue fees.
+                            Fines are removed when fees are fully paid.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Students Table -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-list me-2"></i> Student Fee Records</h5>
+                    <div class="d-flex gap-2">
+                        <div class="input-group input-group-sm" style="width: 250px;">
+                            <input type="text" class="form-control form-control-sm" placeholder="Search students..." id="studentSearch">
+                            <button class="btn btn-outline-secondary" type="button">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="feeTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Student Details</th>
+                                    <th>Academic Info</th>
+                                    <th>Fee Summary</th>
+                                    <th>Payment Status</th>
+                                    <th>Balance</th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for student_data in student_fees %}
+                                <tr class="{% if student_data.total_pending == 0 %}table-success{% elif student_data.total_pending == student_data.total_all %}table-danger{% endif %}">
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if student_data.student.image %}
+                                            <img src="{{ student_data.student.image.url }}" class="rounded-circle me-3" width="45" height="45" alt="{{ student_data.student.first_name }}">
+                                            {% else %}
+                                            <div class="avatar bg-primary text-white rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                                                {{ student_data.student.first_name|first|upper }}{{ student_data.student.last_name|first|upper }}
+                                            </div>
+                                            {% endif %}
+                                            <div>
+                                                <h6 class="mb-1">{{ student_data.student.first_name }} {{ student_data.student.last_name }}</h6>
+                                                <p class="mb-0 text-muted small">
+                                                    <i class="fas fa-id-card me-1"></i>ID: {{ student_data.student.student_id }}
+                                                </p>
+                                                {% if student_data.student.phone %}
+                                                <p class="mb-0 text-muted small">
+                                                    <i class="fas fa-phone me-1"></i>{{ student_data.student.phone }}
+                                                </p>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="text-muted small">
+                                            <div class="mb-1">
+                                                <i class="fas fa-graduation-cap me-1"></i>
+                                                <strong>{{ student_data.discipline.field }}</strong>
+                                            </div>
+                                            <div class="mb-1">
+                                                <i class="fas fa-calendar-alt me-1"></i>
+                                                Batch: {{ student_data.batch.name }}
+                                            </div>
+                                            <div class="mb-1">
+                                                <i class="fas fa-users me-1"></i>
+                                                Section: {{ student_data.section.name }}
+                                            </div>
+                                            <div>
+                                                <i class="fas fa-book-open me-1"></i>
+                                                Current Sem: {{ student_data.semester.number }}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="small">
+                                            <div class="mb-1">
+                                                <i class="fas fa-money-bill-wave me-1"></i>
+                                                <strong>Base Fee:</strong> PKR {{ student_data.fees.0.amount|floatformat:0|intcomma|default:"0" }}
+                                            </div>
+                                            <!-- Show Overdue Fine if any -->
+                                            {% for fee in student_data.fees %}
+                                            {% if fee.fine > 0 %}
+                                            <div class="mb-1 text-danger">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                                <strong>Overdue Fine:</strong> PKR {{ fee.fine|floatformat:0|intcomma }}
+                                            </div>
+                                            {% endif %}
+                                            {% endfor %}
+                                            <div class="mb-1">
+                                                <i class="fas fa-calculator me-1"></i>
+                                                <strong>Total:</strong> PKR {{ student_data.total_all|floatformat:0|intcomma }}
+                                            </div>
+                                            <div class="mb-1">
+                                                <i class="fas fa-check-circle me-1"></i>
+                                                <strong>Paid:</strong> PKR {{ student_data.total_cleared|floatformat:0|intcomma }}
+                                            </div>
+                                            <div>
+                                                <i class="fas fa-calendar-check me-1"></i>
+                                                <strong>Semesters:</strong>
+                                                {% for fee in student_data.fees|slice:":3" %}
+                                                <span class="badge bg-light text-dark">Sem {{ fee.semester.number }}</span>
+                                                {% endfor %}
+                                                {% if student_data.fees|length > 3 %}
+                                                <span class="badge bg-secondary">+{{ student_data.fees|length|add:"-3" }} more</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex flex-column align-items-start">
+                                            {% if student_data.total_pending == 0 %}
+                                            <span class="badge bg-success p-2 mb-1">
+                                                <i class="fas fa-check-circle me-1"></i> Fully Paid
+                                            </span>
+                                            {% elif student_data.total_cleared > 0 %}
+                                            <span class="badge bg-warning p-2 mb-1">
+                                                <i class="fas fa-clock me-1"></i> Partial Paid
+                                            </span>
+                                            <div class="progress" style="width: 120px; height: 8px;">
+                                                {% widthratio student_data.total_cleared student_data.total_all 100 as percentage %}
+                                                <div class="progress-bar bg-warning" style="width: {{ percentage }}%"></div>
+                                            </div>
+                                            <small class="text-muted mt-1">{{ percentage|floatformat:0 }}% Paid</small>
+                                            {% else %}
+                                            <!-- Check if any fee is overdue -->
+                                            {% with student_data.fees|first as first_fee %}
+                                            {% if first_fee.is_overdue %}
+                                            <span class="badge bg-danger p-2 mb-1">
+                                                <i class="fas fa-exclamation-circle me-1"></i> OVERDUE
+                                            </span>
+                                            <small class="text-danger">PKR 5,000 fine applied</small>
+                                            {% else %}
+                                            <span class="badge bg-secondary p-2 mb-1">
+                                                <i class="fas fa-clock me-1"></i> Pending
+                                            </span>
+                                            {% endif %}
+                                            {% endwith %}
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex flex-column">
+                                            {% if student_data.total_pending > 0 %}
+                                            <h5 class="text-danger mb-0">PKR {{ student_data.total_pending|floatformat:0|intcomma }}</h5>
+                                            <small class="text-muted">
+                                                <i class="fas fa-calendar-times me-1"></i>Balance Due
+                                            </small>
+                                            <!-- Check if fine is included -->
+                                            {% for fee in student_data.fees %}
+                                            {% if fee.fine > 0 %}
+                                            <small class="text-danger">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                                Includes PKR {{ fee.fine|floatformat:0|intcomma }} late fine
+                                            </small>
+                                            {% endif %}
+                                            {% endfor %}
+                                            {% else %}
+                                            <h5 class="text-success mb-0">PKR 0</h5>
+                                            <small class="text-muted">
+                                                <i class="fas fa-check me-1"></i>Cleared
+                                            </small>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group" role="group">
+                                            <!-- View Details Button -->
+                                            <a href="{% url 'student_fee_detail' student_data.student.id %}" 
+                                               class="btn btn-sm btn-outline-info"
+                                               title="View Details"
+                                               data-bs-toggle="tooltip">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            
+                                            <!-- Make Payment Button -->
+                                            {% if student_data.total_pending > 0 %}
+                                            <a href="{% url 'student_fee_detail' student_data.student.id %}" 
+                                               class="btn btn-sm btn-outline-success"
+                                               title="Make Payment"
+                                               data-bs-toggle="tooltip">
+                                                <i class="fas fa-credit-card"></i>
+                                            </a>
+                                            {% else %}
+                                            <button class="btn btn-sm btn-outline-secondary" disabled title="No Payment Due">
+                                                <i class="fas fa-credit-card"></i>
+                                            </button>
+                                            {% endif %}
+                                            
+                                            <!-- Edit Button -->
+                                            {% if user_can_edit %}
+                                            {% if student_data.fees|length > 0 %}
+                                            <a href="{% url 'edit_fee' student_data.fees.0.id %}" 
+                                               class="btn btn-sm btn-outline-warning"
+                                               title="Edit Fee"
+                                               data-bs-toggle="tooltip">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            {% else %}
+                                            <button class="btn btn-sm btn-outline-secondary" disabled title="No Fee Records">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            {% endif %}
+                                            {% endif %}
+                                            
+                                            <!-- Receipt Button -->
+                                            {% if student_data.total_cleared > 0 %}
+                                            <a href="#" 
+                                               class="btn btn-sm btn-outline-primary"
+                                               title="Generate Receipt"
+                                               data-bs-toggle="tooltip">
+                                                <i class="fas fa-receipt"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-5">
+                                        <div class="text-muted">
+                                            <i class="fas fa-search fa-3x mb-3"></i>
+                                            <h5>No Students Found</h5>
+                                            <p class="mb-3">Try adjusting your filters or upload new fee records</p>
+                                            <div class="d-flex justify-content-center gap-2">
+                                                <a href="{% url 'fee_list' %}" class="btn btn-outline-primary btn-sm">
+                                                    <i class="fas fa-redo me-1"></i> Reset Filters
+                                                </a>
+                                                <a href="{% url 'upload_fee' %}" class="btn btn-primary btn-sm">
+                                                    <i class="fas fa-cloud-upload-alt me-1"></i> Upload Fee Records
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="text-muted small">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Showing {{ student_fees|length }} of {{ student_fees|length }} records
+                        </div>
+                        <div>
+                            {% if student_fees.has_other_pages %}
+                            <nav>
+                                <ul class="pagination pagination-sm mb-0">
+                                    {% if student_fees.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ student_fees.previous_page_number }}" aria-label="Previous">
+                                            <span aria-hidden="true">&laquo;</span>
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                    
+                                    {% for i in student_fees.paginator.page_range %}
+                                    <li class="page-item {% if student_fees.number == i %}active{% endif %}">
+                                        <a class="page-link" href="?page={{ i }}">{{ i }}</a>
+                                    </li>
+                                    {% endfor %}
+                                    
+                                    {% if student_fees.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ student_fees.next_page_number }}" aria-label="Next">
+                                            <span aria-hidden="true">&raquo;</span>
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style>
+.card-statistic {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.08);
+    transition: transform 0.3s ease;
+}
+
+.card-statistic:hover {
+    transform: translateY(-5px);
+}
+
+.card-statistic .card-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.avatar {
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.badge {
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.progress {
+    border-radius: 10px;
+}
+
+.table th {
+    font-weight: 600;
+    background-color: #f8f9fa;
+    white-space: nowrap;
+}
+
+.table tbody tr {
+    transition: all 0.3s;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+    transform: scale(1.005);
+}
+
+.table-success {
+    background-color: rgba(40, 167, 69, 0.05) !important;
+}
+
+.table-danger {
+    background-color: rgba(220, 53, 69, 0.05) !important;
+}
+
+.btn-outline-info, .btn-outline-success, .btn-outline-warning, .btn-outline-primary {
+    border-width: 1px;
+}
+
+.btn-outline-info:hover, .btn-outline-success:hover, 
+.btn-outline-warning:hover, .btn-outline-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Overdue fine highlight */
+.text-danger {
+    color: #dc3545 !important;
+    font-weight: 600;
+}
+</style>
+
+<script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Auto-hide alerts after 5 seconds (except overdue notice)
+    setTimeout(function() {
+        var alerts = document.querySelectorAll('.alert:not(.alert-danger)');
+        alerts.forEach(function(alert) {
+            var bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        });
+    }, 5000);
+    
+    // Excel Export Functionality
+    document.getElementById('exportExcelBtn').addEventListener('click', function() {
+        exportToExcel();
+    });
+    
+    function exportToExcel() {
+        const table = document.getElementById('feeTable');
+        const ws = XLSX.utils.table_to_sheet(table);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Fee Records");
+        
+        // Generate filename with current date
+        const date = new Date().toISOString().slice(0,10);
+        const filename = `Fee_Records_${date}.xlsx`;
+        
+        XLSX.writeFile(wb, filename);
+        
+        // Show success message
+        showToast('Excel file downloaded successfully!', 'success');
+    }
+    
+    // Student search functionality
+    document.getElementById('studentSearch').addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const rows = document.querySelectorAll('#feeTable tbody tr');
+        
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchTerm) ? '' : 'none';
+        });
+    });
+    
+    // Toast notification function
+    function showToast(message, type = 'info') {
+        // Remove existing toasts
+        const existingToasts = document.querySelectorAll('.toast-container');
+        existingToasts.forEach(toast => toast.remove());
+        
+        // Create toast container
+        const toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+        
+        // Create toast
+        const toastEl = document.createElement('div');
+        toastEl.className = `toast align-items-center text-bg-${type} border-0`;
+        toastEl.setAttribute('role', 'alert');
+        toastEl.setAttribute('aria-live', 'assertive');
+        toastEl.setAttribute('aria-atomic', 'true');
+        
+        toastEl.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'} me-2"></i>
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        `;
+        
+        toastContainer.appendChild(toastEl);
+        document.body.appendChild(toastContainer);
+        
+        const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+        toast.show();
+    }
+    
+    // Filter functionality for discipline, batch, section dependency
+    const disciplineSelect = document.getElementById('disciplineSelect');
+    const batchSelect = document.getElementById('batchSelect');
+    const sectionSelect = document.getElementById('sectionSelect');
+    
+    const allBatches = [
+        {% for b in batches %}
+        {
+            id: "{{ b.id }}", 
+            name: "{{ b.name|escapejs }}", 
+            disciplineId: "{{ b.discipline.id }}"
+        },
+        {% endfor %}
+    ];
+    
+    const allSections = [
+        {% for s in sections %}
+        {
+            id: "{{ s.id }}", 
+            name: "{{ s.name|escapejs }}", 
+            batchId: "{{ s.batch.id }}",
+            batchName: "{{ s.batch.name|escapejs }}"
+        },
+        {% endfor %}
+    ];
+    
+    function filterBatches() {
+        const selectedDisciplineId = disciplineSelect.value;
+        const currentValue = batchSelect.value;
+        
+        batchSelect.innerHTML = '<option value="">All Batches</option>';
+        
+        const filteredBatches = selectedDisciplineId 
+            ? allBatches.filter(b => b.disciplineId === selectedDisciplineId)
+            : allBatches;
+        
+        filteredBatches.forEach(b => {
+            const option = document.createElement('option');
+            option.value = b.id;
+            option.textContent = b.name;
+            batchSelect.appendChild(option);
+        });
+        
+        // Restore previous selection if still valid
+        if (currentValue && filteredBatches.some(b => b.id === currentValue)) {
+            batchSelect.value = currentValue;
+        } else {
+            batchSelect.value = '';
+        }
+        
+        filterSections();
+    }
+    
+    function filterSections() {
+        const selectedBatchId = batchSelect.value;
+        const currentValue = sectionSelect.value;
+        
+        sectionSelect.innerHTML = '<option value="">All Sections</option>';
+        
+        const filteredSections = selectedBatchId 
+            ? allSections.filter(s => s.batchId === selectedBatchId)
+            : allSections;
+        
+        filteredSections.forEach(s => {
+            const option = document.createElement('option');
+            option.value = s.id;
+            option.textContent = s.name;
+            sectionSelect.appendChild(option);
+        });
+        
+        // Restore previous selection if still valid
+        if (currentValue && filteredSections.some(s => s.id === currentValue)) {
+            sectionSelect.value = currentValue;
+        } else {
+            sectionSelect.value = '';
+        }
+    }
+    
+    // Event Listeners
+    if (disciplineSelect) {
+        disciplineSelect.addEventListener('change', filterBatches);
+    }
+    
+    if (batchSelect) {
+        batchSelect.addEventListener('change', filterSections);
+    }
+    
+    // Initialize filters on page load
+    filterBatches();
+    filterSections();
+});
+{% comment %} news javaseript for excel {% endcomment %}
+ // SIMPLE VERSION - Add this to your fee_list.html
+document.getElementById('exportExcelBtn').addEventListener('click', function() {
+    // Get current filter values
+    const discipline = document.getElementById('disciplineSelect').value;
+    const batch = document.getElementById('batchSelect').value;
+    const section = document.getElementById('sectionSelect').value;
+    const semester = document.getElementById('semesterSelect').value;
+    
+    // Build URL
+    let url = '/export-fees-excel/?';
+    if (discipline) url += 'discipline=' + discipline + '&';
+    if (batch) url += 'batch=' + batch + '&';
+    if (section) url += 'section=' + section + '&';
+    if (semester) url += 'semester=' + semester;
+    
+    // Open in new tab (triggers download)
+    window.open(url, '_blank');
+    
+    // Show message
+    alert('Excel download started! Check your downloads folder.');
+});
+</script>
+{% comment %} <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Excel Export Functionality - SIMPLE VERSION
+    document.getElementById('exportExcelBtn').addEventListener('click', function() {
+        exportToExcel();
+    });
+    
+    function exportToExcel() {
+        // Get current filter values
+        const discipline = document.getElementById('disciplineSelect').value;
+        const batch = document.getElementById('batchSelect').value;
+        const section = document.getElementById('sectionSelect').value;
+        const semester = document.getElementById('semesterSelect').value;
+        
+        // Show loading state
+        const originalText = this.innerHTML;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating Excel...';
+        this.disabled = true;
+        
+        // Build URL with current filters
+        let exportUrl = "{% url 'export_fees_excel' %}?";
+        const params = new URLSearchParams();
+        
+        if (discipline) params.append('discipline', discipline);
+        if (batch) params.append('batch', batch);
+        if (section) params.append('section', section);
+        if (semester) params.append('semester', semester);
+        
+        exportUrl += params.toString();
+        
+        // Open in new tab (triggers download)
+        window.open(exportUrl, '_blank');
+        
+        // Restore button after 1 second
+        setTimeout(() => {
+            this.innerHTML = originalText;
+            this.disabled = false;
+            showToast('Excel file download started!', 'success');
+        }, 1000);
+    }
+    
+    // Student search functionality
+    document.getElementById('studentSearch').addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const rows = document.querySelectorAll('#feeTable tbody tr');
+        
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchTerm) ? '' : 'none';
+        });
+        
+        // Update showing count
+        const visibleRows = document.querySelectorAll('#feeTable tbody tr[style=""]');
+        const showingText = document.querySelector('.text-muted.small');
+        if (showingText) {
+            showingText.innerHTML = `<i class="fas fa-info-circle me-1"></i>
+                Showing ${visibleRows.length} of ${rows.length} records`;
+        }
+    });
+    
+    // Toast notification function
+    function showToast(message, type = 'info') {
+        // Remove existing toasts
+        const existingToasts = document.querySelectorAll('.toast-container');
+        existingToasts.forEach(toast => toast.remove());
+        
+        // Create toast container
+        const toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+        toastContainer.style.zIndex = '9999';
+        
+        // Create toast
+        const toastEl = document.createElement('div');
+        toastEl.className = `toast align-items-center text-bg-${type} border-0`;
+        toastEl.setAttribute('role', 'alert');
+        toastEl.setAttribute('aria-live', 'assertive');
+        toastEl.setAttribute('aria-atomic', 'true');
+        
+        toastEl.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'} me-2"></i>
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        `;
+        
+        toastContainer.appendChild(toastEl);
+        document.body.appendChild(toastContainer);
+        
+        const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+        toast.show();
+    }
+    
+    // Filter functionality for discipline, batch, section dependency
+    const disciplineSelect = document.getElementById('disciplineSelect');
+    const batchSelect = document.getElementById('batchSelect');
+    const sectionSelect = document.getElementById('sectionSelect');
+    
+    const allBatches = [
+        {% for b in batches %}
+        {
+            id: "{{ b.id }}", 
+            name: "{{ b.name|escapejs }}", 
+            disciplineId: "{{ b.discipline.id }}"
+        },
+        {% endfor %}
+    ];
+    
+    const allSections = [
+        {% for s in sections %}
+        {
+            id: "{{ s.id }}", 
+            name: "{{ s.name|escapejs }}", 
+            batchId: "{{ s.batch.id }}"
+        },
+        {% endfor %}
+    ];
+    
+    function filterBatches() {
+        const selectedDisciplineId = disciplineSelect.value;
+        const currentValue = batchSelect.value;
+        
+        // Clear and rebuild batch options
+        const defaultOption = batchSelect.querySelector('option[value=""]');
+        batchSelect.innerHTML = '';
+        batchSelect.appendChild(defaultOption.cloneNode(true));
+        
+        const filteredBatches = selectedDisciplineId 
+            ? allBatches.filter(b => b.disciplineId === selectedDisciplineId)
+            : allBatches;
+        
+        filteredBatches.forEach(b => {
+            const option = document.createElement('option');
+            option.value = b.id;
+            option.textContent = b.name;
+            if (b.id === "{{ selected_batch }}") {
+                option.selected = true;
+            }
+            batchSelect.appendChild(option);
+        });
+        
+        // Restore previous selection if still valid
+        if (currentValue && filteredBatches.some(b => b.id === currentValue)) {
+            batchSelect.value = currentValue;
+        } else {
+            batchSelect.value = '';
+        }
+        
+        filterSections();
+    }
+    
+    function filterSections() {
+        const selectedBatchId = batchSelect.value;
+        const currentValue = sectionSelect.value;
+        
+        // Clear and rebuild section options
+        const defaultOption = sectionSelect.querySelector('option[value=""]');
+        sectionSelect.innerHTML = '';
+        sectionSelect.appendChild(defaultOption.cloneNode(true));
+        
+        const filteredSections = selectedBatchId 
+            ? allSections.filter(s => s.batchId === selectedBatchId)
+            : allSections;
+        
+        filteredSections.forEach(s => {
+            const option = document.createElement('option');
+            option.value = s.id;
+            option.textContent = s.name;
+            if (s.id === "{{ selected_section }}") {
+                option.selected = true;
+            }
+            sectionSelect.appendChild(option);
+        });
+        
+        // Restore previous selection if still valid
+        if (currentValue && filteredSections.some(s => s.id === currentValue)) {
+            sectionSelect.value = currentValue;
+        } else {
+            sectionSelect.value = '';
+        }
+    }
+    
+    // Event Listeners
+    if (disciplineSelect) {
+        disciplineSelect.addEventListener('change', filterBatches);
+    }
+    
+    if (batchSelect) {
+        batchSelect.addEventListener('change', filterSections);
+    }
+    
+    // Initialize filters on page load
+    filterBatches();
+    filterSections();
+});
+</script>
+ {% endcomment %}
+{% endblock  %}

@@ -1,0 +1,775 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}Bulk Attendance - Student Management System{% endblock %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Bulk Attendance - Class-wise</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'attendance_dashboard' %}">Attendance</a></li>
+                        <li class="breadcrumb-item active">Bulk Marking</li>
+                    </ul>
+                </div>
+                <div class="col-auto text-right float-right ml-auto">
+                    <a href="{% url 'mark_attendance' %}" class="btn btn-outline-primary mr-2">
+                        <i class="fas fa-user"></i> Single Marking
+                    </a>
+                    <button id="submitAttendance" class="btn btn-success">
+                        <i class="fas fa-save"></i> Save All
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Selection Form -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">Select Class & Subject</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <!-- Discipline -->
+                            <div class="col-md-3">
+                                <label class="form-label">Discipline <span class="text-danger">*</span></label>
+                                <select id="disciplineSelect" class="form-control">
+                                    <option value="">Select Discipline</option>
+                                </select>
+                            </div>
+
+                            <!-- Batch -->
+                            <div class="col-md-3">
+                                <label class="form-label">Batch <span class="text-danger">*</span></label>
+                                <select id="batchSelect" class="form-control" disabled>
+                                    <option value="">Select Batch</option>
+                                </select>
+                            </div>
+
+                            <!-- Semester -->
+                            <div class="col-md-2">
+                                <label class="form-label">Semester <span class="text-danger">*</span></label>
+                                <select id="semesterSelect" class="form-control" disabled>
+                                    <option value="">Select Semester</option>
+                                </select>
+                            </div>
+
+                            <!-- Section -->
+                            <div class="col-md-2">
+                                <label class="form-label">Section <span class="text-danger">*</span></label>
+                                <select id="sectionSelect" class="form-control" disabled>
+                                    <option value="">Select Section</option>
+                                </select>
+                            </div>
+
+                            <!-- Subject -->
+                            <div class="col-md-3">
+                                <label class="form-label">Subject <span class="text-danger">*</span></label>
+                                <select id="subjectSelect" class="form-control" disabled>
+                                    <option value="">Select Subject</option>
+                                </select>
+                            </div>
+
+                            <!-- Date -->
+                            <div class="col-md-2">
+                                <label class="form-label">Date <span class="text-danger">*</span></label>
+                                <input type="date" id="attendanceDate" class="form-control" 
+                                       value="{{ today|date:'Y-m-d' }}">
+                            </div>
+
+                            <!-- Load Students Button -->
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button id="loadStudents" class="btn btn-primary w-100" disabled>
+                                    <i class="fas fa-search"></i> Load Students
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attendance Table -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">Mark Attendance for Students</h5>
+                        <div class="d-flex align-items-center">
+                            <div class="mr-3">
+                                <span class="badge badge-success">Present</span>
+                                <span class="badge badge-danger ml-2">Absent</span>
+                            </div>
+                            <div class="ml-auto">
+                                <button id="markAllPresent" class="btn btn-sm btn-outline-success mr-2">
+                                    <i class="fas fa-check"></i> Mark All Present
+                                </button>
+                                <button id="markAllAbsent" class="btn btn-sm btn-outline-danger">
+                                    <i class="fas fa-times"></i> Mark All Absent
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Loading Indicator -->
+                        <div id="loadingIndicator" class="text-center py-5" style="display: none;">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                            <p class="mt-3">Loading students...</p>
+                        </div>
+
+                        <!-- Students Table -->
+                        <div id="studentsTable" style="display: none;">
+                            <div class="table-responsive">
+                                <table class="table table-hover table-center mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 50px;">#</th>
+                                            <th>Student ID</th>
+                                            <th>Student Name</th>
+                                            <th>Status</th>
+                                            <th>Remarks</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="studentsTableBody">
+                                        <!-- Students will be loaded here dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Summary -->
+                            <div class="row mt-4">
+                                <div class="col-md-4">
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            <h6 class="card-title">Summary</h6>
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span>Total Students:</span>
+                                                <span id="totalStudents" class="badge badge-primary">0</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span>Present:</span>
+                                                <span id="presentCount" class="badge badge-success">0</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between">
+                                                <span>Absent:</span>
+                                                <span id="absentCount" class="badge badge-danger">0</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            <h6 class="card-title">Class Information</h6>
+                                            <div id="classInfo">
+                                                <p class="mb-1"><strong>Discipline:</strong> <span id="selectedDiscipline">-</span></p>
+                                                <p class="mb-1"><strong>Batch:</strong> <span id="selectedBatch">-</span></p>
+                                                <p class="mb-1"><strong>Semester:</strong> <span id="selectedSemester">-</span></p>
+                                                <p class="mb-1"><strong>Section:</strong> <span id="selectedSection">-</span></p>
+                                                <p class="mb-1"><strong>Subject:</strong> <span id="selectedSubject">-</span></p>
+                                                <p class="mb-0"><strong>Date:</strong> <span id="selectedDate">-</span></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- No Data Message -->
+                        <div id="noDataMessage" class="text-center py-5">
+                            <i class="fas fa-users fa-4x text-muted mb-3"></i>
+                            <h4>No Students Loaded</h4>
+                            <p class="text-muted">Please select all required fields to load students.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
+<script>
+    $(document).ready(function() {
+        let studentsData = [];
+        let attendanceData = {};
+        
+        // Initialize date to today
+        const today = new Date().toISOString().split('T')[0];
+        $('#attendanceDate').val(today);
+
+        // Store semester mapping (ID -> Number)
+        let semesterMapping = {};
+
+        // Load initial data on page load
+        loadInitialData();
+
+        // Function to load initial data
+        function loadInitialData() {
+            // Load disciplines
+            $.ajax({
+                url: "{% url 'get_disciplines' %}",
+                method: 'GET',
+                success: function(response) {
+                    const disciplineSelect = $('#disciplineSelect');
+                    disciplineSelect.empty().append('<option value="">Select Discipline</option>');
+                    
+                    if (response.length > 0) {
+                        response.forEach(discipline => {
+                            disciplineSelect.append(`<option value="${discipline.id}">${discipline.text}</option>`);
+                        });
+                    } else {
+                        disciplineSelect.append('<option value="">No disciplines found</option>');
+                    }
+                },
+                error: function() {
+                    console.error('Error loading disciplines');
+                    $('#disciplineSelect').empty().append('<option value="">Error loading disciplines</option>');
+                }
+            });
+
+            // Load semesters and store mapping
+            $.ajax({
+                url: "{% url 'get_semesters' %}",
+                method: 'GET',
+                success: function(response) {
+                    const semesterSelect = $('#semesterSelect');
+                    semesterSelect.empty().append('<option value="">Select Semester</option>');
+                    
+                    if (response.length > 0) {
+                        response.forEach(semester => {
+                            semesterSelect.append(`<option value="${semester.id}">${semester.text}</option>`);
+                            // Store mapping: Semester ID -> Semester Number
+                            const semesterNumber = semester.text.replace('Semester ', '');
+                            semesterMapping[semester.id] = parseInt(semesterNumber);
+                        });
+                    } else {
+                        semesterSelect.append('<option value="">No semesters found</option>');
+                    }
+                },
+                error: function() {
+                    console.error('Error loading semesters');
+                    $('#semesterSelect').empty().append('<option value="">Error loading semesters</option>');
+                }
+            });
+        }
+
+        // When discipline changes, load batches
+        $('#disciplineSelect').change(function() {
+            const disciplineId = $(this).val();
+            
+            if (!disciplineId) {
+                $('#batchSelect').empty().append('<option value="">Select Batch</option>').prop('disabled', true);
+                $('#semesterSelect').prop('disabled', true);
+                $('#sectionSelect').prop('disabled', true);
+                $('#subjectSelect').prop('disabled', true);
+                $('#loadStudents').prop('disabled', true);
+                return;
+            }
+
+            // Update selected discipline in summary
+            $('#selectedDiscipline').text($('#disciplineSelect option:selected').text());
+
+            // Load batches for selected discipline
+            $.ajax({
+                url: "{% url 'get_batches_by_discipline' %}",
+                data: { discipline_id: disciplineId },
+                method: 'GET',
+                success: function(response) {
+                    const batchSelect = $('#batchSelect');
+                    batchSelect.empty().append('<option value="">Select Batch</option>');
+                    
+                    if (response.length > 0) {
+                        response.forEach(batch => {
+                            batchSelect.append(`<option value="${batch.id}">${batch.text}</option>`);
+                        });
+                        batchSelect.prop('disabled', false);
+                    } else {
+                        batchSelect.append('<option value="">No batches found</option>').prop('disabled', true);
+                    }
+                    
+                    // Reset and disable dependent fields
+                    $('#semesterSelect').val('').prop('disabled', true);
+                    $('#sectionSelect').empty().append('<option value="">Select Section</option>').prop('disabled', true);
+                    $('#subjectSelect').empty().append('<option value="">Select Subject</option>').prop('disabled', true);
+                    $('#loadStudents').prop('disabled', true);
+                },
+                error: function() {
+                    alert('Error loading batches');
+                    $('#batchSelect').empty().append('<option value="">Error loading batches</option>').prop('disabled', true);
+                }
+            });
+        });
+
+        // When batch changes, enable semester
+        $('#batchSelect').change(function() {
+            const batchId = $(this).val();
+            
+            if (!batchId) {
+                $('#semesterSelect').prop('disabled', true);
+                $('#sectionSelect').prop('disabled', true);
+                $('#subjectSelect').prop('disabled', true);
+                $('#loadStudents').prop('disabled', true);
+                return;
+            }
+
+            // Enable semester select
+            $('#semesterSelect').prop('disabled', false);
+            
+            // Update selected batch in summary
+            $('#selectedBatch').text($('#batchSelect option:selected').text());
+            
+            // Load sections for selected batch
+            $.ajax({
+                url: "{% url 'get_sections_by_batch' %}",
+                data: { batch_id: batchId },
+                method: 'GET',
+                success: function(response) {
+                    const sectionSelect = $('#sectionSelect');
+                    sectionSelect.empty().append('<option value="">Select Section</option>');
+                    
+                    if (response.length > 0) {
+                        response.forEach(section => {
+                            sectionSelect.append(`<option value="${section.id}">${section.text}</option>`);
+                        });
+                        sectionSelect.prop('disabled', false);
+                    } else {
+                        sectionSelect.append('<option value="">No sections found</option>').prop('disabled', true);
+                    }
+                },
+                error: function() {
+                    console.error('Error loading sections');
+                    $('#sectionSelect').empty().append('<option value="">Error loading sections</option>').prop('disabled', true);
+                }
+            });
+        });
+
+        // When semester changes, enable section
+        $('#semesterSelect').change(function() {
+            const semesterSelect = $(this);
+            const semesterId = semesterSelect.val();
+            const disciplineId = $('#disciplineSelect').val();
+            
+            if (!semesterId) {
+                $('#sectionSelect').prop('disabled', true);
+                $('#subjectSelect').prop('disabled', true);
+                $('#loadStudents').prop('disabled', true);
+                return;
+            }
+
+            // Update selected semester in summary
+            $('#selectedSemester').text(semesterSelect.find('option:selected').text());
+
+            // Get the semester NUMBER from our mapping
+            const semesterNumber = semesterMapping[semesterId];
+            
+            if (!semesterNumber) {
+                console.error('Could not find semester number for ID:', semesterId);
+                $('#subjectSelect').empty().append('<option value="">Error: Invalid semester</option>').prop('disabled', true);
+                return;
+            }
+
+            // Load subjects for the selected semester NUMBER and discipline
+            $.ajax({
+                url: "{% url 'get_subjects_by_semester' %}",
+                data: { 
+                    semester_id: semesterNumber,  // Send semester NUMBER, not ID
+                    discipline_id: disciplineId    // Also send discipline for filtering
+                },
+                method: 'GET',
+                success: function(response) {
+                    const subjectSelect = $('#subjectSelect');
+                    subjectSelect.empty().append('<option value="">Select Subject</option>');
+                    
+                    if (response.length > 0) {
+                        response.forEach(subject => {
+                            subjectSelect.append(`<option value="${subject.id}">${subject.text}</option>`);
+                        });
+                        subjectSelect.prop('disabled', false);
+                    } else {
+                        subjectSelect.append('<option value="">No subjects found for this semester</option>').prop('disabled', true);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error loading subjects:', error);
+                    console.error('Response:', xhr.responseText);
+                    $('#subjectSelect').empty().append('<option value="">Error loading subjects</option>').prop('disabled', true);
+                }
+            });
+        });
+
+        // When section changes
+        $('#sectionSelect').change(function() {
+            const sectionId = $(this).val();
+            
+            if (!sectionId) {
+                $('#subjectSelect').prop('disabled', true);
+                $('#loadStudents').prop('disabled', true);
+                return;
+            }
+
+            // Update selected section in summary
+            $('#selectedSection').text($('#sectionSelect option:selected').text());
+
+            // Check if all required fields are filled
+            checkIfAllFieldsFilled();
+        });
+
+        // When subject changes
+        $('#subjectSelect').change(function() {
+            const subjectId = $(this).val();
+            
+            if (!subjectId) {
+                $('#loadStudents').prop('disabled', true);
+                return;
+            }
+
+            // Update selected subject in summary
+            $('#selectedSubject').text($('#subjectSelect option:selected').text());
+
+            // Check if all required fields are filled
+            checkIfAllFieldsFilled();
+        });
+
+        // Function to check if all fields are filled
+        function checkIfAllFieldsFilled() {
+            const disciplineId = $('#disciplineSelect').val();
+            const batchId = $('#batchSelect').val();
+            const semesterId = $('#semesterSelect').val();
+            const sectionId = $('#sectionSelect').val();
+            const subjectId = $('#subjectSelect').val();
+            
+            // Enable load button if all fields are selected
+            if (disciplineId && batchId && semesterId && sectionId && subjectId) {
+                $('#loadStudents').prop('disabled', false);
+            } else {
+                $('#loadStudents').prop('disabled', true);
+            }
+        }
+
+        // Load students from server
+        $('#loadStudents').click(function() {
+            const disciplineId = $('#disciplineSelect').val();
+            const batchId = $('#batchSelect').val();
+            const semesterId = $('#semesterSelect').val();
+            const sectionId = $('#sectionSelect').val();
+            const subjectId = $('#subjectSelect').val();
+            const date = $('#attendanceDate').val();
+
+            if (!disciplineId || !batchId || !semesterId || !sectionId || !subjectId || !date) {
+                alert('Please select all required fields');
+                return;
+            }
+
+            // Show loading
+            $('#loadingIndicator').show();
+            $('#studentsTable').hide();
+            $('#noDataMessage').hide();
+
+            // Update class info
+            $('#selectedDiscipline').text($('#disciplineSelect option:selected').text());
+            $('#selectedBatch').text($('#batchSelect option:selected').text());
+            $('#selectedSemester').text($('#semesterSelect option:selected').text());
+            $('#selectedSection').text($('#sectionSelect option:selected').text());
+            $('#selectedSubject').text($('#subjectSelect option:selected').text());
+            $('#selectedDate').text(date);
+
+            // Fetch students by section and semester
+            $.ajax({
+                url: "{% url 'get_students_by_section' %}",
+                data: { 
+                    section_id: sectionId,
+                    semester_id: semesterId
+                },
+                method: 'GET',
+                success: function(response) {
+                    studentsData = response.students;
+                    attendanceData = {}; // Reset attendance data
+                    
+                    if (studentsData.length > 0) {
+                        populateStudentsTable();
+                        updateSummary();
+                        $('#studentsTable').show();
+                        $('#noDataMessage').hide();
+                    } else {
+                        $('#studentsTable').hide();
+                        $('#noDataMessage').show().html(`
+                            <i class="fas fa-user-slash fa-4x text-muted mb-3"></i>
+                            <h4>No Students Found</h4>
+                            <p class="text-muted">No students found for the selected criteria.</p>
+                        `);
+                    }
+                    $('#loadingIndicator').hide();
+                },
+                error: function() {
+                    alert('Error loading students');
+                    $('#loadingIndicator').hide();
+                    $('#noDataMessage').show();
+                }
+            });
+        });
+
+        // Populate students table
+        function populateStudentsTable() {
+            const tbody = $('#studentsTableBody');
+            tbody.empty();
+
+            studentsData.forEach((student, index) => {
+                const isPresent = attendanceData[student.id] === 'P' || attendanceData[student.id] === undefined;
+                
+                const row = `
+                    <tr data-student-id="${student.id}">
+                        <td>${index + 1}</td>
+                        <td>${student.student_id}</td>
+                        <td>${student.first_name} ${student.last_name}</td>
+                        <td>
+                            <div class="btn-group btn-group-toggle" role="group">
+                                <button type="button" class="btn btn-outline-success btn-sm status-btn ${isPresent ? 'active' : ''}" 
+                                        data-status="P">
+                                    Present
+                                </button>
+                                <button type="button" class="btn btn-outline-danger btn-sm status-btn ${!isPresent ? 'active' : ''}" 
+                                        data-status="A">
+                                    Absent
+                                </button>
+                            </div>
+                        </td>
+                        <td>
+                            <input type="text" class="form-control form-control-sm remarks-input" 
+                                   placeholder="Remarks (optional)" data-student-id="${student.id}">
+                        </td>
+                    </tr>
+                `;
+                tbody.append(row);
+            });
+
+            // Initialize all students as present by default
+            studentsData.forEach(student => {
+                if (attendanceData[student.id] === undefined) {
+                    attendanceData[student.id] = 'P';
+                }
+            });
+
+            // Add click handlers for attendance buttons using event delegation
+            $(document).on('click', '.status-btn', function() {
+                const button = $(this);
+                const studentId = button.closest('tr').data('student-id');
+                const status = button.data('status');
+                
+                // Update attendance data
+                attendanceData[studentId] = status;
+                
+                // Update button states
+                const buttonGroup = button.closest('.btn-group');
+                buttonGroup.find('.status-btn').removeClass('active');
+                button.addClass('active');
+                
+                updateSummary();
+            });
+
+            updateSummary();
+        }
+
+        // Update summary counts
+        function updateSummary() {
+            const total = studentsData.length;
+            let present = 0;
+            let absent = 0;
+            
+            // Count present and absent
+            studentsData.forEach(student => {
+                if (attendanceData[student.id] === 'P') {
+                    present++;
+                } else {
+                    absent++;
+                }
+            });
+
+            $('#totalStudents').text(total);
+            $('#presentCount').text(present);
+            $('#absentCount').text(absent);
+        }
+
+        // Mark all present
+        $('#markAllPresent').click(function() {
+            if (studentsData.length === 0) {
+                alert('Please load students first');
+                return;
+            }
+            
+            studentsData.forEach(student => {
+                attendanceData[student.id] = 'P';
+            });
+            
+            // Update button UI
+            $('#studentsTableBody .status-btn').each(function() {
+                const button = $(this);
+                if (button.data('status') === 'P') {
+                    button.addClass('active').siblings().removeClass('active');
+                }
+            });
+            
+            updateSummary();
+        });
+
+        // Mark all absent
+        $('#markAllAbsent').click(function() {
+            if (studentsData.length === 0) {
+                alert('Please load students first');
+                return;
+            }
+            
+            studentsData.forEach(student => {
+                attendanceData[student.id] = 'A';
+            });
+            
+            // Update button UI
+            $('#studentsTableBody .status-btn').each(function() {
+                const button = $(this);
+                if (button.data('status') === 'A') {
+                    button.addClass('active').siblings().removeClass('active');
+                }
+            });
+            
+            updateSummary();
+        });
+
+        // Submit attendance
+        $('#submitAttendance').click(function() {
+            if (studentsData.length === 0) {
+                alert('Please load students first');
+                return;
+            }
+
+            if (Object.keys(attendanceData).length === 0) {
+                alert('Please mark attendance for at least one student');
+                return;
+            }
+
+            if (!confirm(`Mark attendance for ${studentsData.length} students?`)) {
+                return;
+            }
+
+            const subjectId = $('#subjectSelect').val();
+            const date = $('#attendanceDate').val();
+
+            const data = {
+                subject_id: subjectId,
+                date: date,
+                attendance: attendanceData
+            };
+
+            $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Saving...');
+
+            $.ajax({
+                url: "{% url 'bulk_attendance' %}",
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        alert(`Success: ${response.message}`);
+                        // Reset form
+                        attendanceData = {};
+                        $('#studentsTable').hide();
+                        $('#noDataMessage').show().html(`
+                            <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+                            <h4>Attendance Saved Successfully!</h4>
+                            <p class="text-muted">${response.success_count} students marked successfully.</p>
+                            <button class="btn btn-primary mt-2" onclick="location.reload()">
+                                <i class="fas fa-redo"></i> Mark Another Class
+                            </button>
+                        `);
+                    } else {
+                        alert(`Error: ${response.message}`);
+                    }
+                    $('#submitAttendance').prop('disabled', false).html('<i class="fas fa-save"></i> Save All');
+                },
+                error: function() {
+                    alert('Error saving attendance');
+                    $('#submitAttendance').prop('disabled', false).html('<i class="fas fa-save"></i> Save All');
+                }
+            });
+        });
+    });
+</script>
+
+<style>
+    .status-btn {
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .status-btn.active {
+        color: white !important;
+    }
+    .status-btn.btn-outline-success.active {
+        background-color: #28a745 !important;
+        border-color: #28a745 !important;
+    }
+    .status-btn.btn-outline-danger.active {
+        background-color: #dc3545 !important;
+        border-color: #dc3545 !important;
+    }
+    .status-btn:focus {
+        box-shadow: none !important;
+    }
+    .btn-group-toggle {
+        display: flex;
+    }
+    .btn-group-toggle .status-btn {
+        border-radius: 0.25rem;
+        padding: 0.25rem 0.75rem;
+    }
+    .btn-group-toggle .status-btn:first-child {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+        border-right: none;
+    }
+    .btn-group-toggle .status-btn:last-child {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+</style>
+<style>
+    .btn-group-toggle .btn {
+        cursor: pointer;
+    }
+    .btn-group-toggle .btn.active {
+        box-shadow: inset 0 3px 5px rgba(0,0,0,.125);
+    }
+    .btn-group-toggle .btn-outline-success.active {
+        background-color: #28a745;
+        border-color: #28a745;
+        color: white;
+    }
+    .btn-group-toggle .btn-outline-danger.active {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        color: white;
+    }
+    .remarks-input {
+        max-width: 200px;
+    }
+    #loadingIndicator {
+        color: #007bff;
+    }
+    select:disabled {
+        background-color: #e9ecef;
+        cursor: not-allowed;
+    }
+    option:disabled {
+        color: #6c757d;
+    }
+</style>
+{% endblock %}

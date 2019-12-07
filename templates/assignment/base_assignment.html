@@ -1,0 +1,43 @@
+{% extends 'assignment/base.html' %}
+
+{% block title %}{% block assignment_title %}Assignment Management{% endblock %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .assignment-card {
+        transition: transform 0.2s;
+        margin-bottom: 20px;
+    }
+    .assignment-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .status-badge {
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-size: 12px;
+        font-weight: bold;
+        display: inline-block;
+    }
+    .status-draft { background-color: #6c757d; color: white; }
+    .status-published { background-color: #28a745; color: white; }
+    .status-closed { background-color: #dc3545; color: white; }
+    .status-graded { background-color: #17a2b8; color: white; }
+    .status-submitted { background-color: #ffc107; color: #333; }
+    .status-late { background-color: #fd7e14; color: white; }
+    .status-rejected { background-color: #dc3545; color: white; }
+    .assignment-table th {
+        background-color: #f8f9fa;
+    }
+    .file-preview {
+        max-width: 200px;
+        margin-top: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    {% block assignment_content %}{% endblock %}
+</div>
+{% endblock %}

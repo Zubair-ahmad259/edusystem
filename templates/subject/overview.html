@@ -1,0 +1,571 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">
+                        <i class="fas fa-home"></i> Overview Dashboard
+                    </h3>
+                    <ul class="breadcrumb">
+                        {% comment %} <li class="breadcrumb-item"><a href="{% url 'Home:dashboard' %}">Home</a></li> {% endcomment %}
+                        {% comment %} <li class="breadcrumb-item"><a href="{% url 'subject:subject_dashboard' %}">Subject Dashboard</a></li> {% endcomment %}
+                        <li class="breadcrumb-item active">Overview</li>
+                    </ul>
+                </div>
+                <div class="col-auto text-right float-right ml-auto">
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+                            <i class="fas fa-cog"></i> Settings
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-right">
+                            <a class="dropdown-item" href="#"><i class="fas fa-bell"></i> Notification Settings</a>
+                            <a class="dropdown-item" href="#"><i class="fas fa-palette"></i> Theme Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="#"><i class="fas fa-question-circle"></i> Help & Support</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Welcome Banner -->
+        <div class="row">
+            <div class="col-xl-12">
+                <div class="card welcome-card">
+                    <div class="card-body">
+                        <div class="welcome-header">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h3>Welcome to Subject Management System</h3>
+                                    <p class="mb-0">
+                                        Manage all your academic subjects, prerequisites, and assignments in one place.
+                                        {% if user.is_authenticated %}
+                                        <strong>Logged in as: {{ user.username }}</strong>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                <div class="col-md-4 text-right">
+                                    <div class="clock-display">
+                                        <h4 id="currentTime">00:00:00</h4>
+                                        <p id="currentDate">Loading...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Overview Cards -->
+        <div class="row">
+            <!-- Academic Structure -->
+            <div class="col-xl-3 col-sm-6 col-12">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-university fa-3x text-primary"></i>
+                        </div>
+                        <h4>{{ total_disciplines }}</h4>
+                        <p class="mb-0">Disciplines</p>
+                        <small class="text-muted">Academic Programs</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-sm-6 col-12">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-layer-group fa-3x text-success"></i>
+                        </div>
+                        <h4>{{ total_semesters }}</h4>
+                        <p class="mb-0">Semesters</p>
+                        <small class="text-muted">Academic Levels</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-sm-6 col-12">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-users fa-3x text-info"></i>
+                        </div>
+                        <h4>{{ total_sections }}</h4>
+                        <p class="mb-0">Sections</p>
+                        <small class="text-muted">Student Groups</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-sm-6 col-12">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-chalkboard-teacher fa-3x text-warning"></i>
+                        </div>
+                        <h4>{{ total_teachers }}</h4>
+                        <p class="mb-0">Teachers</p>
+                        <small class="text-muted">Faculty Members</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions Grid -->
+        <div class="row">
+            <div class="col-xl-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fas fa-rocket"></i> Quick Actions
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% if quick_actions.add_subject %}
+                            <div class="col-lg-2 col-md-4 col-sm-6">
+                                <a href="{% url 'subject:add_subject' %}" class="card action-card mb-4">
+                                    <div class="card-body text-center">
+                                        <div class="action-icon mb-3">
+                                            <i class="fas fa-plus-circle fa-2x text-primary"></i>
+                                        </div>
+                                        <h6>Add Subject</h6>
+                                        <small class="text-muted">Create new subject</small>
+                                    </div>
+                                </a>
+                            </div>
+                            {% endif %}
+                            
+                            {% if quick_actions.import_subjects %}
+                            <div class="col-lg-2 col-md-4 col-sm-6">
+                                <a href="{% url 'subject:import_subjects' %}" class="card action-card mb-4">
+                                    <div class="card-body text-center">
+                                        <div class="action-icon mb-3">
+                                            <i class="fas fa-file-import fa-2x text-info"></i>
+                                        </div>
+                                        <h6>Import Subjects</h6>
+                                        <small class="text-muted">Bulk import from Excel</small>
+                                    </div>
+                                </a>
+                            </div>
+                            {% endif %}
+                            
+                            {% if quick_actions.assign_subject %}
+                            <div class="col-lg-2 col-md-4 col-sm-6">
+                                <a href="{% url 'subject:add_subject_assign' %}" class="card action-card mb-4">
+                                    <div class="card-body text-center">
+                                        <div class="action-icon mb-3">
+                                            <i class="fas fa-user-check fa-2x text-success"></i>
+                                        </div>
+                                        <h6>Assign Subject</h6>
+                                        <small class="text-muted">Assign to teacher</small>
+                                    </div>
+                                </a>
+                            </div>
+                            {% endif %}
+                            
+                            {% if quick_actions.view_reports %}
+                            <div class="col-lg-2 col-md-4 col-sm-6">
+                                <a href="{% url 'subject:subject_analytics' %}" class="card action-card mb-4">
+                                    <div class="card-body text-center">
+                                        <div class="action-icon mb-3">
+                                            <i class="fas fa-chart-line fa-2x text-purple"></i>
+                                        </div>
+                                        <h6>View Reports</h6>
+                                        <small class="text-muted">Analytics & insights</small>
+                                    </div>
+                                </a>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="col-lg-2 col-md-4 col-sm-6">
+                                <a href="{% url 'subject:view_subject' %}" class="card action-card mb-4">
+                                    <div class="card-body text-center">
+                                        <div class="action-icon mb-3">
+                                            <i class="fas fa-list fa-2x text-secondary"></i>
+                                        </div>
+                                        <h6>Browse Subjects</h6>
+                                        <small class="text-muted">View all subjects</small>
+                                    </div>
+                                </a>
+                            </div>
+                            
+                            <div class="col-lg-2 col-md-4 col-sm-6">
+                                <a href="{% url 'subject:show_subject_assign' %}" class="card action-card mb-4">
+                                    <div class="card-body text-center">
+                                        <div class="action-icon mb-3">
+                                            <i class="fas fa-tasks fa-2x text-warning"></i>
+                                        </div>
+                                        <h6>View Assignments</h6>
+                                        <small class="text-muted">Teacher assignments</small>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Status & Upcoming Tasks -->
+        <div class="row">
+            <!-- System Status -->
+            <div class="col-xl-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fas fa-server"></i> System Status
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="system-status">
+                            <div class="status-item">
+                                <div class="status-icon">
+                                    <i class="fas fa-database"></i>
+                                </div>
+                                <div class="status-info">
+                                    <h6>Database</h6>
+                                    <p class="mb-0">
+                                        <span class="badge badge-success">Active</span>
+                                        All systems operational
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div class="status-item">
+                                <div class="status-icon">
+                                    <i class="fas fa-plug"></i>
+                                </div>
+                                <div class="status-info">
+                                    <h6>API Services</h6>
+                                    <p class="mb-0">
+                                        <span class="badge badge-success">Active</span>
+                                        All endpoints responding
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div class="status-item">
+                                <div class="status-icon">
+                                    <i class="fas fa-hdd"></i>
+                                </div>
+                                <div class="status-info">
+                                    <h6>Storage</h6>
+                                    <p class="mb-0">
+                                        <span class="badge badge-warning">{{ system_status.storage }}</span>
+                                        Used of total capacity
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div class="status-item">
+                                <div class="status-icon">
+                                    <i class="fas fa-shield-alt"></i>
+                                </div>
+                                <div class="status-info">
+                                    <h6>Security</h6>
+                                    <p class="mb-0">
+                                        <span class="badge badge-success">Protected</span>
+                                        SSL encryption active
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div class="status-item">
+                                <div class="status-icon">
+                                    <i class="fas fa-history"></i>
+                                </div>
+                                <div class="status-info">
+                                    <h6>Last Backup</h6>
+                                    <p class="mb-0">{{ system_status.last_backup }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Upcoming Tasks -->
+            <div class="col-xl-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fas fa-calendar-alt"></i> Upcoming Tasks
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if upcoming_tasks %}
+                        <div class="upcoming-tasks">
+                            {% for task in upcoming_tasks %}
+                            <div class="task-item">
+                                <div class="task-icon">
+                                    <i class="fas fa-book"></i>
+                                </div>
+                                <div class="task-info">
+                                    <h6>{{ task.subject.code }} - {{ task.subject.name }}</h6>
+                                    <p class="mb-0">
+                                        <small>
+                                            <i class="fas fa-user"></i> {{ task.teacher.first_name }} {{ task.teacher.last_name }}
+                                            | <i class="fas fa-calendar"></i> {{ task.assigned_date|date:"M d, Y" }}
+                                        </small>
+                                    </p>
+                                </div>
+                                <div class="task-action">
+                                    <span class="badge badge-info">{{ task.batch.name }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-check-circle fa-3x text-muted mb-3"></i>
+                            <h5>No Upcoming Tasks</h5>
+                            <p class="text-muted">All tasks are completed</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer">
+                        <a href="#" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-plus"></i> Add New Task
+                        </a>
+                        <a href="#" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-calendar"></i> View Calendar
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Updates & Announcements -->
+        <div class="row">
+            <div class="col-xl-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fas fa-bullhorn"></i> Recent Updates & Announcements
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="timeline">
+                            <div class="timeline-item">
+                                <div class="timeline-marker bg-primary"></div>
+                                <div class="timeline-content">
+                                    <h6>System Update v2.1.0</h6>
+                                    <p class="mb-1">Added new prerequisite checking features</p>
+                                    <small class="text-muted"><i class="fas fa-clock"></i> 2 hours ago</small>
+                                </div>
+                            </div>
+                            
+                            <div class="timeline-item">
+                                <div class="timeline-marker bg-success"></div>
+                                <div class="timeline-content">
+                                    <h6>New Import Templates</h6>
+                                    <p class="mb-1">Updated Excel templates for subject import</p>
+                                    <small class="text-muted"><i class="fas fa-clock"></i> 1 day ago</small>
+                                </div>
+                            </div>
+                            
+                            <div class="timeline-item">
+                                <div class="timeline-marker bg-info"></div>
+                                <div class="timeline-content">
+                                    <h6>Maintenance Scheduled</h6>
+                                    <p class="mb-1">System maintenance on Saturday, 10 PM to 2 AM</p>
+                                    <small class="text-muted"><i class="fas fa-clock"></i> 2 days ago</small>
+                                </div>
+                            </div>
+                            
+                            <div class="timeline-item">
+                                <div class="timeline-marker bg-warning"></div>
+                                <div class="timeline-content">
+                                    <h6>New Features Added</h6>
+                                    <p class="mb-1">Added bulk assignment and QR code generation</p>
+                                    <small class="text-muted"><i class="fas fa-clock"></i> 1 week ago</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
+<script>
+$(document).ready(function() {
+    // Update clock
+    function updateClock() {
+        const now = new Date();
+        const time = now.toLocaleTimeString();
+        const date = now.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+        
+        $('#currentTime').text(time);
+        $('#currentDate').text(date);
+    }
+    
+    // Update clock every second
+    updateClock();
+    setInterval(updateClock, 1000);
+    
+    // Action card hover effects
+    $('.action-card').hover(
+        function() {
+            $(this).addClass('shadow-lg');
+            $(this).css('transform', 'translateY(-5px)');
+        },
+        function() {
+            $(this).removeClass('shadow-lg');
+            $(this).css('transform', 'translateY(0)');
+        }
+    );
+    
+    // System status check
+    function checkSystemStatus() {
+        $.ajax({
+            url: '{% url "subject:quick_stats_api" %}',
+            method: 'GET',
+            success: function(response) {
+                // Update status indicators if needed
+                console.log('System status check:', response);
+            },
+            error: function() {
+                // Show warning if API is down
+                $('.system-status .badge-success').addClass('badge-danger').removeClass('badge-success');
+            }
+        });
+    }
+    
+    // Check status every 60 seconds
+    setInterval(checkSystemStatus, 60000);
+    
+    // Initialize tooltips
+    $('[data-toggle="tooltip"]').tooltip();
+});
+</script>
+
+<style>
+.welcome-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+}
+.clock-display {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+}
+.clock-display h4 {
+    font-size: 2.5rem;
+    margin-bottom: 0;
+    font-weight: 300;
+}
+.feature-icon {
+    transition: transform 0.3s ease;
+}
+.action-card {
+    transition: all 0.3s ease;
+    border: 1px solid #e0e0e0;
+    text-decoration: none;
+    color: inherit;
+}
+.action-card:hover {
+    text-decoration: none;
+    color: inherit;
+}
+.action-icon {
+    transition: transform 0.3s ease;
+}
+.action-card:hover .action-icon {
+    transform: scale(1.2);
+}
+.system-status .status-item {
+    display: flex;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid #eee;
+}
+.system-status .status-item:last-child {
+    border-bottom: none;
+}
+.status-icon {
+    width: 40px;
+    height: 40px;
+    background: #f8f9fa;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    color: #6c757d;
+}
+.status-info h6 {
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+}
+.upcoming-tasks .task-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+}
+.upcoming-tasks .task-item:last-child {
+    border-bottom: none;
+}
+.task-icon {
+    width: 40px;
+    height: 40px;
+    background: #e3f2fd;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    color: #2196f3;
+}
+.task-info h6 {
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+}
+.task-action {
+    margin-left: auto;
+}
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+.timeline-item {
+    position: relative;
+    padding-bottom: 20px;
+}
+.timeline-marker {
+    position: absolute;
+    left: -30px;
+    top: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+}
+.timeline-content {
+    padding-left: 20px;
+}
+.timeline-content h6 {
+    margin-bottom: 5px;
+}
+.text-purple {
+    color: #6f42c1 !important;
+}
+</style>
+{% endblock %}

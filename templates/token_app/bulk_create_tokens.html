@@ -1,0 +1,499 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}Bulk Create Exam Tokens{% endblock %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Bulk Create Exam Tokens</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'token_app:dashboard' %}">Token Dashboard</a></li>
+                        <li class="breadcrumb-item active">Bulk Create Tokens</li>
+                    </ul>
+                </div>
+                <div class="col-auto float-right ml-auto">
+                    <a href="{% url 'token_app:create_token' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Single Token
+                    </a>
+                    <a href="{% url 'token_app:all_tokens' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Tokens
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Display Messages -->
+        {% if messages %}
+        <div class="row">
+            <div class="col-12">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="row">
+            <div class="col-sm-12">
+                <!-- Filter Card -->
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="form-title"><span>Filter Students</span></h5>
+                        <div class="row">
+                            <div class="col-12 col-sm-3">
+                                <div class="form-group">
+                                    <label>Discipline <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="disciplineSelect" required>
+                                        <option value="">-- Select Discipline --</option>
+                                        {% for discipline in disciplines %}
+                                        <option value="{{ discipline.id }}">{{ discipline.program }} in {{ discipline.field }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="col-12 col-sm-3">
+                                <div class="form-group">
+                                    <label>Batch <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="batchSelect" required>
+                                        <option value="">-- Select Batch --</option>
+                                        {% for batch in batches %}
+                                        <option value="{{ batch.id }}">{{ batch.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="col-12 col-sm-2">
+                                <div class="form-group">
+                                    <label>Semester <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="semesterSelect" required>
+                                        <option value="">-- Select --</option>
+                                        {% for semester in semesters %}
+                                        <option value="{{ semester.id }}">Sem {{ semester.number }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="col-12 col-sm-2">
+                                <div class="form-group">
+                                    <label>Section <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="sectionSelect" required>
+                                        <option value="">-- Select --</option>
+                                        {% for section in sections %}
+                                        <option value="{{ section.id }}">{{ section.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="col-12 col-sm-2 d-flex align-items-end">
+                                <div class="form-group w-100">
+                                    <button class="btn btn-primary btn-block" id="filterBtn">
+                                        <i class="fas fa-search"></i> Filter Students
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Token Creation Form -->
+                <form method="POST" id="tokenForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="discipline" id="selectedDiscipline">
+                    <input type="hidden" name="batch" id="selectedBatch">
+                    <input type="hidden" name="semester" id="selectedSemester">
+                    <input type="hidden" name="section" id="selectedSection">
+                    
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <!-- Students List Card -->
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h5 class="form-title mb-0"><span>Students List</span></h5>
+                                        <span class="badge badge-info" id="totalCount">0</span>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-12 col-sm-6">
+                                            <div class="form-group">
+                                                <label>Valid Until <span class="text-danger">*</span></label>
+                                                <input type="date" name="valid_until" class="form-control" 
+                                                       value="{{ default_valid_until|date:'Y-m-d' }}" 
+                                                       min="{{ today|date:'Y-m-d' }}" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-12 col-sm-6 d-flex align-items-end">
+                                            <button type="button" class="btn btn-info btn-sm" id="selectAllBtn">
+                                                <i class="fas fa-check-double"></i> Select All Eligible
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                                        <table class="table table-hover table-center mb-0">
+                                            <thead class="thead-light">
+                                                <tr>
+                                                    <th width="50">
+                                                        <input type="checkbox" id="selectAllCheckbox" disabled>
+                                                    </th>
+                                                    <th>Student ID</th>
+                                                    <th>Name</th>
+                                                    <th>Batch</th>
+                                                    <th>Section</th>
+                                                    <th>Status</th>
+                                                    <th>Issues</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="studentsList">
+                                                <tr>
+                                                    <td colspan="7" class="text-center py-5">
+                                                        <i class="fas fa-filter fa-3x text-muted mb-3"></i>
+                                                        <p class="text-muted">Select filters and click "Filter Students"</p>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-4">
+                            <!-- Summary Card -->
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="form-title"><span>Summary</span></h5>
+                                    
+                                    <div class="statistics">
+                                        <div class="row mb-3">
+                                            <div class="col-6">
+                                                <label class="text-muted">Total Students</label>
+                                                <h4 class="mb-0" id="summaryTotal">0</h4>
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="text-muted">Eligible</label>
+                                                <h4 class="text-success mb-0" id="summaryEligible">0</h4>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row mb-3">
+                                            <div class="col-6">
+                                                <label class="text-muted">Selected</label>
+                                                <h4 class="text-primary mb-0" id="summarySelected">0</h4>
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="text-muted">Has Token</label>
+                                                <h4 class="text-secondary mb-0" id="summaryToken">0</h4>
+                                            </div>
+                                        </div>
+                                        
+                                        <hr>
+                                        
+                                        <div class="issue-list">
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span><i class="fas fa-exclamation-circle text-danger"></i> Fee Defaulters</span>
+                                                <span class="badge badge-danger" id="summaryFee">0</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span><i class="fas fa-clock text-warning"></i> Attendance Shortages</span>
+                                                <span class="badge badge-warning" id="summaryAttendance">0</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span><i class="fas fa-book text-danger"></i> Prerequisite Failures</span>
+                                                <span class="badge badge-danger" id="summaryPrereq">0</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <hr>
+                                    
+                                    <button type="submit" class="btn btn-primary btn-block" id="createBtn" disabled>
+                                        <i class="fas fa-save"></i> Create Tokens for Selected
+                                    </button>
+                                    <p class="text-muted small text-center mt-2">
+                                        <i class="fas fa-info-circle"></i> Only eligible students will receive tokens
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <!-- Info Card -->
+                            <div class="card mt-3">
+                                <div class="card-body">
+                                    <h6 class="card-title"><i class="fas fa-info-circle text-info"></i> Eligibility Criteria</h6>
+                                    <ul class="list-unstyled">
+                                        <li class="mb-2"><i class="fas fa-check-circle text-success mr-2"></i> No fee dues</li>
+                                        <li class="mb-2"><i class="fas fa-check-circle text-success mr-2"></i> Attendance ≥ 75% in all subjects</li>
+                                        <li class="mb-2"><i class="fas fa-check-circle text-success mr-2"></i> All prerequisites passed</li>
+                                        <li class="mb-2"><i class="fas fa-check-circle text-success mr-2"></i> No existing token for this semester</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
+<script>
+let currentStudents = [];
+
+$(document).ready(function() {
+    console.log("Document ready");
+    
+    // Filter button click
+    $('#filterBtn').click(function() {
+        console.log("Filter button clicked");
+        
+        var discipline = $('#disciplineSelect').val();
+        var batch = $('#batchSelect').val();
+        var semester = $('#semesterSelect').val();
+        var section = $('#sectionSelect').val();
+        
+        console.log("Selected values:", {discipline, batch, semester, section});
+        
+        if (!discipline || !batch || !semester || !section) {
+            alert('Please select all filters');
+            return;
+        }
+        
+        // Set hidden inputs
+        $('#selectedDiscipline').val(discipline);
+        $('#selectedBatch').val(batch);
+        $('#selectedSemester').val(semester);
+        $('#selectedSection').val(section);
+        
+        // Fetch students
+        fetchStudents(discipline, batch, semester, section);
+    });
+    
+    // Select All Eligible button
+    $('#selectAllBtn').click(function() {
+        $('.student-checkbox').each(function() {
+            var isEligible = $(this).data('eligible');
+            if (isEligible) {
+                $(this).prop('checked', true);
+            }
+        });
+        updateSummary();
+    });
+    
+    // Select All checkbox
+    $('#selectAllCheckbox').change(function() {
+        var isChecked = $(this).prop('checked');
+        $('.student-checkbox').each(function() {
+            $(this).prop('checked', isChecked);
+        });
+        updateSummary();
+    });
+    
+    // Token form submission
+    $('#tokenForm').submit(function(e) {
+        var selectedStudents = [];
+        $('.student-checkbox:checked').each(function() {
+            selectedStudents.push($(this).val());
+        });
+        
+        if (selectedStudents.length === 0) {
+            e.preventDefault();
+            alert('Please select at least one student');
+            return false;
+        }
+        
+        // Remove any existing hidden inputs first
+        $('input[name="selected_students"]').remove();
+        
+        // Add selected students as hidden inputs
+        selectedStudents.forEach(function(studentId) {
+            $('<input>').attr({
+                type: 'hidden',
+                name: 'selected_students',
+                value: studentId
+            }).appendTo('#tokenForm');
+        });
+        
+        return confirm('Create tokens for ' + selectedStudents.length + ' students? This will check eligibility for each student.');
+    });
+});
+
+function fetchStudents(discipline, batch, semester, section) {
+    console.log("Fetching students with:", {discipline, batch, semester, section});
+    
+    // Show loading state
+    $('#studentsList').html('<tr><td colspan="7" class="text-center py-5"><i class="fas fa-spinner fa-spin fa-3x"></i><p class="mt-3">Loading students...</p></td></tr>');
+    
+    // Get CSRF token
+    function getCSRFToken() {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            if (cookie.startsWith('csrftoken=')) {
+                return cookie.substring('csrftoken='.length, cookie.length);
+            }
+        }
+        return '';
+    }
+    
+    $.ajax({
+        url: window.location.href,
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': getCSRFToken()
+        },
+        data: {
+            discipline: discipline,
+            batch: batch,
+            semester: semester,
+            section: section
+        },
+        success: function(response) {
+            console.log("AJAX success:", response);
+            
+            if (response.error) {
+                console.error("Server returned error:", response.error);
+                alert('Error: ' + response.error);
+                $('#studentsList').html('<tr><td colspan="7" class="text-center py-5 text-danger">Error: ' + response.error + '</td></tr>');
+            } else {
+                console.log("Displaying", response.students.length, "students out of", response.count, "total");
+                displayStudents(response.students);
+                updateCounts(response);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error("AJAX Error Details:");
+            console.error("Status:", status);
+            console.error("Error:", error);
+            console.error("Response Text:", xhr.responseText);
+            console.error("Status Code:", xhr.status);
+            
+            var errorMsg = 'Error fetching students: ' + error;
+            
+            try {
+                var response = JSON.parse(xhr.responseText);
+                if (response.error) {
+                    errorMsg = response.error;
+                }
+            } catch(e) {
+                console.error("Could not parse error response:", e);
+            }
+            
+            alert(errorMsg);
+            $('#studentsList').html('<tr><td colspan="7" class="text-center py-5 text-danger">' + errorMsg + '<br><small class="text-muted">Check console for details (F12)</small></td></tr>');
+        }
+    });
+}
+
+function displayStudents(students) {
+    console.log("Displaying students:", students.length);
+    currentStudents = students;
+    var tbody = $('#studentsList');
+    tbody.empty();
+    
+    if (students.length === 0) {
+        tbody.html('<tr><td colspan="7" class="text-center py-5"><i class="fas fa-users fa-3x text-muted mb-3"></i><p class="text-muted">No students found for the selected criteria</p></td></tr>');
+        $('#selectAllCheckbox').prop('disabled', true);
+        return;
+    }
+    
+    students.forEach(function(student, index) {
+        var statusClass = student.eligible ? 'bg-success' : 'bg-danger';
+        var statusText = student.eligible ? 'Eligible' : 'Not Eligible';
+        var checkboxDisabled = !student.eligible || student.has_token;
+        
+        var reasons = student.reasons || [];
+        if (student.has_token) {
+            reasons.push('Already has token');
+        }
+        
+        var issuesBadge = reasons.length > 0 ? 
+            '<span class="badge badge-danger" title="' + reasons.join('\n') + '">' + 
+            reasons.length + ' Issues</span>' : 
+            '<span class="badge badge-success">No Issues</span>';
+        
+        var row = '<tr>' +
+            '<td><input type="checkbox" class="student-checkbox" value="' + student.id + '" ' +
+            'data-eligible="' + student.eligible + '" ' +
+            (checkboxDisabled ? 'disabled' : '') + '></td>' +
+            '<td>' + (student.student_id || 'N/A') + '</td>' +
+            '<td>' + (student.name || 'N/A') + '</td>' +
+            '<td>' + (student.batch || 'N/A') + '</td>' +
+            '<td>' + (student.section || 'N/A') + '</td>' +
+            '<td><span class="badge ' + statusClass + '">' + statusText + '</span></td>' +
+            '<td>' + issuesBadge + '</td>' +
+            '</tr>';
+        
+        tbody.append(row);
+    });
+    
+    // Enable select all checkbox
+    $('#selectAllCheckbox').prop('disabled', false);
+    
+    // Add change event to student checkboxes
+    $('.student-checkbox').change(updateSummary);
+    
+    updateSummary();
+}
+
+function updateCounts(data) {
+    console.log("Updating counts with data:", data);
+    $('#totalCount').text(data.count + ' Students');
+    $('#summaryTotal').text(data.count);
+    
+    var eligible = 0;
+    var feeDefaulters = 0;
+    var attendanceIssues = 0;
+    var prereqIssues = 0;
+    var hasToken = 0;
+    
+    if (data.students && data.students.length > 0) {
+        data.students.forEach(function(student) {
+            if (student.eligible) eligible++;
+            if (student.reasons) {
+                student.reasons.forEach(function(reason) {
+                    var reasonLower = reason.toLowerCase();
+                    if (reasonLower.includes('fee')) feeDefaulters++;
+                    if (reasonLower.includes('attendance')) attendanceIssues++;
+                    if (reasonLower.includes('prerequisite')) prereqIssues++;
+                });
+            }
+            if (student.has_token) hasToken++;
+        });
+    }
+    
+    $('#summaryEligible').text(eligible);
+    $('#summaryFee').text(feeDefaulters);
+    $('#summaryAttendance').text(attendanceIssues);
+    $('#summaryPrereq').text(prereqIssues);
+    $('#summaryToken').text(hasToken);
+}
+
+function updateSummary() {
+    var selected = $('.student-checkbox:checked').length;
+    $('#summarySelected').text(selected);
+    
+    if (selected > 0) {
+        $('#createBtn').prop('disabled', false);
+    } else {
+        $('#createBtn').prop('disabled', true);
+    }
+}
+</script>
+{% endblock %}

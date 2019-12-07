@@ -1,0 +1,241 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">
+                        {% if admin_profile %}
+                            Edit Admin Profile
+                        {% else %}
+                            Add New Admin Profile
+                        {% endif %}
+                    </h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'admin_profile:admin_profile_list' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'admin_profile:admin_profile_list' %}">Admin Profiles</a></li>
+                        <li class="breadcrumb-item active">
+                            {% if admin_profile %}
+                                Edit Profile
+                            {% else %}
+                                Add New
+                            {% endif %}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Display Messages -->
+        {% if messages %}
+        <div class="row">
+            <div class="col-12">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="card">
+                    <div class="card-body">
+                        <form method="POST" id="adminProfileForm">
+                            {% csrf_token %}
+                            
+                            <!-- Personal Information Section -->
+                            <div class="row">
+                                <div class="col-12">
+                                    <h5 class="form-title"><span>Personal Information</span></h5>
+                                </div>
+                                <div class="col-12 col-sm-4">
+                                    <div class="form-group">
+                                        <label>First Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" name="first_name" 
+                                               value="{% if admin_profile %}{{ admin_profile.first_name }}{% endif %}"
+                                               pattern="[A-Za-z ]+" 
+                                               title="Only alphabets allowed"
+                                               required>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-4">
+                                    <div class="form-group">
+                                        <label>Last Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" name="last_name" 
+                                               value="{% if admin_profile %}{{ admin_profile.last_name }}{% endif %}"
+                                               pattern="[A-Za-z ]+" 
+                                               title="Only alphabets allowed"
+                                               required>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-4">
+                                    <div class="form-group">
+                                        <label>Father's Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" name="father_name" 
+                                               value="{% if admin_profile %}{{ admin_profile.father_name }}{% endif %}"
+                                               pattern="[A-Za-z ]+" 
+                                               title="Only alphabets allowed"
+                                               required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Contact Information Section -->
+                            <div class="row">
+                                <div class="col-12">
+                                    <h5 class="form-title"><span>Contact Information</span></h5>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Email <span class="text-danger">*</span></label>
+                                        <input type="email" class="form-control" name="email" 
+                                               value="{% if admin_profile %}{{ admin_profile.email }}{% endif %}"
+                                               {% if admin_profile %}readonly{% endif %}
+                                               required>
+                                        {% if admin_profile %}
+                                            <small class="form-text text-muted">Email cannot be changed</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Contact Number</label>
+                                        <input type="tel" class="form-control" name="contact_number" 
+                                               value="{% if admin_profile %}{{ admin_profile.contact_number }}{% endif %}"
+                                               pattern="[0-9+\-\s]+" 
+                                               title="Valid phone number">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Professional Information Section -->
+                            <div class="row">
+                                <div class="col-12">
+                                    <h5 class="form-title"><span>Professional Information</span></h5>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Role <span class="text-danger">*</span></label>
+                                        <select class="form-control" name="role" required>
+                                            <option value="">Select Role</option>
+                                            {% for role_value, role_label in role_choices %}
+                                                <option value="{{ role_value }}" 
+                                                    {% if admin_profile and admin_profile.role == role_value %}selected{% endif %}>
+                                                    {{ role_label }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Discipline</label>
+                                        <select class="form-control" name="discipline">
+                                            <option value="">Select Discipline</option>
+                                            {% for discipline in disciplines %}
+                                                <option value="{{ discipline.id }}" 
+                                                    {% if admin_profile and admin_profile.discipline_id == discipline.id %}selected{% endif %}>
+                                                    {{ discipline.name }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Address Section -->
+                            <div class="row">
+                                <div class="col-12">
+                                    <h5 class="form-title"><span>Address Information</span></h5>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-group">
+                                        <label>Address</label>
+                                        <textarea class="form-control" name="address" rows="3">{% if admin_profile %}{{ admin_profile.address }}{% endif %}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Created At (View only) -->
+                            {% if admin_profile and admin_profile.created_at %}
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="form-group">
+                                        <label>Created At</label>
+                                        <input type="text" class="form-control" value="{{ admin_profile.created_at|date:'F d, Y H:i' }}" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Form Actions -->
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fa fa-save"></i> 
+                                        {% if admin_profile %}
+                                            Update Profile
+                                        {% else %}
+                                            Save Profile
+                                        {% endif %}
+                                    </button>
+                                    <a href="{% if admin_profile %}{% url 'admin_profile:admin_profile_detail' admin_profile.pk %}{% else %}{% url 'admin_profile:admin_profile_list' %}{% endif %}" 
+                                       class="btn btn-secondary">
+                                        <i class="fa fa-times"></i> Cancel
+                                    </a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for form validation -->
+<script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
+<script>
+    $(document).ready(function() {
+        // Form validation
+        $('#adminProfileForm').on('submit', function(e) {
+            let isValid = true;
+            
+            // Check name fields
+            $('input[name="first_name"], input[name="last_name"], input[name="father_name"]').each(function() {
+                const value = $(this).val();
+                if (value && !/^[A-Za-z ]+$/.test(value)) {
+                    alert($(this).attr('name').replace('_', ' ') + ' can only contain alphabets');
+                    isValid = false;
+                    return false;
+                }
+            });
+            
+            // Check email format
+            const email = $('input[name="email"]').val();
+            if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                alert('Please enter a valid email address');
+                isValid = false;
+            }
+            
+            // Check contact number if provided
+            const contact = $('input[name="contact_number"]').val();
+            if (contact && !/^[0-9+\-\s]+$/.test(contact)) {
+                alert('Please enter a valid contact number');
+                isValid = false;
+            }
+            
+            return isValid;
+        });
+    });
+</script>
+{% endblock %}

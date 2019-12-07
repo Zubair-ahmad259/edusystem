@@ -1,0 +1,102 @@
+{% extends 'timetables/base.html' %}
+{% load static %}
+
+{% block title %}Exam Timetable{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="text-primary">
+                <i class="fas fa-calendar-check"></i> Exam Timetable
+            </h2>
+        </div>
+        <div class="col text-end">
+            {% if user.is_superuser or user.role == 'admin' %}
+            <a href="{% url 'timetables:create_exam_timetable' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add Exam
+            </a>
+            {% endif %}
+            <a href="javascript:window.print()" class="btn btn-secondary">
+                <i class="fas fa-print"></i> Print
+            </a>
+        </div>
+    </div>
+    
+    <div class="row mb-3">
+        <div class="col">
+            <div class="btn-group" role="group">
+                <a href="?type=all" class="btn btn-outline-primary {% if current_type == 'all' %}active{% endif %}">All</a>
+                <a href="?type=midterm" class="btn btn-outline-primary {% if current_type == 'midterm' %}active{% endif %}">Midterm</a>
+                <a href="?type=final" class="btn btn-outline-primary {% if current_type == 'final' %}active{% endif %}">Final</a>
+                <a href="?type=quiz" class="btn btn-outline-primary {% if current_type == 'quiz' %}active{% endif %}">Quiz</a>
+                <a href="?type=practical" class="btn btn-outline-primary {% if current_type == 'practical' %}active{% endif %}">Practical</a>
+            </div>
+        </div>
+    </div>
+    
+    {% for date, exams in exam_by_date.items %}
+    <div class="card shadow mb-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-calendar-day"></i> {{ date|date:"l, F j, Y" }}
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Time</th>
+                            <th>Subject</th>
+                            <th>Teacher</th>
+                            <th>Section</th>
+                            <th>Classroom</th>
+                            <th>Type</th>
+                            <th>Duration</th>
+                            <th>Total Marks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for exam in exams %}
+                        <tr>
+                            <td>{{ exam.start_time|time:"g:i A" }} - {{ exam.end_time|time:"g:i A" }}</td>
+                            <td>
+                                <strong>{{ exam.subject.code }}</strong><br>
+                                <small>{{ exam.subject.name }}</small>
+                            </td>
+                            <td>{{ exam.teacher.first_name }} {{ exam.teacher.last_name }}</td>
+                            <td>{{ exam.section.name }}</td>
+                            <td>{{ exam.classroom.room_number }}</td>
+                            <td>
+                                <span class="badge {% if exam.exam_type == 'final' %}bg-danger{% elif exam.exam_type == 'midterm' %}bg-warning{% else %}bg-info{% endif %}">
+                                    {{ exam.get_exam_type_display }}
+                                </span>
+                            </td>
+                            <td>{{ exam.duration_minutes }} mins</td>
+                            <td>{{ exam.total_marks }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="alert alert-info text-center">
+        <i class="fas fa-info-circle"></i> No exams scheduled.
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+    @media print {
+        .btn, .btn-group {
+            display: none;
+        }
+        .card {
+            break-inside: avoid;
+        }
+    }
+</style>
+{% endblock %}

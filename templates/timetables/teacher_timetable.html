@@ -1,0 +1,566 @@
+{% extends 'teacher/teacher_base.html' %}
+{% load static %}
+
+{% block teacher_content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="text-primary">
+                <i class="fas fa-calendar-alt"></i> Teacher Timetable
+            </h2>
+            <p class="text-muted">{{ teacher.first_name }} {{ teacher.last_name }} ({{ teacher.teacher_id }})</p>
+        </div>
+        <div class="col text-end">
+            <button onclick="window.print()" class="btn btn-secondary">
+                <i class="fas fa-print"></i> Print
+            </button>
+        </div>
+    </div>
+
+    <div class="class-card">
+    <strong>{{ entry.subject.code }}</strong>
+    <div class="subject-name">{{ entry.subject.name }}</div>
+    <div><i class="fas fa-users"></i> {{ entry.section.name }}</div>
+    <div><i class="fas fa-door-open"></i> {{ entry.classroom.room_number }}</div>
+    {% if user.is_superuser or user.role == 'admin' %}
+    <div class="mt-2">
+        <a href="{% url 'timetables:edit_timetable_entry' entry.id %}" class="btn btn-sm btn-outline-primary">
+            <i class="fas fa-edit"></i> Edit
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+    <!-- Timetable Table -->
+    <div class="card shadow">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-bordered timetable-table mb-0">
+                    <thead>
+                        <tr style="background-color: #343a40; color: white;">
+                            <th style="width: 140px; background-color: #343a40; color: white; text-align: center;">Time / Day</th>
+                            <th style="background-color: #343a40; color: white; text-align: center;">Monday</th>
+                            <th style="background-color: #343a40; color: white; text-align: center;">Tuesday</th>
+                            <th style="background-color: #343a40; color: white; text-align: center;">Wednesday</th>
+                            <th style="background-color: #343a40; color: white; text-align: center;">Thursday</th>
+                            <th style="background-color: #343a40; color: white; text-align: center;">Friday</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- 9:00 - 10:00 -->
+                        <tr>
+                            <td style="background-color: #f8f9fa; font-weight: bold; text-align: center;">9:00 - 10:00</td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Monday' and entry.time_slot.start_time|time:"H:i" == "09:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-users"></i> {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-door-open"></i> {{ entry.classroom.room_number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Tuesday' and entry.time_slot.start_time|time:"H:i" == "09:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-users"></i> {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-door-open"></i> {{ entry.classroom.room_number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Wednesday' and entry.time_slot.start_time|time:"H:i" == "09:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-users"></i> {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-door-open"></i> {{ entry.classroom.room_number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Thursday' and entry.time_slot.start_time|time:"H:i" == "09:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-users"></i> {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-door-open"></i> {{ entry.classroom.room_number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Friday' and entry.time_slot.start_time|time:"H:i" == "09:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-users"></i> {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-door-open"></i> {{ entry.classroom.room_number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        
+                        <!-- 10:00 - 11:00 -->
+                        <tr>
+                            <td style="background-color: #f8f9fa; font-weight: bold; text-align: center;">10:00 - 11:00</td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Monday' and entry.time_slot.start_time|time:"H:i" == "10:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-users"></i> {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-door-open"></i> {{ entry.classroom.room_number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Tuesday' and entry.time_slot.start_time|time:"H:i" == "10:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-users"></i> {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-door-open"></i> {{ entry.classroom.room_number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Wednesday' and entry.time_slot.start_time|time:"H:i" == "10:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-users"></i> {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-door-open"></i> {{ entry.classroom.room_number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Thursday' and entry.time_slot.start_time|time:"H:i" == "10:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-users"></i> {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-door-open"></i> {{ entry.classroom.room_number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Friday' and entry.time_slot.start_time|time:"H:i" == "10:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-users"></i> {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-door-open"></i> {{ entry.classroom.room_number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        
+                        <!-- 11:00 - 12:00 -->
+                        <tr>
+                            <td style="background-color: #f8f9fa; font-weight: bold; text-align: center;">11:00 - 12:00</td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Monday' and entry.time_slot.start_time|time:"H:i" == "11:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-users"></i> {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-door-open"></i> {{ entry.classroom.room_number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Tuesday' and entry.time_slot.start_time|time:"H:i" == "11:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-users"></i> {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-door-open"></i> {{ entry.classroom.room_number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Wednesday' and entry.time_slot.start_time|time:"H:i" == "11:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-users"></i> {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-door-open"></i> {{ entry.classroom.room_number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Thursday' and entry.time_slot.start_time|time:"H:i" == "11:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-users"></i> {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-door-open"></i> {{ entry.classroom.room_number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Friday' and entry.time_slot.start_time|time:"H:i" == "11:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-users"></i> {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-door-open"></i> {{ entry.classroom.room_number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        
+                        <!-- 12:00 - 13:00 -->
+                        <tr>
+                            <td style="background-color: #f8f9fa; font-weight: bold; text-align: center;">12:00 - 13:00</td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Monday' and entry.time_slot.start_time|time:"H:i" == "12:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-users"></i> {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-door-open"></i> {{ entry.classroom.room_number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Tuesday' and entry.time_slot.start_time|time:"H:i" == "12:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-users"></i> {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-door-open"></i> {{ entry.classroom.room_number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Wednesday' and entry.time_slot.start_time|time:"H:i" == "12:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-users"></i> {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-door-open"></i> {{ entry.classroom.room_number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Thursday' and entry.time_slot.start_time|time:"H:i" == "12:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-users"></i> {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-door-open"></i> {{ entry.classroom.room_number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Friday' and entry.time_slot.start_time|time:"H:i" == "12:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-users"></i> {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-door-open"></i> {{ entry.classroom.room_number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        
+                        <!-- 13:00 - 14:00 -->
+                        <tr>
+                            <td style="background-color: #f8f9fa; font-weight: bold; text-align: center;">13:00 - 14:00</td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Monday' and entry.time_slot.start_time|time:"H:i" == "13:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-users"></i> {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-door-open"></i> {{ entry.classroom.room_number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Tuesday' and entry.time_slot.start_time|time:"H:i" == "13:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-users"></i> {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-door-open"></i> {{ entry.classroom.room_number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Wednesday' and entry.time_slot.start_time|time:"H:i" == "13:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-users"></i> {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-door-open"></i> {{ entry.classroom.room_number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Thursday' and entry.time_slot.start_time|time:"H:i" == "13:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-users"></i> {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-door-open"></i> {{ entry.classroom.room_number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Friday' and entry.time_slot.start_time|time:"H:i" == "13:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-users"></i> {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-door-open"></i> {{ entry.classroom.room_number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        
+                        <!-- 14:00 - 15:00 -->
+                        <tr>
+                            <td style="background-color: #f8f9fa; font-weight: bold; text-align: center;">14:00 - 15:00</td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Monday' and entry.time_slot.start_time|time:"H:i" == "14:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-users"></i> {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-door-open"></i> {{ entry.classroom.room_number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Tuesday' and entry.time_slot.start_time|time:"H:i" == "14:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-users"></i> {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-door-open"></i> {{ entry.classroom.room_number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Wednesday' and entry.time_slot.start_time|time:"H:i" == "14:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-users"></i> {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-door-open"></i> {{ entry.classroom.room_number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Thursday' and entry.time_slot.start_time|time:"H:i" == "14:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-users"></i> {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-door-open"></i> {{ entry.classroom.room_number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Friday' and entry.time_slot.start_time|time:"H:i" == "14:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-users"></i> {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-door-open"></i> {{ entry.classroom.room_number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        
+                        <!-- 15:00 - 16:00 (Monday-Thursday only) -->
+                        <tr>
+                            <td style="background-color: #f8f9fa; font-weight: bold; text-align: center;">15:00 - 16:00</td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Monday' and entry.time_slot.start_time|time:"H:i" == "15:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-users"></i> {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-door-open"></i> {{ entry.classroom.room_number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Tuesday' and entry.time_slot.start_time|time:"H:i" == "15:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-users"></i> {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-door-open"></i> {{ entry.classroom.room_number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Wednesday' and entry.time_slot.start_time|time:"H:i" == "15:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-users"></i> {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-door-open"></i> {{ entry.classroom.room_number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td class="timetable-cell">
+                                {% for entry in timetable_entries %}
+                                    {% if entry.time_slot.day == 'Thursday' and entry.time_slot.start_time|time:"H:i" == "15:00" %}
+                                    <div class="class-card">
+                                        <strong>{{ entry.subject.code }}</strong>
+                                        <div class="subject-name">{{ entry.subject.name }}</div>
+                                        <div><i class="fas fa-users"></i> {{ entry.section.name }}</div>
+                                        <div><i class="fas fa-door-open"></i> {{ entry.classroom.room_number }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td style="background-color: #f0f0f0; text-align: center; color: #999;">
+                                <small>No classes</small>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .timetable-table {
+        font-size: 0.85rem;
+        margin-bottom: 0;
+    }
+    .timetable-table thead tr th {
+        padding: 12px 8px;
+        font-weight: 600;
+        text-align: center;
+        border: 1px solid #dee2e6;
+    }
+    .timetable-cell {
+        vertical-align: top;
+        min-height: 80px;
+        background: #fff;
+        padding: 8px;
+        border: 1px solid #dee2e6;
+    }
+    .class-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 8px;
+        margin-bottom: 5px;
+        border-radius: 8px;
+        border-left: 4px solid #28a745;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .class-card strong {
+        color: #2c3e50;
+        font-size: 0.9rem;
+        display: block;
+        margin-bottom: 5px;
+    }
+    .class-card .subject-name {
+        color: #6c757d;
+        font-size: 0.75rem;
+        margin-bottom: 5px;
+    }
+    .class-card div {
+        font-size: 0.7rem;
+        color: #6c757d;
+        margin-top: 2px;
+    }
+    .class-card div i {
+        width: 16px;
+        margin-right: 4px;
+        color: #007bff;
+    }
+    @media print {
+        .btn {
+            display: none;
+        }
+        .class-card {
+            break-inside: avoid;
+            border: 1px solid #ddd;
+        }
+        .timetable-table thead tr th {
+            background-color: #343a40 !important;
+            color: white !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+    }
+</style>
+{% endblock %}
