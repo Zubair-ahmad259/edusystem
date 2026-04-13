@@ -42,7 +42,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # Add this for static files
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -70,15 +70,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'home.wsgi.application'
 
-# import os
-from pathlib import Path
-
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-# Check if running locally
+# Database - Switch between SQLite (local) and PostgreSQL (Railway)
 if os.environ.get('RAILWAY_ENVIRONMENT'):
     # On Railway - use PostgreSQL
-    import dj_database_url
     DATABASES = {
         'default': dj_database_url.config(
             default=os.environ.get('DATABASE_URL'),
@@ -93,6 +87,7 @@ else:
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
