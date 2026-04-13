@@ -1,0 +1,6 @@
+﻿Django==5.0.3
+psycopg2-binary==2.9.11
+dj-database-url==3.1.2
+gunicorn==21.2.0
+whitenoise==6.6.0
+pillow==10.2.0
