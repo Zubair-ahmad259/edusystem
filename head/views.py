@@ -6,13 +6,14 @@ from django.db.models import Q
 from django.http import HttpResponse
 from student.models import Discipline
 from .models import AdminProfile
+
 def import_admin_profiles(request):
-    messages.error(request, "Import feature temporarily disabled. Please use admin panel to add profiles.")
-    return redirect('admin_profile:admin_profile_list')
-def download_sample_excel(request):
-    messages.error(request, "Export feature temporarily disabled.")
+    messages.error(request, "Import feature temporarily disabled...")
     return redirect('admin_profile:admin_profile_list')
 
+def download_sample_excel(request):
+    messages.error(request, "Export feature temporarily disabled...")
+    return redirect('admin_profile:admin_profile_list')
 @login_required
 def admin_profile_list(request):
     """List all admin profiles with search and filter options"""
