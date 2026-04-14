@@ -4,7 +4,6 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.http import HttpResponse
-import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment
 from student.models import Discipline
 from .models import AdminProfile
