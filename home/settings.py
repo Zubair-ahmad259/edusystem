@@ -131,3 +131,16 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'zk7233103@gmail.com'
 EMAIL_HOST_PASSWORD = 'pfui rdgt dxuv ghyn'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+
+
+# Create superuser automatically on Railway
+import os
+if os.environ.get('RAILWAY_ENVIRONMENT'):
+    try:
+        from home_auth.models import CustomUser
+        if not CustomUser.objects.filter(username='admin').exists():
+            CustomUser.objects.create_superuser('admin', 'admin@example.com', 'admin123456')
+            print("Superuser created on Railway!")
+    except:
+        pass
