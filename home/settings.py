@@ -146,14 +146,12 @@ if os.environ.get('RAILWAY_ENVIRONMENT'):
         pass
 
 
-
-
-# Run migrations automatically on Railway
+# Auto-migrate on Railway
 import os
 if os.environ.get('RAILWAY_ENVIRONMENT'):
     try:
         from django.core.management import call_command
-        call_command('migrate', verbosity=0)
-        print("Migrations completed!")
-    except:
-        pass    
+        call_command('migrate', verbosity=1)
+        print("Migrations completed on Railway!")
+    except Exception as e:
+        print(f"Migration error: {e}")
