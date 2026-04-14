@@ -7,7 +7,7 @@ from Academic.models import Discipline, Batch, Semester, Section
 from teachers.models import Teacher
 from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
-import pandas as pd
+# import pandas as pd  # COMMENTED OUT - pandas not available on Railway
 import json
 from django.views.decorators.csrf import csrf_exempt
 
@@ -554,191 +554,16 @@ def debug_prerequisites(request):
     return render(request, 'subject/debug-prerequisites.html', context)
 
 
-# Import subjects from Excel/CSV
+# Import subjects from Excel/CSV - TEMPORARILY DISABLED
 def import_subjects(request):
-    if request.method == 'POST' and request.FILES.get('file'):
-        file = request.FILES['file']
-        file_extension = file.name.split('.')[-1].lower()
-        
-        try:
-            if file_extension in ['xlsx', 'xls']:
-                df = pd.read_excel(file)
-            elif file_extension == 'csv':
-                df = pd.read_csv(file)
-            else:
-                messages.error(request, "Unsupported file format. Please upload Excel or CSV file.")
-                return redirect('subject:view_subject')
-            
-            success_count = 0
-            error_messages = []
-            
-            for index, row in df.iterrows():
-                try:
-                    # Map column names
-                    code = row.get('code') or row.get('subject_code') or row.get('Code')
-                    name = row.get('name') or row.get('subject_name') or row.get('Name')
-                    semester_number = row.get('semester') or row.get('sem')
-                    
-                    # Get discipline
-                    discipline_code = row.get('discipline') or row.get('discipline_code') or row.get('Discipline')
-                    discipline = None
-                    if discipline_code:
-                        discipline = Discipline.objects.filter(
-                            field__icontains=discipline_code
-                        ).first()
-                    
-                    # Get semester instance
-                    semester = None
-                    if semester_number:
-                        try:
-                            semester = Semester.objects.get(number=int(semester_number))
-                        except Semester.DoesNotExist:
-                            error_messages.append(f"Row {index+2}: Semester {semester_number} does not exist")
-                            continue
-                    
-                    # Get section (optional)
-                    section_name = row.get('section') or row.get('section_name')
-                    section = None
-                    if section_name and discipline:
-                        section = Section.objects.filter(
-                            name=section_name.strip(),
-                            discipline=discipline
-                        ).first()
-                    
-                    if not all([code, name, semester, discipline]):
-                        error_messages.append(f"Row {index+2}: Missing required fields")
-                        continue
-                    
-                    # Check if subject exists
-                    if Subject.objects.filter(
-                        code=code, 
-                        semester=semester, 
-                        desciplain=discipline,
-                        section=section
-                    ).exists():
-                        error_messages.append(f"Row {index+2}: Subject {code} already exists")
-                        continue
-                    
-                    # Create subject
-                    subject_data = {
-                        'code': str(code).strip(),
-                        'name': str(name).strip(),
-                        'semester': semester,
-                        'desciplain': discipline,
-                        'section': section,
-                        'credit_hours': int(row.get('credit_hours', 3)),
-                        'subject_type': row.get('subject_type', 'core'),
-                        'description': row.get('description', ''),
-                        'is_active': True,
-                    }
-                    
-                    subject = Subject.objects.create(**subject_data)
-                    
-                    # Handle prerequisites if provided
-                    prereq_codes = str(row.get('prerequisites', '')).split(',')
-                    if prereq_codes and prereq_codes[0]:
-                        prerequisites = []
-                        for prereq_code in prereq_codes:
-                            prereq_code = prereq_code.strip()
-                            prereq = Subject.objects.filter(
-                                code=prereq_code,
-                                desciplain=discipline
-                            ).first()
-                            if prereq:
-                                prerequisites.append(prereq)
-                            else:
-                                error_messages.append(f"Row {index+2}: Prerequisite {prereq_code} not found")
-                        
-                        if prerequisites:
-                            subject.prerequisites.set(prerequisites)
-                    
-                    success_count += 1
-                    
-                except Exception as e:
-                    error_messages.append(f"Row {index+2}: {str(e)}")
-            
-            if success_count > 0:
-                messages.success(request, f"Successfully imported {success_count} subjects")
-            
-            if error_messages:
-                messages.warning(request, f"Some errors occurred: {', '.join(error_messages[:5])}")
-                if len(error_messages) > 5:
-                    messages.warning(request, f"... and {len(error_messages)-5} more errors")
-            
-        except Exception as e:
-            messages.error(request, f"Error processing file: {str(e)}")
-        
-        return redirect('subject:view_subject')
-    
-    return render(request, 'subject/import-subjects.html')
+    messages.error(request, "Import feature temporarily disabled. Please use admin panel to add subjects.")
+    return redirect('subject:view_subject')
 
 
-# Export subjects template
+# Export subjects template - TEMPORARILY DISABLED
 def export_subjects_template(request):
-    # Create a template DataFrame
-    data = {
-        'code': ['CS101', 'CS102', 'CS201'],
-        'name': ['Introduction to Programming', 'Data Structures', 'Database Systems'],
-        'semester': [1, 2, 3],
-        'section': ['A', 'B', 'A'],
-        'discipline': ['CSE', 'CSE', 'CSE'],
-        'credit_hours': [3, 3, 4],
-        'subject_type': ['core', 'core', 'core'],
-        'prerequisites': ['', 'CS101', 'CS101,CS102'],
-        'description': ['Basic programming concepts', 'Data structures and algorithms', 'Database management systems']
-    }
-    
-    df = pd.DataFrame(data)
-    
-    # Create HTTP response
-    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename="subject_import_template.xlsx"'
-    
-    # Write to Excel
-    with pd.ExcelWriter(response, engine='openpyxl') as writer:
-        df.to_excel(writer, sheet_name='Template', index=False)
-        
-        # Add instructions sheet
-        instructions = {
-            'Column': [
-                'code',
-                'name',
-                'semester',
-                'section',
-                'discipline',
-                'credit_hours',
-                'subject_type',
-                'prerequisites',
-                'description'
-            ],
-            'Description': [
-                'Subject code (required)',
-                'Subject name (required)',
-                'Semester number 1-8 (required)',
-                'Section name (optional)',
-                'Discipline code/name (required)',
-                'Credit hours (default: 3)',
-                'Subject type: core/elective',
-                'Comma-separated prerequisite codes',
-                'Subject description (optional)'
-            ],
-            'Example': [
-                'CS101',
-                'Introduction to Programming',
-                '1',
-                'A',
-                'CSE',
-                '3',
-                'core',
-                '',
-                'Basic programming concepts'
-            ]
-        }
-        
-        instructions_df = pd.DataFrame(instructions)
-        instructions_df.to_excel(writer, sheet_name='Instructions', index=False)
-    
-    return response
+    messages.error(request, "Export feature temporarily disabled.")
+    return redirect('subject:view_subject')
 
 
 # API endpoint for prerequisite suggestions - FIXED VERSION
@@ -812,35 +637,6 @@ def get_prerequisite_suggestions(request):
 
 # API endpoint to get sections based on discipline and batch
 @csrf_exempt
-# def get_sections_for_discipline(request):
-#     if request.method == 'GET':
-#         discipline_id = request.GET.get('discipline_id')
-#         batch_id = request.GET.get('batch_id')
-        
-#         if not discipline_id:
-#             return JsonResponse({'error': 'Missing discipline parameter'}, status=400)
-        
-#         try:
-#             # Get sections for discipline
-#             sections = Section.objects.filter(discipline_id=discipline_id)
-            
-#             # Filter by batch if provided
-#             if batch_id:
-#                 sections = sections.filter(batch_id=batch_id)
-            
-#             data = [{
-#                 'id': section.id,
-#                 'name': section.name,
-#                 'batch': section.batch.name if section.batch else '',
-#                 'display': f"{section.name} - {section.batch.name if section.batch else 'All Batches'}"
-#             } for section in sections]
-            
-#             return JsonResponse({'sections': data})
-#         except Exception as e:
-#             return JsonResponse({'error': str(e)}, status=500)
-    
-#     return JsonResponse({'error': 'Invalid request method'}, status=400)
-@csrf_exempt
 def get_sections_for_discipline(request):
     """API endpoint to get sections based on discipline and batch"""
     if request.method == 'GET':
@@ -877,6 +673,7 @@ def get_sections_for_discipline(request):
             return JsonResponse({'error': str(e)}, status=500)
     
     return JsonResponse({'error': 'Invalid request method'}, status=400)
+
 # API endpoint to get batches for discipline
 @csrf_exempt
 def get_batches_for_discipline(request):
@@ -1017,6 +814,7 @@ def get_sections_for_assignment(request):
             return JsonResponse({'error': str(e)}, status=500)
     
     return JsonResponse({'error': 'Invalid request method'}, status=400)
+
 def show_subject_assign(request):
     assigns = SubjectAssign.objects.select_related(
         "teacher", 
@@ -1030,6 +828,7 @@ def show_subject_assign(request):
         "assigns": assigns
     }
     return render(request, "subject/show-subject-assign-record.html", context)
+
 # Check prerequisites for a student
 def check_student_prerequisites(request, student_id):
     student = get_object_or_404(Student, id=student_id)
