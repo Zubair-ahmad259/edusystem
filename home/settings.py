@@ -144,3 +144,16 @@ if os.environ.get('RAILWAY_ENVIRONMENT'):
             print("Superuser created on Railway!")
     except:
         pass
+
+
+
+
+# Run migrations automatically on Railway
+import os
+if os.environ.get('RAILWAY_ENVIRONMENT'):
+    try:
+        from django.core.management import call_command
+        call_command('migrate', verbosity=0)
+        print("Migrations completed!")
+    except:
+        pass    
