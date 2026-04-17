@@ -223,8 +223,7 @@ def forgot_password_view(request):
     """Handle forgot password request - sends reset link via email"""
     
     # Your live server URL
-    LIVE_SERVER_URL = "https://edusphares.pythonanywhere.com/home_auth"
-    
+reset_link = f"{LIVE_SERVER_URL}/reset-password/{token}/?uidb64={uid}"    
     # Get User model
     User = get_user_model()
     
@@ -382,6 +381,7 @@ def forgot_password_view(request):
         return redirect('forgot_password')
     
     return render(request, 'authentication/forgot_password.html')
+
 def reset_password_view(request, token):
     """Handle password reset with token - Show reset form"""
     uidb64 = request.GET.get('uidb64')
