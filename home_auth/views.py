@@ -278,8 +278,10 @@ def forgot_password_view(request):
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             
-            reset_link = f"{LIVE_SERVER_URL}/home_auth/reset-password/{token}/?uidb64={uid}"
-
+            # IMPORTANT: Use the correct URL pattern name 'reset_password'
+            # This matches your urlpatterns: path('reset-password/<str:token>/', ...)
+            reset_link = f"{LIVE_SERVER_URL}home_auth/reset-password/{token}/?uidb64={uid}"
+            
 
             # Send email
             try:
