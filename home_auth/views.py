@@ -218,13 +218,11 @@ from django.utils.encoding import force_bytes, force_str
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
-
 def forgot_password_view(request):
     """Handle forgot password request - sends reset link via email"""
     
-    # Your live server URL
-    
-    LIVE_SERVER_URL = "https://edusphares.pythonanywhere.com/home_auth"
+    # Your live server URL - BASE URL ONLY (no /home_auth)
+    LIVE_SERVER_URL = "https://edusphares.pythonanywhere.com"
     
     # Get User model
     User = get_user_model()
@@ -278,92 +276,26 @@ def forgot_password_view(request):
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             
-            # IMPORTANT: Use the correct URL pattern name 'reset_password'
-            # This matches your urlpatterns: path('reset-password/<str:token>/', ...)
-            reset_link = f"{LIVE_SERVER_URL}home_auth/reset-password/{token}/?uidb64={uid}"
+            # CORRECTED: Use full URL with /home_auth/ prefix
+            reset_link = f"{LIVE_SERVER_URL}/home_auth/reset-password/{token}/?uidb64={uid}"
             
-
-            # Send email
+            # Send email (your existing email code here)
             try:
                 subject = "Reset Your Password - EduSphere"
-                html_message = f"""
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <style>
-                        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-                        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; background: #f9f9f9; border-radius: 10px; }}
-                        .header {{ background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }}
-                        .content {{ padding: 30px; background: white; border-radius: 0 0 10px 10px; }}
-                        .button {{
-                            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-                            color: white;
-                            padding: 12px 30px;
-                            text-decoration: none;
-                            border-radius: 25px;
-                            display: inline-block;
-                            margin: 20px 0;
-                        }}
-                        .footer {{ font-size: 12px; color: #666; text-align: center; margin-top: 20px; }}
-                        .logo {{ text-align: center; margin-bottom: 20px; }}
-                        .logo h1 {{ color: #1e3c72; font-size: 28px; margin: 0; }}
-                        .logo span {{ color: #ffd700; }}
-                    </style>
-                </head>
-                <body>
-                    <div class="container">
-                        <div class="logo">
-                            <h1>Edu<span>Sphere</span></h1>
-                        </div>
-                        <div class="header">
-                            <h2>Password Reset Request</h2>
-                        </div>
-                        <div class="content">
-                            <p>Dear {user.first_name or user.username},</p>
-                            
-                            <p>We received a request to reset your password for your EduSphere account.</p>
-                            
-                            <p style="text-align: center;">
-                                <a href="{reset_link}" class="button">Reset Password</a>
-                            </p>
-                            
-                            <p>If the button doesn't work, copy and paste this link into your browser:</p>
-                            <p style="background: #f0f0f0; padding: 10px; word-break: break-all; font-size: 12px;">
-                                {reset_link}
-                            </p>
-                            
-                            <p>This link will expire in 24 hours for security reasons.</p>
-                            
-                            <p>If you didn't request a password reset, please ignore this email. Your password will remain unchanged.</p>
-                            
-                            <hr style="margin: 20px 0;">
-                            <p style="font-size: 12px; color: #666;">
-                                EduSphere - Empowering Global Learning<br>
-                                {LIVE_SERVER_URL}
-                            </p>
-                        </div>
-                        <div class="footer">
-                            <p>&copy; 2024 EduSphere. All rights reserved.</p>
-                        </div>
-                    </div>
-                </body>
-                </html>
-                """
-                
                 plain_message = f"""
-                Dear {user.first_name or user.username},
+Dear {user.first_name or user.username},
 
-                We received a request to reset your password for your EduSphere account.
+We received a request to reset your password for your EduSphere account.
 
-                Click the link below to reset your password:
-                {reset_link}
+Click the link below to reset your password:
+{reset_link}
 
-                This link will expire in 24 hours.
+This link will expire in 24 hours.
 
-                If you didn't request a password reset, please ignore this email.
+If you didn't request a password reset, please ignore this email.
 
-                EduSphere - Empowering Global Learning
-                {LIVE_SERVER_URL}
+EduSphere - Empowering Global Learning
+{LIVE_SERVER_URL}
                 """
                 
                 send_mail(
@@ -371,7 +303,6 @@ def forgot_password_view(request):
                     plain_message,
                     settings.DEFAULT_FROM_EMAIL,
                     [email],
-                    html_message=html_message,
                     fail_silently=False,
                 )
                 messages.success(request, 'Password reset link has been sent to your email. Please check your inbox.')
@@ -384,7 +315,6 @@ def forgot_password_view(request):
         return redirect('forgot_password')
     
     return render(request, 'authentication/forgot_password.html')
-
 def reset_password_view(request, token):
     """Handle password reset with token - Show reset form"""
     uidb64 = request.GET.get('uidb64')
