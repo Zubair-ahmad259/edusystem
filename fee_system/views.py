@@ -26,7 +26,6 @@ from datetime import date, datetime, timedelta
 from decimal import Decimal
 from .models import UploadFee, Student, Batch, Semester, Section, Discipline
 from decimal import Decimal
-
 import pandas as pd
 from django.http import HttpResponse
 from django.utils import timezone

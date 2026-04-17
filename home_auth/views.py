@@ -2131,3 +2131,13 @@ def process_password_reset(request, user_type, user_id):
         logger.error(f"Error in process_password_reset: {str(e)}")
         messages.error(request, f'An error occurred: {str(e)}')
         return redirect('manage_students_view')
+
+
+        from django.http import JsonResponse
+
+def validate_student_email(request):
+    email = request.GET.get('email')
+    # Check if email exists in Student model
+    from student.models import Student
+    is_valid = Student.objects.filter(email=email).exists()
+    return JsonResponse({'is_valid': is_valid})
