@@ -9,7 +9,7 @@ urlpatterns = [
     path('teachers', include("teachers.urls")),
     path('subject', include("subject.urls")),
      path('ddcomit', include("ddcomit.urls")),
-    path('home_auth', include("home_auth.urls")),
+    path('home_auth', include("home_auth.urls")),  # Added trailing slash
     path('head', include("head.urls")),
     path('fee_system', include("fee_system.urls")),
     path('stu', include("stu.urls")),
