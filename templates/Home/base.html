@@ -53,15 +53,45 @@
             position: fixed;
             top: 0;
             bottom: 0;
-            left: 0;
-            width: 260px;
-            z-index: 1000;
+            left: -280px;
+            width: 280px;
+            z-index: 1001;
             transition: all 0.3s ease;
+            overflow-y: auto;
+        }
+        
+        body.sidebar-open .sidebar {
+            left: 0;
+        }
+        
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            display: none;
+        }
+        
+        body.sidebar-open .sidebar-overlay {
+            display: block;
+        }
+        
+        @media (min-width: 992px) {
+            .sidebar {
+                left: 0;
+            }
+            
+            .sidebar-overlay {
+                display: none !important;
+            }
         }
         
         .sidebar .sidebar-menu > ul > li {
             list-style: none;
-            margin: 8px 0;
+            margin: 5px 0;
         }
         
         .sidebar .sidebar-menu > ul > li > a {
@@ -78,9 +108,9 @@
         }
         
         .sidebar .sidebar-menu > ul > li > a i {
-            width: 25px;
-            margin-right: 10px;
-            font-size: 16px;
+            width: 28px;
+            margin-right: 12px;
+            font-size: 18px;
         }
         
         .sidebar .sidebar-menu > ul > li > a:hover {
@@ -95,34 +125,10 @@
             box-shadow: 0 5px 15px rgba(102,126,234,0.4);
         }
         
-        .sidebar .sidebar-menu > ul > li.active > a i {
-            color: white;
-        }
-        
-        .sidebar .submenu {
-            position: relative;
-        }
-        
         .sidebar .submenu ul {
             display: none;
-            padding-left: 45px;
+            padding-left: 50px;
             list-style: none;
-        }
-        
-        .sidebar .submenu ul li a {
-            padding: 8px 15px;
-            display: block;
-            color: #cbd5e1;
-            font-size: 13px;
-            text-decoration: none;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-        
-        .sidebar .submenu ul li a:hover {
-            background: rgba(102, 126, 234, 0.2);
-            color: white;
-            transform: translateX(5px);
         }
         
         .sidebar .submenu.open ul {
@@ -154,20 +160,28 @@
             border-bottom: 1px solid #e2e8f0;
             position: fixed;
             top: 0;
-            left: 260px;
+            left: 0;
             right: 0;
             height: 70px;
             z-index: 999;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 30px;
+            padding: 0 20px;
             transition: all 0.3s ease;
+        }
+        
+        @media (min-width: 992px) {
+            .header {
+                left: 280px;
+                width: calc(100% - 280px);
+            }
         }
         
         .header-left {
             display: flex;
             align-items: center;
+            gap: 15px;
         }
         
         .logo {
@@ -180,23 +194,55 @@
             font-weight: 700;
             margin-left: 10px;
             color: #1e293b;
+            font-size: 18px;
         }
         
         .logo span span {
             color: #667eea;
         }
         
+        .mobile-menu-toggle {
+            background: none;
+            border: none;
+            font-size: 22px;
+            color: #64748b;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+        }
+        
+        @media (min-width: 992px) {
+            .mobile-menu-toggle {
+                display: none;
+            }
+        }
+        
         #toggle_btn {
             font-size: 20px;
             color: #64748b;
             cursor: pointer;
-            margin-left: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+        }
+        
+        @media (max-width: 991px) {
+            #toggle_btn {
+                display: none;
+            }
         }
         
         .top-nav-search {
             flex: 1;
             max-width: 400px;
-            margin-left: 30px;
+            margin: 0 20px;
         }
         
         .top-nav-search form {
@@ -221,10 +267,16 @@
             padding: 10px 20px;
         }
         
+        @media (max-width: 576px) {
+            .top-nav-search {
+                display: none;
+            }
+        }
+        
         .user-menu {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 15px;
             margin-bottom: 0;
         }
         
@@ -256,34 +308,17 @@
             object-fit: cover;
         }
         
-        .dropdown-menu {
-            border: none;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-            border-radius: 12px;
-            padding: 10px;
-        }
-        
-        .dropdown-item {
-            padding: 8px 15px;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-        
-        .dropdown-item:hover {
-            background: rgba(102,126,234,0.1);
-            color: #667eea;
-        }
-        
         /* Page Wrapper */
         .page-wrapper {
-            margin-left: 260px;
-            padding-top: 90px;
-            padding-bottom: 30px;
+            margin-top: 70px;
+            padding: 20px;
             transition: all 0.3s ease;
         }
         
-        .content {
-            padding: 0 30px;
+        @media (min-width: 992px) {
+            .page-wrapper {
+                margin-left: 280px;
+            }
         }
         
         /* Cards Styling */
@@ -311,13 +346,14 @@
             margin-bottom: 0;
             color: #1e293b;
             font-weight: 600;
+            font-size: 16px;
         }
         
         .card-body {
             padding: 25px;
         }
         
-        /* Dashboard Cards */
+        /* Dashboard Widgets */
         .db-widgets {
             padding: 5px;
         }
@@ -351,25 +387,11 @@
         }
         
         /* Gradient Cards */
-        .card.bg-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        
-        .card.bg-success {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        }
-        
-        .card.bg-danger {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        }
-        
-        .card.bg-info {
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-        }
-        
-        .card.bg-warning {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-        }
+        .card.bg-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card.bg-success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        .card.bg-danger { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+        .card.bg-info { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+        .card.bg-warning { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
         
         /* Buttons */
         .btn-primary {
@@ -386,78 +408,23 @@
             box-shadow: 0 10px 20px rgba(102,126,234,0.3);
         }
         
-        .btn-outline-primary {
-            border: 2px solid #667eea;
-            color: #667eea;
-            background: transparent;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-outline-primary:hover {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-color: transparent;
-            color: white;
-            transform: translateY(-2px);
-        }
-        
-        /* Tables */
-        .table {
-            border-radius: 16px;
-            overflow: hidden;
-        }
-        
-        .table thead th {
-            background: #f1f5f9;
-            color: #1e293b;
-            font-weight: 600;
-            border-bottom: none;
-            padding: 15px;
-        }
-        
-        .table tbody tr:hover {
-            background: #f8fafc;
-        }
-        
         /* Badges */
-        .badge-info {
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-            padding: 6px 12px;
+        .badge-info, .badge-warning, .badge-success, .badge-danger {
+            padding: 5px 12px;
             border-radius: 20px;
             font-weight: 500;
+            font-size: 11px;
             color: white;
         }
-        
-        .badge-warning {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 20px;
-        }
-        
-        .badge-success {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 20px;
-        }
-        
-        .badge-danger {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 20px;
-        }
+        .badge-info { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+        .badge-warning { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        .badge-success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        .badge-danger { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
         
         /* Animations */
         @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
         .fade-in-up {
@@ -465,271 +432,154 @@
             opacity: 0;
         }
         
-        /* Responsive */
-        @media (max-width: 991px) {
-            .sidebar {
-                left: -260px;
-            }
-            
-            .header {
-                left: 0;
-            }
-            
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
             .page-wrapper {
-                margin-left: 0;
+                padding: 15px;
             }
-            
-            .sidebar-opened .sidebar {
-                left: 0;
-            }
-            
-            .sidebar-opened .header {
-                left: 260px;
-            }
-            
-            .sidebar-opened .page-wrapper {
-                margin-left: 260px;
-            }
+            .card-header { padding: 15px 20px; }
+            .card-body { padding: 20px; }
+            .db-icon { width: 45px; height: 45px; }
+            .db-icon i { font-size: 20px; }
+            .db-info h3 { font-size: 20px; }
+            .db-info h6 { font-size: 11px; }
+            .logo span { font-size: 16px; }
+            .logo img { width: 32px; height: 32px; }
         }
         
-        @media (max-width: 768px) {
-            .db-icon {
-                width: 50px;
-                height: 50px;
-            }
-            
-            .db-icon i {
-                font-size: 22px;
-            }
-            
-            .db-info h3 {
-                font-size: 22px;
-            }
-            
-            .content {
-                padding: 0 20px;
-            }
-            
-            .top-nav-search {
-                display: none;
-            }
+        @media (max-width: 480px) {
+            .user-menu { gap: 8px; }
+            .user-img img { width: 35px; height: 35px; }
+            .card-header h5 { font-size: 14px; }
+            .db-info h3 { font-size: 18px; }
         }
     </style>
 </head>
 <body>
 
-<div class="main-wrapper">
-    <!-- Header -->
-    <div class="header">
-        <div class="header-left">
-            <a href="{% url 'index' %}" class="logo">
-                <img src="{% static 'assets/images/uni logo.jpg' %}" alt="Logo" width="40" height="40">
-                <span>Edu<span>Sphere</span></span>
-            </a>
-            <a href="javascript:void(0);" id="toggle_btn">
-                <i class="fas fa-align-left"></i>
-            </a>
-        </div>
-        
-        <div class="top-nav-search">
-            <form>
-                <input type="text" class="form-control" placeholder="Search here...">
-                <button class="btn" type="submit"><i class="fas fa-search"></i></button>
-            </form>
-        </div>
-        
-        <a class="mobile_btn" id="mobile_btn">
-            <i class="fas fa-bars"></i>
-        </a>
-        
-        <ul class="nav user-menu">
-            <li class="nav-item dropdown noti-dropdown">
-                <a href="#" class="dropdown-toggle nav-link" data-toggle="dropdown">
-                    <i class="far fa-bell"></i>
-                    {% if unread_notification_count > 0 %}
-                        <span class="badge">{{ unread_notification_count }}</span>
-                    {% endif %}
-                </a>
-                <div class="dropdown-menu notifications">
-                    <div class="topnav-dropdown-header">
-                        <span class="notification-title">Notifications</span>
-                        <a href="javascript:void(0)" class="clear-noti">Clear All</a>
-                    </div>
-                    <div class="noti-content">
-                        <ul class="notification-list">
-                            {% for notification in unread_notification %}
-                                <li class="notification-message">
-                                    <a href="#">
-                                        <div class="media">
-                                            <span class="avatar avatar-sm">
-                                                <img class="avatar-img rounded-circle" alt="User Image" src="{% static 'assets/img/profiles/avatar-02.jpg' %}">
-                                            </span>
-                                            <div class="media-body">
-                                                <p class="noti-details">{{ notification.message }}</p>
-                                                <p class="noti-time">{{ notification.created_at|timesince }} ago</p>
-                                            </div>
-                                        </div>
-                                    </a>
-                                </li>
-                            {% empty %}
-                                <li class="text-center p-3">No new notifications</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                    <div class="topnav-dropdown-footer">
-                        <a href="#">View all Notifications</a>
-                    </div>
-                </div>
-            </li>
-            
-            <li class="nav-item dropdown has-arrow">
-                <a href="#" class="dropdown-toggle nav-link" data-toggle="dropdown">
-                    <span class="user-img">
-                        <img class="rounded-circle" src="{% static 'assets/images/usericion.svg' %}" width="40" alt="User">
-                    </span>
-                </a>
-                <div class="dropdown-menu">
-                    <div class="user-header">
-                        <div class="avatar avatar-sm">
-                            <img src="{% static 'assets/img/profiles/avatar-01.jpg' %}" alt="User Image" class="avatar-img rounded-circle">
-                        </div>
-                        <div class="user-text">
-                            <h6>{{ request.user.first_name|default:request.user.username }}</h6>
-                            <p class="text-muted mb-0">{{ request.user.role|default:"Administrator" }}</p>
-                        </div>
-                    </div>
-                    <a class="dropdown-item" href="#">My Profile</a>
-                    <a class="dropdown-item" href="#">Settings</a>
-                    <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
-                </div>
-            </li>
-        </ul>
-    </div>
-    
-    <!-- Sidebar -->
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-inner slimscroll">
-            <div id="sidebar-menu" class="sidebar-menu">
-                <ul>
-                    <li class="menu-title">
-                        <span>Main Menu</span>
-                    </li>
-                    <li class="active">
-                        <a href="{% url 'index' %}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a>
-                    </li>
-                    
-                    <li class="menu-title">
-                        <span>User Management</span>
-                    </li>
-                    <li class="submenu">
-                        <a href="#"><i class="fas fa-user-graduate"></i> <span> Students</span> <span class="menu-arrow"><i class="fas fa-chevron-down"></i></span></a>
-                        <ul>
-                            <li><a href="{% url 'student_list' %}">Student List</a></li>
-                            <li><a href="{% url 'add_student' %}">Add Student</a></li>
-                        </ul>
-                    </li>
-                    <li class="submenu">
-                        <a href="#"><i class="fas fa-chalkboard-teacher"></i> <span> Teachers</span> <span class="menu-arrow"><i class="fas fa-chevron-down"></i></span></a>
-                        <ul>
-                            <li><a href="{% url 'teacher_list' %}">Teacher List</a></li>
-                            <li><a href="{% url 'add_teacher' %}">Add Teacher</a></li>
-                        </ul>
-                    </li>
-                    <li class="submenu">
-                        <a href="#"><i class="fas fa-user-shield"></i> <span> Admins</span> <span class="menu-arrow"><i class="fas fa-chevron-down"></i></span></a>
-                        <ul>
-                            <li><a href="{% url 'manage_admins' %}">Admin Management</a></li>
-                        </ul>
-                    </li>
-                    
-                    <li class="menu-title">
-                        <span>Academic Management</span>
-                    </li>
-                    <li class="submenu">
-                        <a href="#"><i class="fas fa-book"></i> <span> Subjects</span> <span class="menu-arrow"><i class="fas fa-chevron-down"></i></span></a>
-                        <ul>
-                            <li><a href="{% url 'subject:subject_dashboard' %}">Subject List</a></li>
-                            <li><a href="{% url 'subject:add_subject' %}">Add Subject</a></li>
-                            <li><a href="{% url 'subject:add_subject_assign' %}">Assign Subject</a></li>
-                        </ul>
-                    </li>
-                    <li>
-                        <a href="{% url 'attendance_dashboard' %}"><i class="fas fa-calendar-check"></i> <span>Attendance</span></a>
-                    </li>
-                    
-                    <!-- Timetable Section -->
-                    <li class="menu-title">
-                        <span>Scheduling</span>
-                    </li>
-                    <li>
-                        <a href="{% url 'timetables:timetable_dashboard' %}"><i class="fas fa-calendar-week"></i> <span>Timetable Dashboard</span></a>
-                    </li>
-                    <li class="submenu">
-                        <a href="#"><i class="fas fa-clock"></i> <span> Time Tables</span> <span class="menu-arrow"><i class="fas fa-chevron-down"></i></span></a>
-                        <ul>
-                            <li><a href="{% url 'timetables:dashboard' %}">Class Timetable</a></li>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-                        </ul>
-                    </li>
-                    
-                    <!-- Exam Section -->
-                    <li class="menu-title">
-                        <span>Examination</span>
-                    </li>
-                    <li>
-                        <a href="{% url 'dashboard' %}"><i class="fas fa-chart-line"></i> <span>Exam Dashboard</span></a>
-                    </li>
-                    <li class="submenu">
-                        <a href="#"><i class="fas fa-file-alt"></i> <span> Exams</span> <span class="menu-arrow"><i class="fas fa-chevron-down"></i></span></a>
-                       
-                    </li>
-                    
-                    
-                    <!-- Discipline Committee -->
-                    <li class="menu-title">
-                        <span>Discipline</span>
-                    </li>
-                    <li class="submenu">
-                        <a href="#"><i class="fas fa-gavel"></i> <span> Discipline Committee</span> <span class="menu-arrow"><i class="fas fa-chevron-down"></i></span></a>
-                        <ul>
-                            <li><a href="{% url 'case_list' %}">Cases List</a></li>
-                            <li><a href="{% url 'add_case' %}">Add Case</a></li>
-                        </ul>
-                    </li>
-                    
-                    <!-- Financial Management -->
-                    <li class="menu-title">
-                        <span>Financial Management</span>
-                    </li>
-                    <li class="submenu">
-                        <a href="#"><i class="fas fa-file-invoice-dollar"></i> <span> Fee Management</span> <span class="menu-arrow"><i class="fas fa-chevron-down"></i></span></a>
-                        <ul>
-                            <li><a href="{% url 'upload_fee' %}">Upload Fee</a></li>
-                            <li><a href="{% url 'fee_list' %}">Fee Overview</a></li>
-                            <li><a href="{% url 'defaulter_student' %}">Defaulter Students</a></li>
-                        </ul>
-                    </li>
-                    
-                    <!-- Token Management -->
-                    <li class="menu-title">
-                        <span>Tokens</span>
-                    </li>
-                    <li>
-                        <a href="{% url 'token_app:dashboard' %}"><i class="fas fa-ticket-alt"></i> <span>Token Dashboard</span></a>
-                    </li>
-                </ul>
-            </div>
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-inner slimscroll">
+        <div id="sidebar-menu" class="sidebar-menu">
+            <ul>
+                <li class="menu-title"><span>Main Menu</span></li>
+                <li class="active"><a href="{% url 'index' %}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
+                
+                <li class="menu-title"><span>User Management</span></li>
+                <li class="submenu">
+                    <a href="#"><i class="fas fa-user-graduate"></i> <span>Students</span> <span class="menu-arrow"><i class="fas fa-chevron-down"></i></span></a>
+                    <ul>
+                        <li><a href="{% url 'student_list' %}">Student List</a></li>
+                        <li><a href="{% url 'add_student' %}">Add Student</a></li>
+                    </ul>
+                </li>
+                <li class="submenu">
+                    <a href="#"><i class="fas fa-chalkboard-teacher"></i> <span>Teachers</span> <span class="menu-arrow"><i class="fas fa-chevron-down"></i></span></a>
+                    <ul>
+                        <li><a href="{% url 'teacher_list' %}">Teacher List</a></li>
+                        <li><a href="{% url 'add_teacher' %}">Add Teacher</a></li>
+                    </ul>
+                </li>
+                
+                <li class="menu-title"><span>Academic</span></li>
+                <li><a href="{% url 'attendance_dashboard' %}"><i class="fas fa-calendar-check"></i> <span>Attendance</span></a></li>
+                <li><a href="{% url 'timetables:timetable_dashboard' %}"><i class="fas fa-calendar-week"></i> <span>Timetable</span></a></li>
+                
+                <li class="menu-title"><span>Examination</span></li>
+                <li><a href="{% url 'dashboard' %}"><i class="fas fa-chart-line"></i> <span>Exam Dashboard</span></a></li>
+                
+                <li class="menu-title"><span>Discipline</span></li>
+                <li class="submenu">
+                    <a href="#"><i class="fas fa-gavel"></i> <span>Discipline Committee</span> <span class="menu-arrow"><i class="fas fa-chevron-down"></i></span></a>
+                    <ul>
+                        <li><a href="{% url 'case_list' %}">Cases List</a></li>
+                        <li><a href="{% url 'add_case' %}">Add Case</a></li>
+                    </ul>
+                </li>
+                
+                <li class="menu-title"><span>Financial</span></li>
+                <li class="submenu">
+                    <a href="#"><i class="fas fa-file-invoice-dollar"></i> <span>Fee Management</span> <span class="menu-arrow"><i class="fas fa-chevron-down"></i></span></a>
+                    <ul>
+                        <li><a href="{% url 'upload_fee' %}">Upload Fee</a></li>
+                        <li><a href="{% url 'fee_list' %}">Fee Overview</a></li>
+                        <li><a href="{% url 'defaulter_student' %}">Defaulters</a></li>
+                    </ul>
+                </li>
+            </ul>
         </div>
-    </div>
-    
-    <!-- Page Content -->
-    <div class="page-wrapper">
-        {% block body %}
-        {% endblock %}
     </div>
 </div>
 
-<!-- Scripts -->
+<div class="header">
+    <div class="header-left">
+        <button class="mobile-menu-toggle" id="mobileMenuToggle">
+            <i class="fas fa-bars"></i>
+        </button>
+        <a href="javascript:void(0);" id="toggle_btn">
+            <i class="fas fa-align-left"></i>
+        </a>
+        <a href="{% url 'index' %}" class="logo">
+            <img src="{% static 'assets/images/uni logo.jpg' %}" alt="Logo" width="40" height="40">
+            <span>Edu<span>Sphere</span></span>
+        </a>
+    </div>
+    
+    <div class="top-nav-search">
+        <form>
+            <input type="text" class="form-control" placeholder="Search here...">
+            <button class="btn" type="submit"><i class="fas fa-search"></i></button>
+        </form>
+    </div>
+    
+    <ul class="nav user-menu">
+        <li class="nav-item dropdown noti-dropdown">
+            <a href="#" class="dropdown-toggle nav-link" data-toggle="dropdown">
+                <i class="far fa-bell"></i>
+                {% if unread_notification_count > 0 %}
+                    <span class="badge">{{ unread_notification_count }}</span>
+                {% endif %}
+            </a>
+            <div class="dropdown-menu notifications">
+                <div class="topnav-dropdown-header">
+                    <span class="notification-title">Notifications</span>
+                    <a href="javascript:void(0)" class="clear-noti">Clear All</a>
+                </div>
+                <div class="noti-content">
+                    <ul class="notification-list">
+                        {% for notification in unread_notification %}
+                            <li class="notification-message">
+                                <a href="#"><div class="media-body"><p class="noti-details">{{ notification.message }}</p><p class="noti-time">{{ notification.created_at|timesince }} ago</p></div></a>
+                            </li>
+                        {% empty %}
+                            <li class="text-center p-3">No new notifications</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="topnav-dropdown-footer"><a href="#">View all Notifications</a></div>
+            </div>
+        </li>
+        
+        <li class="nav-item dropdown has-arrow">
+            <a href="#" class="dropdown-toggle nav-link" data-toggle="dropdown">
+                <span class="user-img"><img class="rounded-circle" src="{% static 'assets/images/usericion.svg' %}" width="40" alt="User"></span>
+            </a>
+            <div class="dropdown-menu">
+                <div class="user-header"><div class="user-text"><h6>{{ request.user.first_name|default:request.user.username }}</h6><p class="text-muted mb-0">{{ request.user.role|default:"Administrator" }}</p></div></div>
+                <a class="dropdown-item" href="#">My Profile</a>
+                <a class="dropdown-item" href="#">Settings</a>
+                <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
+            </div>
+        </li>
+    </ul>
+</div>
+
+<div class="page-wrapper">
+    {% block body %}
+    {% endblock %}
+</div>
+
 <script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
 <script src="{% static 'assets/js/popper.min.js' %}"></script>
 <script src="{% static 'assets/plugins/bootstrap/js/bootstrap.min.js' %}"></script>
@@ -737,34 +587,25 @@
 <script src="{% static 'assets/js/script.js' %}"></script>
 
 <script>
-    // Toggle sidebar
-    $('#toggle_btn').on('click', function() {
-        $('body').toggleClass('mini-sidebar');
-    });
-    
-    // Mobile menu toggle
-    $('#mobile_btn').on('click', function() {
-        $('body').toggleClass('sidebar-opened');
-    });
-    
-    // Submenu toggle
-    $('.submenu > a').on('click', function(e) {
-        e.preventDefault();
-        var parentLi = $(this).parent();
-        parentLi.toggleClass('open');
-    });
-    
-    // Notification dropdown auto-hide
-    $(document).on('click', '.noti-dropdown .dropdown-toggle', function() {
-        setTimeout(function() {
-            $('.noti-dropdown .dropdown-menu').removeClass('show');
-        }, 3000);
-    });
-    
-    // Slimscroll initialization
-    $('.sidebar-inner').slimscroll({
-        height: '100vh',
-        wheelStep: 10
+    $(document).ready(function() {
+        $('#mobileMenuToggle, #sidebarOverlay').on('click', function() {
+            $('body').toggleClass('sidebar-open');
+        });
+        
+        $('#toggle_btn').on('click', function() {
+            $('body').toggleClass('mini-sidebar');
+        });
+        
+        $('.submenu > a').on('click', function(e) {
+            e.preventDefault();
+            $(this).parent().toggleClass('open');
+        });
+        
+        $('.sidebar-inner').slimscroll({ height: '100vh', wheelStep: 10 });
+        
+        $(window).on('resize', function() {
+            if ($(window).width() > 991) $('body').removeClass('sidebar-open');
+        });
     });
 </script>
 
