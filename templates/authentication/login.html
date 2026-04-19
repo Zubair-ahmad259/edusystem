@@ -1,4 +1,3 @@
-{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -29,12 +28,20 @@
       }
       
       /* Animated background bubbles */
+      body::before {
+         content: '';
+         position: absolute;
+         width: 100%;
+         height: 100%;
+         overflow: hidden;
+         z-index: 0;
+      }
+      
       .bubble {
          position: absolute;
          background: rgba(255, 255, 255, 0.1);
          border-radius: 50%;
          animation: float 20s infinite ease-in-out;
-         pointer-events: none;
       }
       
       @keyframes float {
@@ -164,28 +171,6 @@
          background: white;
       }
       
-      /* Mobile Brand - visible only on mobile */
-      .mobile-brand {
-         display: none;
-         text-align: center;
-         margin-bottom: 30px;
-      }
-      
-      .mobile-brand h2 {
-         font-size: 2rem;
-         font-weight: 800;
-         background: linear-gradient(135deg, #1e3c72, #2a5298);
-         -webkit-background-clip: text;
-         -webkit-text-fill-color: transparent;
-         background-clip: text;
-      }
-      
-      .mobile-brand p {
-         color: #666;
-         font-size: 0.85rem;
-         margin-top: 5px;
-      }
-      
       .form-header {
          text-align: center;
          margin-bottom: 40px;
@@ -306,9 +291,6 @@
          border-radius: 12px;
          margin-bottom: 24px;
          font-size: 0.85rem;
-         display: flex;
-         align-items: center;
-         gap: 8px;
       }
       
       .alert-success {
@@ -321,10 +303,6 @@
          background: #f8d7da;
          color: #721c24;
          border: 1px solid #f5c6cb;
-      }
-      
-      .alert i {
-         font-size: 1rem;
       }
       
       /* Responsive */
@@ -341,10 +319,6 @@
             max-width: 500px;
             margin: 0 auto;
          }
-         
-         .mobile-brand {
-            display: block;
-         }
       }
       
       @media (max-width: 480px) {
@@ -353,10 +327,6 @@
          }
          
          .form-header h3 {
-            font-size: 1.6rem;
-         }
-         
-         .mobile-brand h2 {
             font-size: 1.6rem;
          }
       }
@@ -402,12 +372,6 @@
          
          <!-- Right Side - Login Form -->
          <div class="form-side">
-            <!-- Mobile Brand (visible only on mobile) -->
-            <div class="mobile-brand">
-               <h2>EduSphere</h2>
-               <p>Learning Management System</p>
-            </div>
-            
             <div class="form-header">
                <h3>Login</h3>
                <p>Enter your credentials to access your account</p>
@@ -417,13 +381,12 @@
             {% if messages %}
                {% for message in messages %}
                   <div class="alert alert-{% if message.tags == 'error' %}error{% else %}success{% endif %}">
-                     <i class="fas fa-{% if message.tags == 'error' %}exclamation-circle{% else %}check-circle{% endif %}"></i>
                      {{ message }}
                   </div>
                {% endfor %}
             {% endif %}
             
-            <!-- Login Form - with value persistence -->
+            <!-- Login Form -->
             <form method="POST" action="{% url 'login' %}">
                {% csrf_token %}
                
@@ -431,7 +394,7 @@
                   <label>Email Address</label>
                   <div class="input-group">
                      <i class="fas fa-envelope"></i>
-                     <input type="email" name="email" class="form-control" placeholder="Enter your email" value="{{ request.POST.email }}" required>
+                     <input type="email" name="email" class="form-control" placeholder="Enter your email" required>
                   </div>
                </div>
                
@@ -446,7 +409,7 @@
                <button type="submit" class="btn-login">Login</button>
                
                <div class="forgot-link">
-                  <a href="{% url 'reset_password_confirm' %}">Forgot Password?</a>
+                  <a href="{% url 'reset_password_success' %}">Forgot Password?</a>
                </div>
             </form>
             
@@ -455,25 +418,5 @@
          </div>
       </div>
    </div>
-   
-   <script>
-      // Preserve email value after page refresh
-      document.addEventListener('DOMContentLoaded', function() {
-         const emailField = document.querySelector('input[name="email"]');
-         if (emailField && emailField.value === '') {
-            const savedEmail = localStorage.getItem('savedEmail');
-            if (savedEmail) {
-               emailField.value = savedEmail;
-            }
-         }
-         
-         // Save email when typing
-         if (emailField) {
-            emailField.addEventListener('input', function() {
-               localStorage.setItem('savedEmail', this.value);
-            });
-         }
-      });
-   </script>
 </body>
 </html>

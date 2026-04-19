@@ -482,7 +482,7 @@ LMS Administration Team
 
 def reset_password_success_view(request):
     """Show success message after reset link is sent"""
-    return render(request, 'authentication/reset_password_success.html')
+    return render(request, 'authentication/forgot_password.html')
 
 
 @login_required
