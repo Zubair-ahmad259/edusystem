@@ -221,10 +221,9 @@ User = get_user_model()
 def forgot_password_view(request):
     """Handle forgot password request - sends reset link via email"""
     
-    # Your live server URL - BASE URL ONLY (no /home_auth)
+    # Your live server URL
     LIVE_SERVER_URL = "https://edusphares.pythonanywhere.com"
     
-    # Get User model
     User = get_user_model()
     
     # If user is already on the reset password page (with token in URL)
@@ -234,7 +233,6 @@ def forgot_password_view(request):
             user = User.objects.get(pk=uid)
             token = request.GET.get('token')
             
-            # Verify token
             if default_token_generator.check_token(user, token):
                 if request.method == 'POST':
                     new_password = request.POST.get('new_password')
@@ -248,11 +246,13 @@ def forgot_password_view(request):
                     else:
                         messages.error(request, 'Invalid password. Please try again.')
                 
-                return render(request, 'authentication/forgot_password.html', {
-                    'show_password_form': True,
-                    'email': user.email,
+                return render(request, 'authentication/reset_password.html', {
+                    'validlink': True,
+                    'user': user,
+                    'token': token,
                     'uidb64': request.GET.get('uidb64'),
-                    'token': token
+                    'user_email': user.email,
+                    'user_name': user.first_name or user.username
                 })
             else:
                 messages.error(request, 'Invalid or expired reset link.')
@@ -272,40 +272,88 @@ def forgot_password_view(request):
         user = User.objects.filter(email=email).first()
         
         if user:
-            # Generate token and uid
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             
-            # CORRECTED: Use full URL with /home_auth/ prefix
+            # Create reset link
             reset_link = f"{LIVE_SERVER_URL}/home_auth/reset-password/{token}/?uidb64={uid}"
             
-            # Send email (your existing email code here)
+            # HTML Email with button
+            html_message = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                    .container {{ max-width: 600px; margin: 0 auto; padding: 20px; background: #f9f9f9; border-radius: 10px; }}
+                    .header {{ background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }}
+                    .content {{ padding: 30px; background: white; border-radius: 0 0 10px 10px; }}
+                    .button {{
+                        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+                        color: white;
+                        padding: 12px 30px;
+                        text-decoration: none;
+                        border-radius: 25px;
+                        display: inline-block;
+                        margin: 20px 0;
+                    }}
+                    .footer {{ font-size: 12px; color: #666; text-align: center; margin-top: 20px; }}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h2>Password Reset Request</h2>
+                    </div>
+                    <div class="content">
+                        <p>Dear {user.first_name or user.username},</p>
+                        
+                        <p>We received a request to reset your password for your EduSphere account.</p>
+                        
+                        <p style="text-align: center;">
+                            <a href="{reset_link}" class="button">Reset Password</a>
+                        </p>
+                        
+                        <p>If the button doesn't work, copy and paste this link into your browser:</p>
+                        <p style="background: #f0f0f0; padding: 10px; word-break: break-all;">{reset_link}</p>
+                        
+                        <p>This link will expire in 24 hours.</p>
+                        
+                        <p>If you didn't request this, please ignore this email.</p>
+                    </div>
+                    <div class="footer">
+                        <p>EduSphere - Empowering Global Learning</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+            
+            plain_message = f"""
+            Dear {user.first_name or user.username},
+            
+            We received a request to reset your password for your EduSphere account.
+            
+            Click the link below to reset your password:
+            {reset_link}
+            
+            This link will expire in 24 hours.
+            
+            If you didn't request this, please ignore this email.
+            
+            EduSphere - Empowering Global Learning
+            """
+            
             try:
-                subject = "Reset Your Password - EduSphere"
-                plain_message = f"""
-Dear {user.first_name or user.username},
-
-We received a request to reset your password for your EduSphere account.
-
-Click the link below to reset your password:
-{reset_link}
-
-This link will expire in 24 hours.
-
-If you didn't request a password reset, please ignore this email.
-
-EduSphere - Empowering Global Learning
-{LIVE_SERVER_URL}
-                """
-                
                 send_mail(
-                    subject,
+                    'Reset Your Password - EduSphere',
                     plain_message,
                     settings.DEFAULT_FROM_EMAIL,
                     [email],
+                    html_message=html_message,
                     fail_silently=False,
                 )
-                messages.success(request, 'Password reset link has been sent to your email. Please check your inbox.')
+                messages.success(request, 'Password reset link has been sent to your email.')
             except Exception as e:
                 logger.error(f"Email sending failed: {e}")
                 messages.error(request, 'Failed to send email. Please try again.')
