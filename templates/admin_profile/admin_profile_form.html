@@ -140,12 +140,10 @@
                                     <div class="form-group">
                                         <label>Discipline</label>
                                         <select class="form-control" name="discipline">
-                                            <option value="">Select Discipline</option>
-                                            {% for discipline in disciplines %}
-                                                <option value="{{ discipline.id }}" 
-                                                    {% if admin_profile and admin_profile.discipline_id == discipline.id %}selected{% endif %}>
-                                                    {{ discipline.name }}
-                                                </option>
+                                            
+                                                    <option value="">Select Discipline</option>
+                                                    {% for discipline in disciplines %}
+                                                    <option value="{{ discipline.id }}">{{ discipline.program}}   {{ discipline.field }}</option>
                                             {% endfor %}
                                         </select>
                                     </div>

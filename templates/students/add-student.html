@@ -1,210 +1,402 @@
 {% extends 'Home/base.html' %}
 {% load static %}
+
+{% block title %}Add Students - EduSphere{% endblock %}
+
 {% block body %}
-   
 <div class="page-wrapper">
     <div class="content container-fluid">
+        <!-- Page Header -->
         <div class="page-header">
             <div class="row align-items-center">
                 <div class="col">
-                    <h3 class="page-title">Add Students</h3>
+                    <h3 class="page-title">Student Management</h3>
                     <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'index' %}">Dashboard</a></li>
                         <li class="breadcrumb-item"><a href="{% url 'student_list' %}">Students</a></li>
                         <li class="breadcrumb-item active">Add Students</li>
                     </ul>
                 </div>
+                <div class="col-auto text-right">
+                    <a href="{% url 'student_list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left"></i> Back to List
+                    </a>
+                </div>
             </div>
         </div>
+
+        <!-- Modern Tabs Design -->
         <div class="row">
-            <div class="mb-3">
-                    {% for message in messages %}
-                    <div class="alert 
-                                {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %}">
-                        {{ message }}
-                    </div>
-                    {% endfor %}
-                    </div>
-            <div class="col-sm-12">
+            <div class="col-md-12">
                 <div class="card">
                     <div class="card-body">
-                        <form method="POST" enctype="multipart/form-data">
-                            {% csrf_token %}
-                            <div class="row">
-                                <div class="col-12">
-                                    <h5 class="form-title"><span>Student Information</span></h5>
-                                </div>
-                                <div class="col-12 col-sm-6">
-                                    <div class="form-group">
-                                        <label>First Name</label>
-                                        <input type="text" class="form-control" name="first_name" required>
+                        <ul class="nav nav-tabs nav-tabs-solid nav-justified">
+                            <li class="nav-item">
+                                <a class="nav-link active" data-toggle="tab" href="#single-student">
+                                    <i class="fas fa-user-plus mr-2"></i> Single Student
+                                </a>
+                            </li>
+                            <div class="alert alert-success">
+    <i class="fas fa-paste"></i>
+    <strong>Quick Paste Method:</strong> 
+    <a href="{% url 'bulk_paste_students' %}" class="alert-link">Click here</a> to paste data directly from Excel/Sheets
+</div>
+
+                        </ul>
+
+                        <div class="tab-content">
+                            <!-- Tab 1: Single Student Form -->
+                            <div class="tab-pane fade show active pt-4" id="single-student">
+                                <form method="POST" enctype="multipart/form-data">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="form_type" value="single">
+                                    
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="form-section-title">
+                                                <i class="fas fa-user-graduate"></i> Personal Information
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>First Name <span class="text-danger">*</span></label>
+                                                <input type="text" class="form-control" name="first_name" placeholder="Enter first name" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>Last Name <span class="text-danger">*</span></label>
+                                                <input type="text" class="form-control" name="last_name" placeholder="Enter last name" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>Student ID <span class="text-danger">*</span></label>
+                                                <input type="text" class="form-control" name="student_id" placeholder="e.g., STU-2024-001" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>Admission Number <span class="text-danger">*</span></label>
+                                                <input type="text" class="form-control" name="admission_number" placeholder="e.g., ADM-001" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>Gender <span class="text-danger">*</span></label>
+                                                <select class="form-control" name="gender" required>
+                                                    <option value="">Select Gender</option>
+                                                    <option value="Male">👨 Male</option>
+                                                    <option value="Female">👩 Female</option>
+                                                    <option value="Other">👤 Other</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>Date of Birth <span class="text-danger">*</span></label>
+                                                <input type="date" class="form-control" name="dob" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>Email <span class="text-danger">*</span></label>
+                                                <input type="email" class="form-control" name="email" placeholder="student@example.com" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>Contact Number</label>
+                                                <input type="tel" class="form-control" name="contact_number" placeholder="+92 XXX XXXXXXX">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>Student Image</label>
+                                                <input type="file" class="form-control-file" name="image" accept="image/*">
+                                                <small class="text-muted">Upload profile picture (optional)</small>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-12 mt-3">
+                                            <div class="form-section-title">
+                                                <i class="fas fa-graduation-cap"></i> Academic Information
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label>Batch <span class="text-danger">*</span></label>
+                                                <select class="form-control" name="batch" id="batch_select" required>
+                                                    <option value="">Select Batch</option>
+                                                    {% for batch in batches %}
+                                                    <option value="{{ batch.id }}">{{ batch.name }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label>Semester <span class="text-danger">*</span></label>
+                                                <select class="form-control" name="semester" id="semester_select" required>
+                                                    <option value="">Select Semester</option>
+                                                    {% for semester in semesters %}
+                                                    <option value="{{ semester.id }}">Semester {{ semester.number }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label>Discipline <span class="text-danger">*</span></label>
+                                                <select class="form-control" name="discipline" id="discipline_select" required>
+                                                    <option value="">Select Discipline</option>
+                                                    {% for discipline in disciplines %}
+                                                    <option value="{{ discipline.id }}">{{ discipline.field }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label>Section <span class="text-danger">*</span></label>
+                                                <select class="form-control" name="section" id="section_select" required>
+                                                    <option value="">Select Section</option>
+                                                    {% for section in sections %}
+                                                    <option value="{{ section.id }}" data-batch="{{ section.batch.id }}">
+                                                        {{ section.name }}
+                                                    </option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="form-group">
+                                                <label>Address <span class="text-danger">*</span></label>
+                                                <textarea class="form-control" name="address" rows="2" placeholder="Enter complete address" required></textarea>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-12 mt-3">
+                                            <div class="form-section-title">
+                                                <i class="fas fa-users"></i> Parent/Guardian Information
+                                            </div>
+                                            <small class="text-muted d-block mb-3">Optional - Fill if available</small>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label>Father's Name</label>
+                                                <input type="text" class="form-control" name="father_name" placeholder="Enter father's name">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label>Mother's Name</label>
+                                                <input type="text" class="form-control" name="mother_name" placeholder="Enter mother's name">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label>Father's Contact</label>
+                                                <input type="tel" class="form-control" name="father_contact" placeholder="Father's phone number">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label>Father's Email</label>
+                                                <input type="email" class="form-control" name="father_email" placeholder="father@example.com">
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="form-group">
+                                                <label>Parent Address</label>
+                                                <textarea class="form-control" name="parent_address" rows="2" placeholder="Parent's address (if different)"></textarea>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="col-12 col-sm-6">
-                                    <div class="form-group">
-                                        <label>Last Name</label>
-                                        <input type="text" class="form-control" name="last_name" required>
+                                    
+                                    <div class="text-right mt-4">
+                                        <button type="reset" class="btn btn-secondary mr-2">
+                                            <i class="fas fa-undo"></i> Reset
+                                        </button>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save"></i> Save Student
+                                        </button>
                                     </div>
-                                </div>
-                                <div class="col-12 col-sm-6">
-                                    <div class="form-group">
-                                        <label>Student ID</label>
-                                        <input type="text" class="form-control" name="student_id" required>
-                                    </div>
-                                </div>
-                                <div class="col-12 col-sm-6">
-                                    <div class="form-group">
-                                        <label>Admission Number</label>
-                                        <input type="text" class="form-control" name="admission_number" required>
-                                    </div>
-                                </div>
-                                <div class="col-12 col-sm-6">
-                                    <div class="form-group">
-                                        <label>Gender</label>
-                                        <select class="form-control" name="gender" required>
-                                            <option value="">Select Gender</option>
-                                            <option value="M">Male</option>
-                                            <option value="F">Female</option>
-                                            <option value="O">Other</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="col-12 col-sm-6">
-                                    <div class="form-group">
-                                        <label>Date of Birth</label>
-                                        <div>
-                                            <input type="date" class="form-control" name="dob" required>
+                                </form>
+                            </div>
+
+                            <!-- Tab 2: Bulk Import Excel - Professional Design -->
+                            <div class="tab-pane fade pt-4" id="bulk-import">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <!-- Step 1: Download Template -->
+                                        <div class="card mb-4">
+                                            <div class="card-header bg-primary text-white">
+                                                <h5 class="mb-0"><i class="fas fa-download mr-2"></i> Step 1: Download Template</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row align-items-center">
+                                                    <div class="col-md-8">
+                                                        <p class="mb-0">Download the Excel template file. It contains all the required columns for importing student data.</p>
+                                                        <small class="text-muted">The template includes sample data to guide you.</small>
+                                                    </div>
+                                                    <div class="col-md-4 text-right">
+                                                        <a href="{% url 'download_template' %}" class="btn btn-success btn-lg">
+                                                            <i class="fas fa-download"></i> Download Template
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Step 2: Fill Data -->
+                                        <div class="card mb-4">
+                                            <div class="card-header bg-info text-white">
+                                                <h5 class="mb-0"><i class="fas fa-edit mr-2"></i> Step 2: Fill Your Data</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="alert alert-info">
+                                                    <i class="fas fa-info-circle"></i>
+                                                    <strong>Required Fields:</strong>
+                                                    <ul class="mb-0 mt-2">
+                                                        <li><strong>First Name*, Last Name*, Student ID*, Admission Number*</strong> - Must be unique</li>
+                                                        <li><strong>Gender* (Male/Female/Other)</strong> - Use full words (Male, Female, Other)</li>
+                                                        <li><strong>Date of Birth* (YYYY-MM-DD)</strong> - Format: 2000-01-15</li>
+                                                        <li><strong>Email*</strong> - Must be unique email address</li>
+                                                        <li><strong>Batch Name*, Semester Number*, Section Name*, Discipline Name*</strong> - These must match existing records</li>
+                                                        <li><strong>Address*</strong> - Student's residential address</li>
+                                                    </ul>
+                                                </div>
+                                                <div class="alert alert-warning">
+                                                    <i class="fas fa-exclamation-triangle"></i>
+                                                    <strong>Important Notes:</strong>
+                                                    <ul class="mb-0 mt-2">
+                                                        <li>Student ID and Email must be unique - duplicate entries will be rejected</li>
+                                                        <li>Batch, Semester, Section, Discipline must already exist in the system</li>
+                                                        <li>Parent fields are optional</li>
+                                                        <li>Date format must be exactly: <strong>YYYY-MM-DD</strong> (e.g., 2005-06-15)</li>
+                                                        <li>Do not change the column headers in the template</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Add this anywhere in the bulk-import tab -->
+
+
+                                        <!-- Step 3: Upload File -->
+                                        <div class="card">
+                                            <div class="card-header bg-success text-white">
+                                                <h5 class="mb-0"><i class="fas fa-upload mr-2"></i> Step 3: Upload Excel File</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <form method="POST" enctype="multipart/form-data" action="{% url 'bulk_student_import' %}" id="excelUploadForm">
+                                                    {% csrf_token %}
+                                                    <div class="row align-items-center">
+                                                        <div class="col-md-8">
+                                                            <div class="form-group mb-0">
+                                                                <label class="font-weight-bold">Select Excel File (.xlsx, .xls, .csv)</label>
+                                                                <input type="file" class="form-control-file" name="excel_file" accept=".xlsx, .xls, .csv" required>
+                                                                <small class="text-muted">Maximum file size: 5MB</small>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-4 text-right">
+                                                            <button type="submit" class="btn btn-success btn-lg" id="uploadBtn">
+                                                                <i class="fas fa-upload"></i> Import Students
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </form>
+                                                
+                                                <!-- Loading Indicator -->
+                                                <div id="uploadLoader" style="display: none;" class="text-center mt-3">
+                                                    <div class="spinner-border text-primary" role="status">
+                                                        <span class="sr-only">Loading...</span>
+                                                    </div>
+                                                    <p class="mt-2">Processing your file... Please wait.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Preview Section -->
+                                        <div class="card mt-4">
+                                            <div class="card-header bg-secondary text-white">
+                                                <h5 class="mb-0"><i class="fas fa-eye mr-2"></i> Sample Data Format</h5>
+                                            </div>
+                                            <div class="card-body p-0">
+                                                <div class="table-responsive">
+                                                    <table class="table table-bordered table-sm mb-0">
+                                                        <thead class="thead-light">
+                                                            <tr>
+                                                                <th>First Name*</th>
+                                                                <th>Last Name*</th>
+                                                                <th>Student ID*</th>
+                                                                <th>Admission Number*</th>
+                                                                <th>Gender*</th>
+                                                                <th>Date of Birth*</th>
+                                                                <th>Email*</th>
+                                                                <th>Contact Number</th>
+                                                                <th>Batch Name*</th>
+                                                                <th>Semester Number*</th>
+                                                                <th>Section Name*</th>
+                                                                <th>Discipline Name*</th>
+                                                                <th>Address*</th>
+                                                                <th>Father's Name</th>
+                                                                <th>Mother's Name</th>
+                                                                <th>Father's Contact</th>
+                                                                <th>Father's Email</th>
+                                                                <th>Parent Address</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td>John</td>
+                                                                <td>Doe</td>
+                                                                <td>STU-2024-001</td>
+                                                                <td>ADM-001</td>
+                                                                <td>Male</td>
+                                                                <td>2000-01-15</td>
+                                                                <td>john.doe@example.com</td>
+                                                                <td>+92 300 1234567</td>
+                                                                <td>Batch 2024</td>
+                                                                <td>1</td>
+                                                                <td>Section A</td>
+                                                                <td>Computer Science</td>
+                                                                <td>123 Main Street, Lahore</td>
+                                                                <td>Robert Doe</td>
+                                                                <td>Jane Doe</td>
+                                                                <td>+92 300 7654321</td>
+                                                                <td>robert@example.com</td>
+                                                                <td>Same as student</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Jane</td>
+                                                                <td>Smith</td>
+                                                                <td>STU-2024-002</td>
+                                                                <td>ADM-002</td>
+                                                                <td>Female</td>
+                                                                <td>2001-03-20</td>
+                                                                <td>jane.smith@example.com</td>
+                                                                <td>+92 322 7654321</td>
+                                                                <td>Batch 2024</td>
+                                                                <td>1</td>
+                                                                <td>Section B</td>
+                                                                <td>Software Engineering</td>
+                                                                <td>456 Oak Avenue, Karachi</td>
+                                                                <td>Michael Smith</td>
+                                                                <td>Sarah Smith</td>
+                                                                <td>+92 321 9876543</td>
+                                                                <td>michael@example.com</td>
+                                                                <td>456 Oak Avenue, Karachi</td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-12 col-sm-6">
-                                    <div class="form-group">
-                                        <label>Email</label>
-                                        <input type="email" class="form-control" name="email" required>
-                                    </div>
-                                </div>
-                                <div class="col-12 col-sm-6">
-                                    <div class="form-group">
-                                        <label>Contact Number</label>
-                                        <input type="text" class="form-control" name="contact_number">
-                                    </div>
-                                </div>
-                                <div class="col-12 col-sm-6">
-                                    <div class="form-group">
-                                        <label>Batch</label>
-                                        <select class="form-control" name="batch" required>
-                                            <option value="">Select Batch</option>
-                                            {% for batch in batches %}
-                                            <option value="{{ batch.id }}">{{ batch.name }}</option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="col-12 col-sm-6">
-                                    <div class="form-group">
-                                        <label>Semester</label>
-                                        <select class="form-control" name="semester" required>
-                                            <option value="">Select Semester</option>
-                                            {% for semester in semesters %}
-                                            <option value="{{ semester.id }}">Semester {{ semester.number }}</option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                </div>
-                                     <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label>Discipline <span class="text-danger">*</span></label>
-                                            <select class="form-control" name="discipline" id="discipline_filter" required>
-                                             <option value="">All Disciplines</option>
-                                              {% for discipline in disciplines %}
-                                             <option value="{{ discipline.id }}" {% if selected_discipline and selected_discipline.id == discipline.id %}selected{% endif %}>
-                                               {{ discipline.field }} ({{ discipline.program }})
-                                             </option>
-                                               {% endfor %}
-                                             </select>
-                                        <small class="form-text text-muted">Choose the related discipline</small>
-                                    </div>
-                                </div>
-
-                                {% comment %} <div class="col-12 col-sm-6"> {% endcomment %}
-                                    {% comment %} <div class="form-group">
-                                        <label>Section</label>
-                                        <select class="form-control" name="section" required>
-                                            <option value="">Select Section</option>
-                                            {% for section in sections %}
-                                            <option value="{{ section.id }}">{{ section.name }}</option>
-                                            {% endfor %}
-                                        </select>
-                                    </div> {% endcomment %}
-                                {% comment %} </div> {% endcomment %}
-<!-- Previous code remains the same until the section dropdown -->
-
-<div class="col-12 col-sm-6">
-    <div class="form-group">
-        <label>Section</label>
-        <select class="form-control" name="section" id="section_select" required>
-            <option value="">Select Section</option>
-            {% for section in sections %}
-            <option value="{{ section.id }}" data-batch="{{ section.batch.id }}">
-                {{ section.name }} ({{ section.batch.name }})
-            </option>
-            {% endfor %}
-        </select>
-    </div>
-</div>
-
-<!-- Rest of your template remains the same -->
-
-                    
-                                <div class="col-12 col-sm-6">
-                                    <div class="form-group">
-                                        <label>Student Image</label>
-                                        <input type="file" class="form-control" name="image">
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <div class="form-group">
-                                        <label>Student Address</label>
-                                        <textarea class="form-control" name="address" required></textarea>
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <h5 class="form-title"><span>Parent Information (Optional)</span></h5>
-                                </div>
-                                <div class="col-12 col-sm-6">
-                                    <div class="form-group">
-                                        <label>Father's Name</label>
-                                        <input type="text" class="form-control" name="father_name">
-                                    </div>
-                                </div>
-                                <div class="col-12 col-sm-6">
-                                    <div class="form-group">
-                                        <label>Mother's Name</label>
-                                        <input type="text" class="form-control" name="mother_name">
-                                    </div>
-                                </div>
-                                <div class="col-12 col-sm-6">
-                                    <div class="form-group">
-                                        <label>Father's Contact</label>
-                                        <input type="text" class="form-control" name="father_contact">
-                                    </div>
-                                </div>
-                                <div class="col-12 col-sm-6">
-                                    <div class="form-group">
-                                        <label>Father's Email</label>
-                                        <input type="email" class="form-control" name="father_email">
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <div class="form-group">
-                                        <label>Parent Address</label>
-                                        <textarea class="form-control" name="parent_address"></textarea>
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <button type="submit" class="btn btn-primary">Submit</button>
-                                </div>
                             </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -212,41 +404,87 @@
     </div>
 </div>
 
-<script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
-<script src="{% static 'assets/js/popper.min.js' %}"></script>
-<script src="{% static 'assets/plugins/bootstrap/js/bootstrap.min.js' %}"></script>
-<script src="{% static 'assets/plugins/slimscroll/jquery.slimscroll.min.js' %}"></script>
-<script src="{% static 'assets/js/script.js' %}"></script>
+<style>
+    .form-section-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #667eea;
+    }
+    .form-section-title i {
+        color: #667eea;
+        margin-right: 10px;
+    }
+    .nav-tabs-solid .nav-link {
+        padding: 12px 25px;
+        font-weight: 500;
+    }
+    .nav-tabs-solid .nav-link.active {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+    }
+    .card-header {
+        border-bottom: none;
+    }
+    .alert ul {
+        padding-left: 20px;
+    }
+</style>
 
 <script>
 $(document).ready(function() {
-    // When batch changes, filter sections
-    $('select[name="batch"]').change(function() {
+    // Filter sections based on batch
+    $('#batch_select').change(function() {
         var batchId = $(this).val();
         var $sectionSelect = $('#section_select');
         
         if (batchId) {
-            // Enable and filter sections
-            $sectionSelect.prop('disabled', false);
-            $sectionSelect.find('option').each(function() {
-                var $option = $(this);
-                // Show only options for selected batch or the default option
-                $option.toggle(
-                    $option.val() === '' || $option.data('batch') == batchId
-                );
+            $.ajax({
+                url: '{% url "get_sections_by_batch" %}',
+                data: {'batch_id': batchId},
+                dataType: 'json',
+                success: function(data) {
+                    $sectionSelect.empty();
+                    $sectionSelect.append('<option value="">Select Section</option>');
+                    $.each(data, function(index, section) {
+                        $sectionSelect.append('<option value="' + section.id + '">' + section.name + '</option>');
+                    });
+                    $sectionSelect.prop('disabled', false);
+                },
+                error: function(xhr, status, error) {
+                    console.error("AJAX Error:", error);
+                    $sectionSelect.empty();
+                    $sectionSelect.append('<option value="">Error loading sections</option>');
+                }
             });
         } else {
-            // Disable and show all sections if no batch selected
+            $sectionSelect.empty();
+            $sectionSelect.append('<option value="">Select Section</option>');
             $sectionSelect.prop('disabled', true);
-            $sectionSelect.find('option').show();
+        }
+    });
+
+    // Show loading indicator on form submit
+    $('#excelUploadForm').on('submit', function(e) {
+        var fileInput = $('input[name="excel_file"]');
+        if (fileInput.val() === '') {
+            e.preventDefault();
+            alert('Please select an Excel file first');
+            return false;
         }
         
-        // Reset section selection
-        $sectionSelect.val('');
+        $('#uploadBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Processing...');
+        $('#uploadLoader').show();
     });
     
-    // Trigger change event on page load if batch is already selected
-    $('select[name="batch"]').trigger('change');
+    // Reset button functionality
+    $('button[type="reset"]').click(function() {
+        setTimeout(function() {
+            $('#section_select').prop('disabled', false);
+        }, 100);
+    });
 });
 </script>
 {% endblock %}

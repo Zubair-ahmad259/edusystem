@@ -1,0 +1,294 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}Bulk Import Teachers - EduSphere{% endblock %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Bulk Import Teachers</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'index' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'teacher_list' %}">Teachers</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'add_teacher' %}">Add Teacher</a></li>
+                        <li class="breadcrumb-item active">Bulk Import</li>
+                    </ul>
+                </div>
+                <div class="col-auto text-right">
+                    <a href="{% url 'teacher_list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left"></i> Back to List
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-paste mr-2"></i> Bulk Import Teachers
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{% url 'bulk_paste_teachers' %}" id="pasteForm">
+                            {% csrf_token %}
+                            
+                            <!-- Instructions -->
+                            <div class="alert alert-info mb-4">
+                                <h5><i class="fas fa-info-circle"></i> Instructions:</h5>
+                                <ol class="mb-0">
+                                    <li>Copy your data from Excel or Google Sheets (select cells and press Ctrl+C)</li>
+                                    <li>Paste it directly into the text area below (Ctrl+V)</li>
+                                    <li>Data should be in <strong>Tab-separated</strong> format (default from Excel)</li>
+                                    <li>Each row represents one teacher</li>
+                                    <li>Click "Import Teachers" to add all teachers at once</li>
+                                </ol>
+                            </div>
+
+                            <!-- Column Order Reference -->
+                            <div class="alert alert-success mb-4">
+                                <h5><i class="fas fa-columns"></i> Column Order (13 columns):</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered mb-0">
+                                        <thead class="thead-light">
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Column Name</th>
+                                                <th>Required</th>
+                                                <th>Format Example</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr><td>1</td><td>First Name</td><td class="text-danger">*</td><td>John</td></tr>
+                                            <tr><td>2</td><td>Last Name</td><td class="text-danger">*</td><td>Smith</td></tr>
+                                            <tr><td>3</td><td>Father's Name</td><td class="text-danger">*</td><td>Robert Smith</td></tr>
+                                            <tr><td>4</td><td>Teacher ID</td><td class="text-danger">*</td><td>TCH-2024-001</td></tr>
+                                            <tr><td>5</td><td>Gender</td><td class="text-danger">*</td><td>Male/Female/Other</td></tr>
+                                            <tr><td>6</td><td>Date of Birth</td><td class="text-danger">*</td><td>1985-05-15</td></tr>
+                                            <tr><td>7</td><td>Email</td><td class="text-danger">*</td><td>john@example.com</td></tr>
+                                            <tr><td>8</td><td>Mobile Number</td><td class="text-danger">*</td><td>+92 300 1234567</td></tr>
+                                            <tr><td>9</td><td>Field/Specialization</td><td class="text-danger">*</td><td>Computer Science</td></tr>
+                                            <tr><td>10</td><td>Experience (Years)</td><td class="text-muted">Optional</td><td>5</td></tr>
+                                            <tr><td>11</td><td>Salary (PKR)</td><td class="text-muted">Optional</td><td>80000</td></tr>
+                                            <tr><td>12</td><td>Joining Date</td><td class="text-danger">*</td><td>2020-01-15</td></tr>
+                                            <tr><td>13</td><td>Religion</td><td class="text-muted">Optional</td><td>Islam</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Sample Data Button -->
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="loadSampleData()">
+                                    <i class="fas fa-database"></i> Load Sample Data
+                                </button>
+                                <button type="button" class="btn btn-info btn-sm" onclick="clearData()">
+                                    <i class="fas fa-eraser"></i> Clear All
+                                </button>
+                                <a href="{% url 'download_teacher_template' %}" class="btn btn-success btn-sm">
+                                    <i class="fas fa-download"></i> Download Excel Template
+                                </a>
+                            </div>
+
+                            <!-- Text Area for Pasting -->
+                            <div class="form-group">
+                                <label class="font-weight-bold">
+                                    <i class="fas fa-table"></i> Paste your data here:
+                                </label>
+                                <textarea 
+                                    class="form-control" 
+                                    name="pasted_data" 
+                                    id="pasted_data" 
+                                    rows="15" 
+                                    placeholder="Paste your tab-separated data here...
+Example (copy from Excel):
+John    Smith   Robert Smith    TCH-2024-001   Male    1985-05-15 john.smith@example.com   +92 300 1234567   Computer Science   8   80000   2020-01-15  Islam"
+                                    required
+                                ></textarea>
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle"></i> 
+                                    Paste directly from Excel (tabs will be preserved). First row will be treated as data.
+                                </small>
+                            </div>
+
+                            <!-- Preview Section -->
+                            <div class="card mt-3 mb-3">
+                                <div class="card-header bg-secondary text-white">
+                                    <h6 class="mb-0"><i class="fas fa-eye"></i> Preview (First 10 rows)</h6>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive" id="previewTable">
+                                        <table class="table table-sm table-bordered mb-0">
+                                            <thead class="thead-light">
+                                                <tr>
+                                                    <th>First Name</th>
+                                                    <th>Last Name</th>
+                                                    <th>Father Name</th>
+                                                    <th>Teacher ID</th>
+                                                    <th>Gender</th>
+                                                    <th>DOB</th>
+                                                    <th>Email</th>
+                                                    <th>Mobile</th>
+                                                    <th>Field</th>
+                                                    <th>Experience</th>
+                                                    <th>Salary</th>
+                                                    <th>Joining Date</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="previewBody">
+                                                <tr>
+                                                    <td colspan="12" class="text-center text-muted">
+                                                        Paste data above to see preview
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Submit Buttons -->
+                            <div class="text-right">
+                                <button type="reset" class="btn btn-secondary mr-2">
+                                    <i class="fas fa-undo"></i> Reset
+                                </button>
+                                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                                    <i class="fas fa-save"></i> Import Teachers
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    textarea {
+        font-family: 'Courier New', monospace;
+        font-size: 13px;
+    }
+    .table td, .table th {
+        padding: 0.5rem;
+        font-size: 12px;
+    }
+    .alert ul {
+        margin-bottom: 0;
+        padding-left: 20px;
+    }
+</style>
+
+<script>
+    const textarea = document.getElementById('pasted_data');
+    const previewBody = document.getElementById('previewBody');
+    
+    textarea.addEventListener('input', function() {
+        updatePreview();
+    });
+    
+    function updatePreview() {
+        const data = textarea.value;
+        const lines = data.trim().split('\n');
+        
+        if (lines.length === 0 || !data.trim()) {
+            previewBody.innerHTML = '<tr><td colspan="12" class="text-center text-muted">Paste data above to see preview</td></tr>';
+            return;
+        }
+        
+        let delimiter = '\t';
+        if (lines[0] && !lines[0].includes('\t') && lines[0].includes(',')) {
+            delimiter = ',';
+        }
+        
+        let html = '';
+        let displayCount = 0;
+        
+        for (let i = 0; i < Math.min(lines.length, 10); i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+            
+            const cols = delimiter === '\t' ? line.split('\t') : line.split(',');
+            
+            if (cols.length >= 12) {
+                html += `<tr>
+                    <td>${escapeHtml(cols[0] || '')}</td>
+                    <td>${escapeHtml(cols[1] || '')}</td>
+                    <td>${escapeHtml(cols[2] || '')}</td>
+                    <td>${escapeHtml(cols[3] || '')}</td>
+                    <td>${escapeHtml(cols[4] || '')}</td>
+                    <td>${escapeHtml(cols[5] || '')}</td>
+                    <td>${escapeHtml(cols[6] || '')}</td>
+                    <td>${escapeHtml(cols[7] || '')}</td>
+                    <td>${escapeHtml(cols[8] || '')}</td>
+                    <td>${escapeHtml(cols[9] || '')}</td>
+                    <td>${escapeHtml(cols[10] || '')}</td>
+                    <td>${escapeHtml(cols[11] || '')}</td>
+                </tr>`;
+                displayCount++;
+            } else {
+                html += `<tr class="table-danger">
+                    <td colspan="12" class="text-danger">Row ${i+1}: Only ${cols.length} columns (need at least 12)</td>
+                </tr>`;
+            }
+        }
+        
+        if (displayCount === 0) {
+            previewBody.innerHTML = '<tr><td colspan="12" class="text-center text-warning">No valid rows found. Check column count.</td></tr>';
+        } else {
+            previewBody.innerHTML = html;
+            if (lines.length > 10) {
+                previewBody.innerHTML += `<tr><td colspan="12" class="text-center text-muted">... and ${lines.length - 10} more rows</td></tr>`;
+            }
+        }
+    }
+    
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    function loadSampleData() {
+        const sampleData = `John	Smith	Robert Smith	TCH-2024-001	Male	1985-05-15	john.smith@example.com	+92 300 1234567	Computer Science	8	80000	2020-01-15	Islam
+Sarah	Ahmed	Khalid Ahmed	TCH-2024-002	Female	1990-03-20	sarah.ahmed@example.com	+92 322 7654321	Mathematics	5	60000	2021-08-01	Islam
+Michael	Brown	David Brown	TCH-2024-003	Male	1988-07-10	michael.brown@example.com	+92 333 9876543	Physics	10	90000	2019-03-15	Christianity
+Emma	Wilson	James Wilson	TCH-2024-004	Female	1992-11-25	emma.wilson@example.com	+92 344 5555555	English	4	50000	2022-01-10	Christianity
+David	Lee	Robert Lee	TCH-2024-005	Male	1980-09-30	david.lee@example.com	+92 355 4444444	Chemistry	15	120000	2015-06-20	Buddhism`;
+        
+        textarea.value = sampleData;
+        updatePreview();
+    }
+    
+    function clearData() {
+        if (confirm('Are you sure you want to clear all data?')) {
+            textarea.value = '';
+            updatePreview();
+        }
+    }
+    
+    document.getElementById('pasteForm').addEventListener('submit', function(e) {
+        const data = textarea.value.trim();
+        if (!data) {
+            e.preventDefault();
+            alert('Please paste some data first');
+            return false;
+        }
+        
+        const lines = data.split('\n').filter(l => l.trim());
+        const confirmed = confirm(`You are about to import ${lines.length} teacher(s). Are you sure?`);
+        if (!confirmed) {
+            e.preventDefault();
+        } else {
+            document.getElementById('submitBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Importing...';
+            document.getElementById('submitBtn').disabled = true;
+        }
+    });
+</script>
+{% endblock %}

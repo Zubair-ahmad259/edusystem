@@ -1,110 +1,222 @@
 {% extends 'Home/base.html' %}
 {% load static %}
+
+{% block title %}Edit Teacher - {{ teacher.first_name }} {{ teacher.last_name }} | EduSphere{% endblock %}
+
 {% block body %}
 <div class="page-wrapper">
     <div class="content container-fluid">
+        <!-- Page Header -->
         <div class="page-header">
             <div class="row align-items-center">
                 <div class="col">
-                    <h3 class="page-title">Edit teacher</h3>
+                    <h3 class="page-title">Edit Teacher</h3>
                     <ul class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="/teacher">teachers</a></li>
-                        <li class="breadcrumb-item active">Edit teacher</li>
+                        <li class="breadcrumb-item"><a href="{% url 'index' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'teacher_list' %}">Teachers</a></li>
+                        <li class="breadcrumb-item active">Edit {{ teacher.first_name }} {{ teacher.last_name }}</li>
                     </ul>
+                </div>
+                <div class="col-auto text-right">
+                    <a href="{% url 'teacher_list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left"></i> Back to List
+                    </a>
+                    <a href="{% url 'view_teacher' teacher.teacher_id %}" class="btn btn-outline-info">
+                        <i class="fas fa-eye"></i> View Profile
+                    </a>
                 </div>
             </div>
         </div>
+
         <div class="row">
-            <div class="col-sm-12">
+            <div class="col-md-12">
                 <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-user-edit"></i> Edit Teacher Information
+                        </h5>
+                    </div>
                     <div class="card-body">
-                        <form method="POST" enctype="multipart/form-data">
+                        <form method="POST" enctype="multipart/form-data" id="editTeacherForm">
                             {% csrf_token %}
+                            
+                            <!-- Teacher Image Preview -->
+                            <div class="row mb-4">
+                                <div class="col-md-12 text-center">
+                                    <div class="avatar-upload">
+                                        <div class="avatar-preview">
+                                            {% if teacher.teacher_image %}
+                                                <img id="imagePreview" src="{{ teacher.teacher_image.url }}" alt="Teacher Photo" class="rounded-circle" style="width: 120px; height: 120px; object-fit: cover; border: 3px solid #667eea;">
+                                            {% else %}
+                                                <div id="imagePreview" class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto" style="width: 120px; height: 120px; font-size: 48px;">
+                                                    {{ teacher.first_name|slice:":1" }}{{ teacher.last_name|slice:":1" }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="avatar-edit mt-2">
+                                            <input type="file" name="teacher_image" id="imageUpload" accept="image/*" style="display: none;">
+                                            <button type="button" class="btn btn-sm btn-secondary" onclick="document.getElementById('imageUpload').click();">
+                                                <i class="fas fa-camera"></i> Change Photo
+                                            </button>
+                                            {% if teacher.teacher_image %}
+                                            <small class="text-muted d-block mt-1">Current: {{ teacher.teacher_image.name|slice:"20" }}</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="row">
                                 <div class="col-12">
-                                    <h5 class="form-title"><span>teacher Information</span></h5>
+                                    <h5 class="form-title">
+                                        <i class="fas fa-user-circle text-primary"></i> Personal Information
+                                    </h5>
+                                    <hr>
                                 </div>
-                                <div class="col-12 col-sm-6">
+                                
+                                <div class="col-md-4">
                                     <div class="form-group">
-                                        <label>First Name</label>
-                                        <input type="text" name="first_name" class="form-control" value="{{ teacher.first_name }}">
+                                        <label>First Name <span class="text-danger">*</span></label>
+                                        <input type="text" name="first_name" class="form-control" value="{{ teacher.first_name }}" required>
                                     </div>
                                 </div>
-                                <div class="col-12 col-sm-6">
+                                <div class="col-md-4">
                                     <div class="form-group">
-                                        <label>Last Name</label>
-                                        <input type="text" name="last_name" class="form-control" value="{{ teacher.last_name }}">
+                                        <label>Last Name <span class="text-danger">*</span></label>
+                                        <input type="text" name="last_name" class="form-control" value="{{ teacher.last_name }}" required>
                                     </div>
                                 </div>
-                                <div class="col-12 col-sm-6">
+                                <div class="col-md-4">
                                     <div class="form-group">
-                                        <label>teacher Id</label>
-                                        <input type="text" name="teacher_id" class="form-control" value="{{ teacher.teacher_id }}">
+                                        <label>Father's Name <span class="text-danger">*</span></label>
+                                        <input type="text" name="father_name" class="form-control" value="{{ teacher.father_name }}" required>
                                     </div>
                                 </div>
-                                <div class="col-12 col-sm-6">
+                                
+                                <div class="col-md-4">
                                     <div class="form-group">
-                                        <label>Gender</label>
-                                        <select name="gender" class="form-control">
-                                            <option value="Female" {% if teacher.gender == 'Female' %}selected{% endif %}>Female</option>
+                                        <label>Gender <span class="text-danger">*</span></label>
+                                        <select name="gender" class="form-control" required>
                                             <option value="Male" {% if teacher.gender == 'Male' %}selected{% endif %}>Male</option>
-                                            <option value="Others" {% if teacher.gender == 'Others' %}selected{% endif %}>Others</option>
+                                            <option value="Female" {% if teacher.gender == 'Female' %}selected{% endif %}>Female</option>
+                                            <option value="Other" {% if teacher.gender == 'Other' %}selected{% endif %}>Other</option>
                                         </select>
                                     </div>
                                 </div>
-                                <div class="col-12 col-sm-6">
+                                <div class="col-md-4">
                                     <div class="form-group">
-                                        <label>Date of Birth</label>
-                                        <input type="date" name="date_of_birth" class="form-control" value="{{ teacher.date_of_birth|date:'Y-m-d' }}">
+                                        <label>Date of Birth <span class="text-danger">*</span></label>
+                                        <input type="date" name="date_of_birth" class="form-control" value="{{ teacher.date_of_birth|date:'Y-m-d' }}" required>
                                     </div>
                                 </div>
-                                <div class="col-12 col-sm-6">
-                                    <div class="form-group">
-                                        <label>salary</label>
-                                        <input type="text" name="salary" class="form-control" value="{{ teacher.salary }}">
-                                    </div>
-                                </div>
-                                <div class="col-12 col-sm-6">
+                                <div class="col-md-4">
                                     <div class="form-group">
                                         <label>Religion</label>
                                         <input type="text" name="religion" class="form-control" value="{{ teacher.religion }}">
                                     </div>
                                 </div>
-                                <div class="col-12 col-sm-6">
-                                    <div class="form-group">
-                                        <label>Joining Date</label>
-                                        <input type="date" name="joining_date" class="form-control" value="{{ teacher.joining_date|date:'Y-m-d' }}">
-                                    </div>
-                                </div>
-                                <div class="col-12 col-sm-6">
-                                    <div class="form-group">
-                                        <label>Mobile Number</label>
-                                        <input type="text" name="mobile_number" class="form-control" value="{{ teacher.mobile_number }}">
-                                    </div>
-                                </div>
-                                <div class="col-12 col-sm-6">
-                                    <div class="form-group">
-                                        <label> email</label>
-                                        <input type="text" name="email" class="form-control" value="{{ teacher.email }}">
-                                    </div>
-                                </div>
-                                <div class="col-12 col-sm-6">
-                                    <div class="form-group">
-                                        <label>experiance</label>
-                                        <input type="text" name="experince" class="form-control" value="{{ teacher.experince }}">
-                                    </div>
-                                </div>
-                                <div class="col-12 col-sm-6">
-                                    <div class="form-group">
-                                        <label>teacher Image</label>
-                                        <input type="file" name="teacher_image" class="form-control">
-                                        <small>Current Image: {{ teacher.teacher_image.url }}</small>
-                                    </div>
-                                </div>
-                   
-                                </div>
+                            </div>
+
+                            <div class="row mt-3">
                                 <div class="col-12">
-                                    <button type="submit" class="btn btn-primary">Submit</button>
+                                    <h5 class="form-title">
+                                        <i class="fas fa-briefcase text-primary"></i> Professional Information
+                                    </h5>
+                                    <hr>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Teacher ID <span class="text-danger">*</span></label>
+                                        <input type="text" name="teacher_id" class="form-control" value="{{ teacher.teacher_id }}" readonly>
+                                        <small class="text-muted">Teacher ID cannot be changed</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Field/Specialization <span class="text-danger">*</span></label>
+                                        <input type="text" name="field" class="form-control" value="{{ teacher.field }}" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Years of Experience</label>
+                                        <input type="number" name="experience" class="form-control" value="{{ teacher.experience }}" min="0" max="50">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <h5 class="form-title">
+                                        <i class="fas fa-money-bill-wave text-primary"></i> Salary & Employment
+                                    </h5>
+                                    <hr>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Salary (PKR)</label>
+                                        <input type="number" name="salary" class="form-control" value="{{ teacher.salary|default:0 }}" min="0" step="1000">
+                                        <small class="text-muted">Monthly salary in Pakistani Rupees</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Joining Date <span class="text-danger">*</span></label>
+                                        <input type="date" name="joining_date" class="form-control" value="{{ teacher.joining_date|date:'Y-m-d' }}" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Status</label>
+                                        <div class="custom-control custom-switch">
+                                            <input type="checkbox" class="custom-control-input" id="isActive" {% if teacher.salary > 0 %}checked{% endif %}>
+                                            <label class="custom-control-label" for="isActive">
+                                                {% if teacher.salary > 0 %}
+                                                    <span class="badge badge-success">Active</span>
+                                                {% else %}
+                                                    <span class="badge badge-warning">Inactive</span>
+                                                {% endif %}
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <h5 class="form-title">
+                                        <i class="fas fa-address-card text-primary"></i> Contact Information
+                                    </h5>
+                                    <hr>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Email Address <span class="text-danger">*</span></label>
+                                        <input type="email" name="email" class="form-control" value="{{ teacher.email }}" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Mobile Number <span class="text-danger">*</span></label>
+                                        <input type="tel" name="mobile_number" class="form-control" value="{{ teacher.mobile_number }}" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row mt-4">
+                                <div class="col-12 text-right">
+                                    <a href="{% url 'teacher_list' %}" class="btn btn-secondary">
+                                        <i class="fas fa-times"></i> Cancel
+                                    </a>
+                                    <button type="reset" class="btn btn-warning">
+                                        <i class="fas fa-undo"></i> Reset
+                                    </button>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Update Teacher
+                                    </button>
                                 </div>
                             </div>
                         </form>
@@ -114,9 +226,51 @@
         </div>
     </div>
 </div>
-<script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
-<script src="{% static 'assets/js/popper.min.js' %}"></script>
-<script src="{% static 'assets/plugins/bootstrap/js/bootstrap.min.js' %}"></script>
-<script src="{% static 'assets/plugins/slimscroll/jquery.slimscroll.min.js' %}"></script>
-<script src="{% static 'assets/js/script.js' %}"></script>
+
+<style>
+    .form-title {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 15px;
+        color: #2c3e50;
+    }
+    .form-title i {
+        color: #667eea;
+        margin-right: 8px;
+    }
+    .card-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .custom-switch {
+        padding-left: 2.25rem;
+    }
+</style>
+
+<script>
+$(document).ready(function() {
+    // Image preview
+    $('#imageUpload').change(function(e) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            $('#imagePreview').attr('src', e.target.result);
+            $('#imagePreview').css('width', '120px').css('height', '120px');
+        }
+        reader.readAsDataURL(e.target.files[0]);
+    });
+    
+    // Status toggle
+    $('#isActive').change(function() {
+        const salaryField = $('input[name="salary"]');
+        if ($(this).is(':checked')) {
+            if (salaryField.val() == '0') {
+                salaryField.val('30000');
+            }
+            $(this).next('label').find('span').removeClass('badge-warning').addClass('badge-success').text('Active');
+        } else {
+            salaryField.val('0');
+            $(this).next('label').find('span').removeClass('badge-success').addClass('badge-warning').text('Inactive');
+        }
+    });
+});
+</script>
 {% endblock %}

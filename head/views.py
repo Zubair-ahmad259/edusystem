@@ -3,16 +3,19 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment
+from datetime import datetime
+import random
 from student.models import Discipline
 from .models import AdminProfile
+
 
 @login_required
 def admin_profile_list(request):
     """List all admin profiles with search and filter options"""
-    admin_profiles = AdminProfile.objects.select_related('discipline').all()
+    admin_profiles = AdminProfile.objects.select_related('discipline').all().order_by('-created_at')
     
     # Clear import errors from session if requested
     if request.GET.get('clear_errors'):
@@ -28,7 +31,8 @@ def admin_profile_list(request):
             Q(email__icontains=search_query) |
             Q(role__icontains=search_query) |
             Q(father_name__icontains=search_query) |
-            Q(contact_number__icontains=search_query)
+            Q(contact_number__icontains=search_query) |
+            Q(employee_id__icontains=search_query)
         )
     
     # Filter by role
@@ -40,6 +44,11 @@ def admin_profile_list(request):
     discipline_filter = request.GET.get('discipline', '')
     if discipline_filter:
         admin_profiles = admin_profiles.filter(discipline_id=discipline_filter)
+    
+    # Calculate statistics
+    hod_count = AdminProfile.objects.filter(role='HOD').count()
+    office_clerk_count = AdminProfile.objects.filter(role='Office Clerk').count()
+    active_count = AdminProfile.objects.filter(is_active=True).count()
     
     # Pagination
     paginator = Paginator(admin_profiles, 10)
@@ -57,8 +66,12 @@ def admin_profile_list(request):
         'disciplines': disciplines,
         'role_choices': AdminProfile._meta.get_field('role').choices,
         'import_errors': request.session.get('import_errors', []),
+        'hod_count': hod_count,
+        'office_clerk_count': office_clerk_count,
+        'active_count': active_count,
     }
     return render(request, 'admin_profile/admin_profile_list.html', context)
+
 
 @login_required
 def admin_profile_detail(request, pk):
@@ -71,6 +84,7 @@ def admin_profile_detail(request, pk):
         'admin_profile': admin_profile
     })
 
+
 @login_required
 def admin_profile_create(request):
     """Create a new admin profile"""
@@ -82,11 +96,17 @@ def admin_profile_create(request):
                 messages.error(request, f'Email "{email}" already exists!')
                 return redirect('admin_profile:admin_profile_create')
             
-            # Create admin profile
+            # Get discipline
             discipline_id = request.POST.get('discipline')
             discipline = Discipline.objects.get(id=discipline_id) if discipline_id else None
             
-            AdminProfile.objects.create(
+            # Generate employee ID
+            year = datetime.now().year
+            random_num = random.randint(1000, 9999)
+            employee_id = f"EMP-{year}-{random_num}"
+            
+            # Create admin profile
+            admin_profile = AdminProfile.objects.create(
                 first_name=request.POST.get('first_name'),
                 last_name=request.POST.get('last_name'),
                 father_name=request.POST.get('father_name'),
@@ -94,14 +114,17 @@ def admin_profile_create(request):
                 email=email,
                 discipline=discipline,
                 role=request.POST.get('role'),
-                address=request.POST.get('address')
+                address=request.POST.get('address'),
+                employee_id=employee_id,
+                joining_date=request.POST.get('joining_date') or None,
+                is_active=request.POST.get('is_active') == 'on'
             )
             
-            messages.success(request, 'Admin profile created successfully!')
-            return redirect('admin_profile:admin_profile_list')
+            messages.success(request, f'Staff member "{admin_profile.first_name} {admin_profile.last_name}" created successfully!')
+            return redirect('admin_profile:admin_profile_detail', pk=admin_profile.pk)
                 
         except Exception as e:
-            messages.error(request, f'Error creating admin profile: {str(e)}')
+            messages.error(request, f'Error creating staff profile: {str(e)}')
     
     # GET request - show form
     disciplines = Discipline.objects.all()
@@ -110,6 +133,7 @@ def admin_profile_create(request):
         'role_choices': AdminProfile._meta.get_field('role').choices,
     }
     return render(request, 'admin_profile/admin_profile_form.html', context)
+
 
 @login_required
 def admin_profile_update(request, pk):
@@ -124,10 +148,11 @@ def admin_profile_update(request, pk):
                 messages.error(request, f'Email "{new_email}" already exists!')
                 return redirect('admin_profile:admin_profile_update', pk=pk)
             
-            # Update admin profile
+            # Update discipline
             discipline_id = request.POST.get('discipline')
             admin_profile.discipline = Discipline.objects.get(id=discipline_id) if discipline_id else None
             
+            # Update fields
             admin_profile.first_name = request.POST.get('first_name')
             admin_profile.last_name = request.POST.get('last_name')
             admin_profile.father_name = request.POST.get('father_name')
@@ -135,13 +160,15 @@ def admin_profile_update(request, pk):
             admin_profile.email = new_email
             admin_profile.role = request.POST.get('role')
             admin_profile.address = request.POST.get('address')
+            admin_profile.joining_date = request.POST.get('joining_date') or None
+            admin_profile.is_active = request.POST.get('is_active') == 'on'
             admin_profile.save()
             
-            messages.success(request, 'Admin profile updated successfully!')
+            messages.success(request, f'Staff profile "{admin_profile.first_name} {admin_profile.last_name}" updated successfully!')
             return redirect('admin_profile:admin_profile_detail', pk=admin_profile.pk)
                 
         except Exception as e:
-            messages.error(request, f'Error updating admin profile: {str(e)}')
+            messages.error(request, f'Error updating staff profile: {str(e)}')
     
     # GET request - show form with current data
     disciplines = Discipline.objects.all()
@@ -152,6 +179,7 @@ def admin_profile_update(request, pk):
     }
     return render(request, 'admin_profile/admin_profile_form.html', context)
 
+
 @login_required
 def admin_profile_delete(request, pk):
     """Delete an admin profile"""
@@ -159,16 +187,18 @@ def admin_profile_delete(request, pk):
     
     if request.method == 'POST':
         try:
+            name = f"{admin_profile.first_name} {admin_profile.last_name}"
             email = admin_profile.email
             admin_profile.delete()
-            messages.success(request, f'Admin profile for "{email}" deleted successfully!')
+            messages.success(request, f'Staff member "{name}" ({email}) has been deleted successfully!')
             return redirect('admin_profile:admin_profile_list')
         except Exception as e:
-            messages.error(request, f'Error deleting admin profile: {str(e)}')
+            messages.error(request, f'Error deleting staff profile: {str(e)}')
     
     return render(request, 'admin_profile/admin_profile_confirm_delete.html', {
         'admin_profile': admin_profile
     })
+
 
 @login_required
 def import_admin_profiles(request):
@@ -205,6 +235,7 @@ def import_admin_profiles(request):
             success_count = 0
             error_count = 0
             errors = []
+            year = datetime.now().year
             
             for row_idx, row in enumerate(sheet.iter_rows(min_row=2, values_only=True), 2):
                 # Skip empty rows
@@ -268,6 +299,10 @@ def import_admin_profiles(request):
                             error_count += 1
                             continue
                     
+                    # Generate employee ID
+                    random_num = random.randint(1000, 9999)
+                    employee_id = f"EMP-{year}-{random_num}"
+                    
                     # Create admin profile
                     AdminProfile.objects.create(
                         first_name=first_name,
@@ -277,7 +312,10 @@ def import_admin_profiles(request):
                         email=email,
                         discipline=discipline,
                         role=role,
-                        address=str(address).strip() if address else ''
+                        address=str(address).strip() if address else '',
+                        employee_id=employee_id,
+                        joining_date=datetime.now().date(),
+                        is_active=True
                     )
                     
                     success_count += 1
@@ -288,7 +326,7 @@ def import_admin_profiles(request):
             
             # Show summary message
             if success_count > 0:
-                messages.success(request, f'Successfully imported {success_count} admin profiles!')
+                messages.success(request, f'Successfully imported {success_count} staff members!')
             if error_count > 0:
                 messages.warning(request, f'Failed to import {error_count} profiles. Check errors below.')
                 request.session['import_errors'] = errors[:50]  # Store first 50 errors in session
@@ -298,13 +336,14 @@ def import_admin_profiles(request):
     
     return redirect('admin_profile:admin_profile_list')
 
+
 @login_required
 def download_sample_excel(request):
     """Download sample Excel template for admin profile import"""
     # Create a new workbook
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.title = "Admin Profiles"
+    ws.title = "Staff Import Template"
     
     # Define headers
     headers = [
@@ -328,7 +367,8 @@ def download_sample_excel(request):
     sample_data = [
         ['John', 'Doe', 'Robert Doe', 'john.doe@example.com', 'HOD', '1234567890', '123 Main St, City', 'Computer Science'],
         ['Jane', 'Smith', 'Michael Smith', 'jane.smith@example.com', 'Coordinator', '0987654321', '456 Oak Ave, Town', 'Mathematics'],
-        ['Bob', 'Johnson', 'William Johnson', 'bob.johnson@example.com', 'Section Head', '5555555555', '789 Pine Rd, Village', 'Physics'],
+        ['Bob', 'Johnson', 'William Johnson', 'bob.johnson@example.com', 'Office Clerk', '5555555555', '789 Pine Rd, Village', 'Physics'],
+        ['Sarah', 'Ahmed', 'Khalid Ahmed', 'sarah.ahmed@example.com', 'Section Head', '3333333333', '321 Park Ave, City', 'Computer Science'],
     ]
     
     # Add sample data
@@ -352,7 +392,7 @@ def download_sample_excel(request):
     # Add instructions at the bottom
     instruction_row = len(sample_data) + 3
     ws.cell(row=instruction_row, column=1, value="INSTRUCTIONS:").font = Font(bold=True)
-    ws.cell(row=instruction_row + 1, column=1, value="1. Role must be one of: HOD, Coordinator, Section Head")
+    ws.cell(row=instruction_row + 1, column=1, value="1. Role must be one of: HOD, Coordinator, Section Head, Office Clerk, Accounts, Librarian")
     ws.cell(row=instruction_row + 2, column=1, value="2. Discipline names must match existing disciplines in system")
     ws.cell(row=instruction_row + 3, column=1, value="3. Contact Number and Address are optional")
     ws.cell(row=instruction_row + 4, column=1, value="4. Email must be unique")
@@ -361,12 +401,11 @@ def download_sample_excel(request):
     response = HttpResponse(
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
-    response['Content-Disposition'] = 'attachment; filename="admin_profile_sample.xlsx"'
+    response['Content-Disposition'] = 'attachment; filename="staff_import_template.xlsx"'
     
     wb.save(response)
     return response
-    from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
+
 
 @login_required
 def debug_admin_permissions(request):
@@ -389,21 +428,8 @@ def debug_admin_permissions(request):
         'is_superuser': user.is_superuser,
         'is_staff': user.is_staff,
         'is_active': user.is_active,
-        'is_admin': getattr(user, 'is_admin', False),
         'has_admin_profile': has_admin_profile,
         'admin_role': admin_role,
     }
     
-    # Get all available attributes
-    all_attrs = {}
-    for attr in dir(user):
-        if not attr.startswith('_') and not callable(getattr(user, attr)):
-            try:
-                all_attrs[attr] = str(getattr(user, attr))
-            except:
-                all_attrs[attr] = "Error getting value"
-    
-    return JsonResponse({
-        'user_attributes': user_attrs,
-        'all_attributes': all_attrs,
-    })
+    return JsonResponse({'user_attributes': user_attrs})

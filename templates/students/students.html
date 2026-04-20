@@ -1,180 +1,301 @@
 {% extends 'Home/base.html' %}
 {% load static %}
+
+{% block title %}Students List - EduSphere{% endblock %}
+
 {% block body %}
 <div class="page-wrapper">
     <div class="content container-fluid">
-            <div class="mb-3">
-                {% for message in messages %}
-                <div class="alert 
-                            {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %}">
+        <!-- Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags == 'warning' %}warning{% else %}success{% endif %} alert-dismissible fade show">
+                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %} mr-2"></i>
                     {{ message }}
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
                 </div>
-                {% endfor %}
-
-            </div>
-
+            {% endfor %}
+        {% endif %}
 
         <!-- Page Header -->
         <div class="page-header">
             <div class="row align-items-center">
                 <div class="col">
-                    <h3 class="page-title">Students</h3>
+                    <h3 class="page-title">Student Management</h3>
                     <ul class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="#">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'index' %}">Dashboard</a></li>
                         <li class="breadcrumb-item active">Students</li>
                     </ul>
                 </div>
-                <div class="col-auto text-right float-right ml-auto">
-                    <a href="{% url 'add_student' %}" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Add Student
-                    </a>
+                <div class="col-auto">
+                    <div class="btn-group">
+                        <a href="{% url 'add_student' %}" class="btn btn-primary">
+                            <i class="fas fa-user-plus"></i> Add Student
+                        </a>
+                        <a href="{% url 'export_students_excel' %}" class="btn btn-success">
+                            <i class="fas fa-file-excel"></i> Export
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Filter Section -->
-        <div class="row filter-row">
-            <div class="col-sm-6 col-md-3">
-                <div class="form-group form-focus">
-                    <label class="focus-label">Discipline</label>
-                    <select class="form-control" id="discipline_filter">
-                        <option value="">All Disciplines</option>
-                        {% for discipline in disciplines %}
-                        <option value="{{ discipline.id }}" {% if selected_discipline and selected_discipline.id == discipline.id %}selected{% endif %}>
-                            {{ discipline.field }} ({{ discipline.program }})
-                        </option>
-                        {% endfor %}
-                    </select>
+        <!-- Stats Cards -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card dash-widget">
+                    <div class="card-body">
+                        <span class="dash-widget-icon"><i class="fas fa-users"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ students.count }}</h3>
+                            <span>Total Students</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-
-            <!-- Batch Filter -->
-            <div class="col-sm-6 col-md-3">
-                <div class="form-group form-focus">
-                    <label class="focus-label">Batch</label>
-                    <select class="form-control" id="batch_filter">
-                        <option value="">All Batches</option>
-                        {% for batch in batches %}
-                        <option value="{{ batch.id }}" {% if selected_batch and selected_batch.id == batch.id %}selected{% endif %}>
-                            {{ batch.name }}
-                        </option>
-                        {% endfor %}
-                    </select>
+            <div class="col-md-3">
+                <div class="card dash-widget">
+                    <div class="card-body">
+                        <span class="dash-widget-icon"><i class="fas fa-graduation-cap"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ students|length }}</h3>
+                            <span>Active Students</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-
-            <!-- Section Filter -->
-            <div class="col-sm-6 col-md-3">
-                <div class="form-group form-focus">
-                    <label class="focus-label">Section</label>
-                    <select class="form-control" id="section_filter" {% if not selected_batch %}{% endif %}>
-                        <option value="">All Sections</option>
-                        {% for section in sections %}
-                        <option value="{{ section.id }}" {% if selected_section and selected_section.id == section.id %}selected{% endif %}>
-                            {{ section.name }}
-                        </option>
-                        {% endfor %}
-                    </select>
+            <div class="col-md-3">
+                <div class="card dash-widget">
+                    <div class="card-body">
+                        <span class="dash-widget-icon"><i class="fas fa-trophy"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ graduated_count|default:0 }}</h3>
+                            <span>Graduated</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-
-            <!-- Semester Filter -->
-            <div class="col-sm-6 col-md-3">
-                <div class="form-group form-focus">
-                    <label class="focus-label">Semester</label>
-                    <select class="form-control" id="semester_filter">
-                        <option value="">All Semesters</option>
-                        {% for semester in semesters %}
-                        <option value="{{ semester.id }}" {% if selected_semester and selected_semester.id == semester.id %}selected{% endif %}>
-                            Semester {{ semester.number }}
-                        </option>
-                        {% endfor %}
-                    </select>
+            <div class="col-md-3">
+                <div class="card dash-widget">
+                    <div class="card-body">
+                        <span class="dash-widget-icon"><i class="fas fa-chalkboard"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ total_semesters }}</h3>
+                            <span>Total Semesters</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Filter Button -->
-        <div class="row mb-3">
+        <!-- Bulk Promotion Section -->
+        <div class="row mb-4">
             <div class="col-md-12">
-                <a href="#" class="btn btn-success btn-block" id="filter_button">Filter</a>
+                <div class="card">
+                    <div class="card-header bg-warning">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-arrow-up"></i> Bulk Promotion
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{% url 'promote_all_students' %}" class="form-inline">
+                            {% csrf_token %}
+                            <div class="form-group mr-3 mb-2">
+                                <label class="mr-2 font-weight-bold">Select Semester:</label>
+                                <select name="semester_id" class="form-control" required>
+                                    <option value="">-- Select Semester --</option>
+                                    {% for semester in semesters %}
+                                    <option value="{{ semester.id }}">Semester {{ semester.number }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-warning mb-2" onclick="return confirm('⚠️ WARNING: This will promote ALL students from the selected semester to the next semester. Continue?')">
+                                <i class="fas fa-arrow-up"></i> Promote All Students
+                            </button>
+                            <small class="text-muted ml-3 mb-2">Note: Students in Semester 8 will be marked as Graduated</small>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Active Filters Indicator -->
-        {% if selected_discipline or selected_batch or selected_section or selected_semester %}
-        <div class="alert alert-info alert-dismissible fade show" role="alert">
-            Showing students:
-            {% if selected_discipline %}<strong>Discipline: {{ selected_discipline.field }}</strong>{% endif %}
-            {% if selected_batch %}<strong> Batch: {{ selected_batch.name }}</strong>{% endif %}
-            {% if selected_section %}<strong> Section: {{ selected_section.name }}</strong>{% endif %}
-            {% if selected_semester %}<strong> Semester: {{ selected_semester.number }}</strong>{% endif %}
-            <a href="?" class="close" aria-label="Clear filter"><span aria-hidden="true">&times;</span></a>
+        <!-- Filters Card -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-filter"></i> Filter Students
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label>Discipline</label>
+                                    <select class="form-control" id="discipline_filter">
+                                        <option value="">All Disciplines</option>
+                                        {% for discipline in disciplines %}
+                                        <option value="{{ discipline.id }}" {% if selected_discipline.id == discipline.id %}selected{% endif %}>{{ discipline.field }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label>Batch</label>
+                                    <select class="form-control" id="batch_filter">
+                                        <option value="">All Batches</option>
+                                        {% for batch in batches %}
+                                        <option value="{{ batch.id }}" {% if selected_batch.id == batch.id %}selected{% endif %}>{{ batch.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label>Section</label>
+                                    <select class="form-control" id="section_filter">
+                                        <option value="">All Sections</option>
+                                        {% for section in sections %}
+                                        <option value="{{ section.id }}" {% if selected_section.id == section.id %}selected{% endif %}>{{ section.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label>Semester</label>
+                                    <select class="form-control" id="semester_filter">
+                                        <option value="">All Semesters</option>
+                                        {% for semester in semesters %}
+                                        <option value="{{ semester.id }}" {% if selected_semester.id == semester.id %}selected{% endif %}>Semester {{ semester.number }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 text-right">
+                                <a href="{% url 'student_list' %}" class="btn btn-secondary">
+                                    <i class="fas fa-sync-alt"></i> Reset Filters
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        {% endif %}
 
         <!-- Students Table -->
         <div class="row">
             <div class="col-sm-12">
                 <div class="card card-table">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-list"></i> Student List
+                        </h5>
+                    </div>
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table class="table table-hover table-center mb-0">
-                                <thead>
+                            <table class="table table-hover table-center mb-0 datatable">
+                                <thead class="thead-light">
                                     <tr>
-                                        <th>ID</th>
-                                        <th>Student</th>
-                                        <th>Father Name</th>
+                                        <th>#</th>
+                                        <th>Student ID</th>
+                                        <th>Student Name</th>
+                                        <th>Father's Name</th>
                                         <th>Discipline</th>
                                         <th>Batch</th>
                                         <th>Section</th>
                                         <th>Semester</th>
+                                        <th>Status</th>
                                         <th>Contact</th>
-                                        <th class="text-right">Action</th>
+                                        <th class="text-right">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% if students %}
                                     {% for student in students %}
                                     <tr>
-                                        <td>{{ student.student_id }}</td>
+                                        <td>{{ forloop.counter }}</td>
                                         <td>
-                                            <h2 class="table-avatar">
+                                            <span class="font-weight-bold">{{ student.student_id }}</span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
                                                 <a href="{% url 'view_student' student.id %}" class="avatar avatar-sm mr-2">
                                                     {% if student.image %}
-                                                        <img class="avatar-img rounded-circle" src="{{ student.image.url }}" alt="{{ student.first_name }}" width="40" height="40">
+                                                        <img class="avatar-img rounded-circle" src="{{ student.image.url }}" alt="{{ student.first_name }}" width="35" height="35">
                                                     {% else %}
-                                                        <img class="avatar-img rounded-circle" src="{% static 'assets/img/user.jpg' %}" alt="Default" width="40" height="40">
+                                                        <div class="avatar-img rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width:35px;height:35px;">
+                                                            <span style="font-size:14px;">{{ student.first_name|slice:":1" }}{{ student.last_name|slice:":1" }}</span>
+                                                        </div>
                                                     {% endif %}
                                                 </a>
-                                                <a href="{% url 'view_student' student.id %}">{{ student.first_name }} {{ student.last_name }}</a>
-                                            </h2>
+                                                <div>
+                                                    <a href="{% url 'view_student' student.id %}" class="font-weight-bold text-dark">
+                                                        {{ student.first_name }} {{ student.last_name }}
+                                                    </a>
+                                                    <br>
+                                                    <small class="text-muted">{{ student.email }}</small>
+                                                </div>
+                                            </div>
                                         </td>
-                                        <td>{{ student.parent.father_name|default:"-" }}</td>
-                                        <td>{{ student.discipline.field }}</td>
-                                        <td>{{ student.batch.name }}</td>
-                                        <td>{{ student.section.name }}</td>
-                                        <td>Semester {{ student.semester.number }}</td>
-                                        <td>{{ student.contact_number }}</td>
+                                        <td>{{ student.parent.father_name|default:"—" }}</td>
+                                        <td>
+                                            <span class="badge badge-primary badge-pill">{{ student.discipline.field|truncatechars:25 }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-info">{{ student.batch.name }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-secondary">{{ student.section.name }}</span>
+                                        </td>
+                                        <td>
+                                            {% if student.semester.number >= 8 %}
+                                                <span class="badge badge-success badge-lg">
+                                                    <i class="fas fa-check-circle"></i> final year
+                                                </span>
+                                            {% else %}
+                                                <span class="badge badge-warning badge-lg">
+                                                    Semester {{ student.semester.number }}
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if student.semester.number >= 9 %}
+                                                <span class="badge badge-success">🎓 Graduated</span>
+                                            {% elif student.semester.number == 8 %}
+                                                <span class="badge badge-info">📚 Final Year</span>
+                                            {% else %}
+                                                <span class="badge badge-primary">✅ Active</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <small>{{ student.contact_number|default:"—" }}</small>
+                                        </td>
                                         <td class="text-right">
-                                            <div class="actions">
-                                                {% if student.semester.number < semesters|length %}
+                                            <div class="btn-group" role="group">
+                                                {% if student.semester.number < 8 %}
                                                 <form action="{% url 'promote_student' student.id %}" method="POST" style="display:inline;">
                                                     {% csrf_token %}
-                                                    <button type="submit" class="btn btn-sm bg-warning-light mr-2" title="Promote"
-                                                        onclick="return confirm('Promote {{ student.first_name }} to the next semester?');">
+                                                    <button type="submit" class="btn btn-sm btn-outline-warning mr-1" title="Promote to Next Semester" onclick="return confirm('Promote {{ student.first_name }} {{ student.last_name }} to next semester?');">
                                                         <i class="fas fa-arrow-up"></i>
                                                     </button>
                                                 </form>
+                                                {% else %}
+                                                <button class="btn btn-sm btn-outline-success mr-1" disabled title="Graduated">
+                                                    <i class="fas fa-trophy"></i>
+                                                </button>
                                                 {% endif %}
-                                                <a href="{% url 'edit_student' student.id %}" class="btn btn-sm bg-success-light mr-2" title="Edit">
-                                                    <i class="fas fa-pen"></i>
+                                                <a href="{% url 'edit_student' student.id %}" class="btn btn-sm btn-outline-primary mr-1" title="Edit Student">
+                                                    <i class="fas fa-edit"></i>
                                                 </a>
                                                 <form action="{% url 'delete_student' student.id %}" method="POST" style="display:inline;">
                                                     {% csrf_token %}
-                                                    <button type="submit" class="btn btn-sm bg-danger-light" title="Delete"
-                                                        onclick="return confirm('Are you sure you want to delete this student?');">
-                                                        <i class="fas fa-trash"></i>
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Student" onclick="return confirm('⚠️ Delete {{ student.first_name }} {{ student.last_name }}? This action cannot be undone.');">
+                                                        <i class="fas fa-trash-alt"></i>
                                                     </button>
                                                 </form>
                                             </div>
@@ -183,12 +304,13 @@
                                     {% endfor %}
                                     {% else %}
                                     <tr>
-                                        <td colspan="9" class="text-center">
-                                            {% if selected_discipline or selected_batch or selected_section or selected_semester %}
-                                            No students found for selected filters
-                                            {% else %}
-                                            No students found. <a href="{% url 'add_student' %}">Add a student</a>
-                                            {% endif %}
+                                        <td colspan="11" class="text-center py-5">
+                                            <i class="fas fa-user-graduate fa-4x text-muted mb-3 d-block"></i>
+                                            <h5>No students found</h5>
+                                            <p class="text-muted">Click "Add Student" to get started.</p>
+                                            <a href="{% url 'add_student' %}" class="btn btn-primary mt-2">
+                                                <i class="fas fa-user-plus"></i> Add Your First Student
+                                            </a>
                                         </td>
                                     </tr>
                                     {% endif %}
@@ -199,30 +321,135 @@
                 </div>
             </div>
         </div>
-
     </div>
 </div>
 
-<!-- Filter Script -->
-<script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
+<style>
+    /* Professional Styling */
+    .dash-widget {
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .dash-widget:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .dash-widget-icon {
+        font-size: 40px;
+        float: left;
+        width: 70px;
+        height: 70px;
+        line-height: 70px;
+        text-align: center;
+        background: rgba(0,0,0,0.05);
+        border-radius: 50%;
+        margin-right: 15px;
+    }
+    
+    .dash-widget-info {
+        overflow: hidden;
+    }
+    
+    .dash-widget-info h3 {
+        font-size: 28px;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+    
+    .badge-lg {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+    
+    .table td {
+        vertical-align: middle;
+    }
+    
+    .btn-group .btn {
+        border-radius: 4px;
+        margin: 0 2px;
+    }
+    
+    .avatar-img {
+        object-fit: cover;
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-bottom: none;
+    }
+    
+    .card-header .card-title {
+        color: white;
+    }
+    
+    .card-header.bg-warning {
+        background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+    }
+    
+    .alert {
+        border-radius: 10px;
+        border: none;
+    }
+    
+    .filter-row .form-group {
+        margin-bottom: 0;
+    }
+    
+    @media (max-width: 768px) {
+        .dash-widget-icon {
+            width: 50px;
+            height: 50px;
+            line-height: 50px;
+            font-size: 25px;
+        }
+        .dash-widget-info h3 {
+            font-size: 20px;
+        }
+    }
+</style>
 
 <script>
 $(document).ready(function() {
-    $('#filter_button').click(function(e) {
-        e.preventDefault();
-        var disciplineId = $('#discipline_filter').val();
-        var batchId = $('#batch_filter').val();
-        var sectionId = $('#section_filter').val();
-        var semesterId = $('#semester_filter').val();
-
+    // Initialize DataTable for better sorting and searching
+    if ($('.datatable').length) {
+        $('.datatable').DataTable({
+            pageLength: 25,
+            order: [[1, 'asc']],
+            language: {
+                search: "<i class='fas fa-search'></i>",
+                searchPlaceholder: "Search students...",
+                lengthMenu: "Show _MENU_ students",
+                info: "Showing _START_ to _END_ of _TOTAL_ students"
+            }
+        });
+    }
+    
+    // Filter functionality
+    $('#discipline_filter, #batch_filter, #section_filter, #semester_filter').change(function() {
+        var discipline = $('#discipline_filter').val();
+        var batch = $('#batch_filter').val();
+        var section = $('#section_filter').val();
+        var semester = $('#semester_filter').val();
+        
         var url = "{% url 'student_list' %}?";
-        if (disciplineId) url += "discipline=" + disciplineId + "&";
-        if (batchId) url += "batch=" + batchId + "&";
-        if (sectionId) url += "section=" + sectionId + "&";
-        if (semesterId) url += "semester=" + semesterId;
-
+        if (discipline) url += "discipline=" + discipline + "&";
+        if (batch) url += "batch=" + batch + "&";
+        if (section) url += "section=" + section + "&";
+        if (semester) url += "semester=" + semester;
+        
         window.location.href = url;
     });
+    
+    // Auto-dismiss alerts after 5 seconds
+    setTimeout(function() {
+        $('.alert').fadeOut('slow');
+    }, 5000);
 });
 </script>
 {% endblock %}

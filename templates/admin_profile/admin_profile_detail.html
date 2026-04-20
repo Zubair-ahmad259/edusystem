@@ -1,111 +1,247 @@
-{% extends 'admin_profile/base.html' %}
+{% extends 'Home/base.html' %}
+{% load static %}
 
-{% block title %}{{ admin_profile.first_name }} {{ admin_profile.last_name }} - Details{% endblock %}
+{% block title %}{{ admin_profile.first_name }} {{ admin_profile.last_name }} - Staff Details{% endblock %}
 
-{% block content %}
-<div class="row">
-    <div class="col-md-8 mx-auto">
-        <div class="card shadow">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <h4 class="mb-0"><i class="bi bi-person-badge"></i> Admin Profile Details</h4>
-                <div>
-                    <a href="{% url 'admin_profile:admin_profile_update' admin_profile.pk %}" 
-                       class="btn btn-light btn-sm me-2">
-                        <i class="bi bi-pencil"></i> Edit
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Staff Profile</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'index' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'admin_profile:admin_profile_list' %}">Staff</a></li>
+                        <li class="breadcrumb-item active">Profile</li>
+                    </ul>
+                </div>
+                <div class="col-auto text-right">
+                    <a href="{% url 'admin_profile:admin_profile_list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left"></i> Back to List
                     </a>
-                    <a href="{% url 'admin_profile:admin_profile_list' %}" 
-                       class="btn btn-light btn-sm">
-                        <i class="bi bi-arrow-left"></i> Back
+                    <a href="{% url 'admin_profile:admin_profile_update' admin_profile.pk %}" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> Edit Profile
                     </a>
                 </div>
             </div>
-            
-            <div class="card-body">
-                <div class="text-center mb-4">
-                    <div class="bg-primary bg-opacity-10 p-4 rounded-circle d-inline-block mb-3">
-                        <i class="bi bi-person-circle fs-1 text-primary"></i>
-                    </div>
-                    <h3>{{ admin_profile.first_name }} {{ admin_profile.last_name }}</h3>
-                    <p class="text-muted mb-1">
-                        <span class="badge bg-primary">{{ admin_profile.role }}</span>
-                    </p>
-                    <p class="text-muted">Joined: {{ admin_profile.created_at|date:"F d, Y" }}</p>
-                </div>
-                
-                <div class="row">
-                    <div class="col-md-6">
-                        <h5 class="border-bottom pb-2 mb-3">Personal Information</h5>
-                        <table class="table table-borderless">
-                            <tr>
-                                <th width="40%">First Name:</th>
-                                <td>{{ admin_profile.first_name }}</td>
-                            </tr>
-                            <tr>
-                                <th>Last Name:</th>
-                                <td>{{ admin_profile.last_name }}</td>
-                            </tr>
-                            <tr>
-                                <th>Father's Name:</th>
-                                <td>{{ admin_profile.father_name|default:"-" }}</td>
-                            </tr>
-                            <tr>
-                                <th>Contact Number:</th>
-                                <td>{{ admin_profile.contact_number|default:"-" }}</td>
-                            </tr>
-                        </table>
-                    </div>
-                    
-                    <div class="col-md-6">
-                        <h5 class="border-bottom pb-2 mb-3">Professional Information</h5>
-                        <table class="table table-borderless">
-                            <tr>
-                                <th width="40%">Email:</th>
-                                <td>{{ admin_profile.email }}</td>
-                            </tr>
-                            <tr>
-                                <th>Role:</th>
-                                <td>{{ admin_profile.get_role_display }}</td>
-                            </tr>
-                            <tr>
-                                <th>Discipline:</th>
-                                <td>
-                                    {% if admin_profile.discipline %}
-                                        {{ admin_profile.discipline.name }}
-                                    {% else %}
-                                        <span class="text-muted">Not assigned</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            <tr>
-                                <th>Username:</th>
-                                <td>{{ admin_profile.user.username }}</td>
-                            </tr>
-                        </table>
-                    </div>
-                    
-                    {% if admin_profile.address %}
-                        <div class="col-12 mt-3">
-                            <h5 class="border-bottom pb-2 mb-3">Address</h5>
-                            <p>{{ admin_profile.address }}</p>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <!-- Profile Image / Initials -->
+                                <div class="text-center mb-4">
+                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto" style="width: 150px; height: 150px; font-size: 56px;">
+                                        {{ admin_profile.first_name|slice:":1" }}{{ admin_profile.last_name|slice:":1" }}
+                                    </div>
+                                    <h3 class="mt-3 mb-1">{{ admin_profile.first_name }} {{ admin_profile.last_name }}</h3>
+                                    <p class="text-muted">
+                                        <i class="fas fa-id-card"></i> {{ admin_profile.employee_id|default:"EMP-ID" }}
+                                    </p>
+                                    <p>
+                                        {% if admin_profile.is_active %}
+                                            <span class="badge badge-success"><i class="fas fa-check-circle"></i> Active</span>
+                                        {% else %}
+                                            <span class="badge badge-danger"><i class="fas fa-ban"></i> Inactive</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                
+                                <!-- Quick Info Card -->
+                                <div class="card bg-light mb-3">
+                                    <div class="card-body">
+                                        <h6 class="card-title"><i class="fas fa-phone"></i> Contact Info</h6>
+                                        <p class="mb-1"><i class="fas fa-envelope"></i> {{ admin_profile.email }}</p>
+                                        <p><i class="fas fa-mobile-alt"></i> {{ admin_profile.contact_number|default:"Not provided" }}</p>
+                                        
+                                        <h6 class="card-title mt-3"><i class="fas fa-calendar"></i> Important Dates</h6>
+                                        <p class="mb-1"><i class="fas fa-calendar-plus"></i> Joined: {{ admin_profile.joining_date|date:"F d, Y"|default:"N/A" }}</p>
+                                        <p><i class="fas fa-clock"></i> Member since: {{ admin_profile.created_at|date:"F d, Y" }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-9">
+                                <!-- Tabs -->
+                                <ul class="nav nav-tabs nav-tabs-solid nav-justified">
+                                    <li class="nav-item">
+                                        <a class="nav-link active" data-toggle="tab" href="#personal-info">
+                                            <i class="fas fa-user"></i> Personal Info
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" data-toggle="tab" href="#professional-info">
+                                            <i class="fas fa-briefcase"></i> Professional Info
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" data-toggle="tab" href="#documents">
+                                            <i class="fas fa-file-alt"></i> Documents
+                                        </a>
+                                    </li>
+                                </ul>
+
+                                <div class="tab-content mt-4">
+                                    <!-- Personal Information Tab -->
+                                    <div class="tab-pane fade show active" id="personal-info">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="info-box">
+                                                    <label><i class="fas fa-user"></i> Full Name</label>
+                                                    <p>{{ admin_profile.first_name }} {{ admin_profile.last_name }}</p>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="info-box">
+                                                    <label><i class="fas fa-user-friends"></i> Father's Name</label>
+                                                    <p>{{ admin_profile.father_name|default:"Not provided" }}</p>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="info-box">
+                                                    <label><i class="fas fa-envelope"></i> Email Address</label>
+                                                    <p>{{ admin_profile.email }}</p>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="info-box">
+                                                    <label><i class="fas fa-phone"></i> Contact Number</label>
+                                                    <p>{{ admin_profile.contact_number|default:"Not provided" }}</p>
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="info-box">
+                                                    <label><i class="fas fa-home"></i> Address</label>
+                                                    <p>{{ admin_profile.address|default:"Not provided" }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Professional Information Tab -->
+                                    <div class="tab-pane fade" id="professional-info">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="info-box">
+                                                    <label><i class="fas fa-id-badge"></i> Employee ID</label>
+                                                    <p><span class="badge badge-info">{{ admin_profile.employee_id|default:"N/A" }}</span></p>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="info-box">
+                                                    <label><i class="fas fa-user-tag"></i> Role</label>
+                                                    <p>
+                                                        {% if admin_profile.role == 'HOD' %}
+                                                            <span class="badge badge-danger">{{ admin_profile.get_role_display }}</span>
+                                                        {% elif admin_profile.role == 'Coordinator' %}
+                                                            <span class="badge badge-warning">{{ admin_profile.get_role_display }}</span>
+                                                        {% elif admin_profile.role == 'Office Clerk' %}
+                                                            <span class="badge badge-info">{{ admin_profile.get_role_display }}</span>
+                                                        {% else %}
+                                                            <span class="badge badge-secondary">{{ admin_profile.get_role_display }}</span>
+                                                        {% endif %}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="info-box">
+                                                    <label><i class="fas fa-graduation-cap"></i> Discipline</label>
+                                                    <p>{{ admin_profile.discipline.name|default:"Not assigned" }}</p>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="info-box">
+                                                    <label><i class="fas fa-calendar-alt"></i> Joining Date</label>
+                                                    <p>{{ admin_profile.joining_date|date:"F d, Y"|default:"N/A" }}</p>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-12">
+                                                <div class="info-box">
+                                                    <label><i class="fas fa-clock"></i> Employment Duration</label>
+                                                    <p>
+                                                        {% if admin_profile.joining_date %}
+                                                            {{ admin_profile.joining_date|timesince }}
+                                                        {% else %}
+                                                            N/A
+                                                        {% endif %}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Documents Tab -->
+                                    <div class="tab-pane fade" id="documents">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="card">
+                                                    <div class="card-body text-center">
+                                                        <i class="fas fa-id-card fa-3x text-primary mb-2"></i>
+                                                        <h6>Staff ID Card</h6>
+                                                        <p class="text-muted small">ID: {{ admin_profile.employee_id|default:"N/A" }}</p>
+                                                        <button class="btn btn-sm btn-outline-primary" onclick="window.print();">
+                                                            <i class="fas fa-print"></i> Print ID Card
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="card">
+                                                    <div class="card-body text-center">
+                                                        <i class="fas fa-file-contract fa-3x text-danger mb-2"></i>
+                                                        <h6>Employment Contract</h6>
+                                                        <p class="text-muted small">Download contract document</p>
+                                                        <button class="btn btn-sm btn-outline-danger">
+                                                            <i class="fas fa-download"></i> Download
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    {% endif %}
-                </div>
-            </div>
-            
-            <div class="card-footer bg-light">
-                <div class="d-flex justify-content-between">
-                    <small class="text-muted">
-                        <i class="bi bi-clock"></i> Profile ID: #{{ admin_profile.pk }}
-                    </small>
-                    <div>
-                        <a href="{% url 'admin_profile:admin_profile_delete' admin_profile.pk %}" 
-                           class="btn btn-danger btn-sm">
-                            <i class="bi bi-trash"></i> Delete Profile
-                        </a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .info-box {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        border-left: 3px solid #667eea;
+    }
+    .info-box label {
+        font-size: 12px;
+        text-transform: uppercase;
+        color: #6c757d;
+        margin-bottom: 5px;
+        display: block;
+        letter-spacing: 0.5px;
+    }
+    .info-box p {
+        margin-bottom: 0;
+        font-size: 14px;
+        font-weight: 500;
+    }
+    .nav-tabs-solid .nav-link {
+        padding: 12px 20px;
+        font-weight: 500;
+    }
+    .nav-tabs-solid .nav-link.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+</style>
 {% endblock %}

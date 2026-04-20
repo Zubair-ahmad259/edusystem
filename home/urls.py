@@ -19,6 +19,8 @@ urlpatterns = [
     path('timetables', include("timetables.urls")),
     path('assignm', include("assignm.urls")),
 
+    path('head', include("head.urls")),
+
 
 
 
