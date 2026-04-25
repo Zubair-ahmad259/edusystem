@@ -1,0 +1,269 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}Assignment Dashboard - EduSphere{% endblock %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Assignment Dashboard</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'index' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Assignments</li>
+                    </ul>
+                </div>
+                {% if user.is_teacher %}
+                <div class="col-auto text-right">
+                    <a href="{% url 'assignment:teacher_assignment_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create Assignment
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card bg-gradient-primary">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-white-50">Total Assignments</h6>
+                                <h2 class="text-white mb-0">{{ total_assignments|default:"0" }}</h2>
+                            </div>
+                            <div class="bg-white-30 p-3 rounded">
+                                <i class="fas fa-tasks fa-2x text-white"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-gradient-success">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-white-50">Submitted</h6>
+                                <h2 class="text-white mb-0">{{ total_submitted|default:"0" }}</h2>
+                            </div>
+                            <div class="bg-white-30 p-3 rounded">
+                                <i class="fas fa-check-circle fa-2x text-white"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-gradient-warning">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-white-50">Pending</h6>
+                                <h2 class="text-white mb-0">{{ total_pending|default:"0" }}</h2>
+                            </div>
+                            <div class="bg-white-30 p-3 rounded">
+                                <i class="fas fa-clock fa-2x text-white"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-gradient-danger">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-white-50">Overdue</h6>
+                                <h2 class="text-white mb-0">{{ total_overdue|default:"0" }}</h2>
+                            </div>
+                            <div class="bg-white-30 p-3 rounded">
+                                <i class="fas fa-exclamation-triangle fa-2x text-white"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Role-Based Quick Actions -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title"><i class="fas fa-bolt"></i> Quick Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            {% if user.is_teacher %}
+                            <div class="col-md-4 col-6 mb-3">
+                                <a href="{% url 'assignment:teacher_assignment_create' %}" class="btn btn-outline-primary btn-block py-3">
+                                    <i class="fas fa-plus-circle fa-2x mb-2 d-block"></i>
+                                    Create Assignment
+                                </a>
+                            </div>
+                            <div class="col-md-4 col-6 mb-3">
+                                <a href="{% url 'assignment:teacher_assignment_list' %}" class="btn btn-outline-info btn-block py-3">
+                                    <i class="fas fa-list fa-2x mb-2 d-block"></i>
+                                    View My Assignments
+                                </a>
+                            </div>
+                            <div class="col-md-4 col-6 mb-3">
+                                <a href="#" class="btn btn-outline-success btn-block py-3">
+                                    <i class="fas fa-chart-line fa-2x mb-2 d-block"></i>
+                                    Grade Pending
+                                </a>
+                            </div>
+                            {% else %}
+                            <div class="col-md-4 col-6 mb-3">
+                                <a href="{% url 'assignment:student_assignment_list' %}" class="btn btn-outline-primary btn-block py-3">
+                                    <i class="fas fa-tasks fa-2x mb-2 d-block"></i>
+                                    My Assignments
+                                </a>
+                            </div>
+                            <div class="col-md-4 col-6 mb-3">
+                                <a href="{% url 'assignment:student_submission_status' %}" class="btn btn-outline-info btn-block py-3">
+                                    <i class="fas fa-history fa-2x mb-2 d-block"></i>
+                                    Submission History
+                                </a>
+                            </div>
+                            <div class="col-md-4 col-6 mb-3">
+                                <a href="#" class="btn btn-outline-success btn-block py-3">
+                                    <i class="fas fa-trophy fa-2x mb-2 d-block"></i>
+                                    My Grades
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- All Assignments Table -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fas fa-tasks"></i> 
+                            {% if user.is_teacher %}All My Assignments{% else %}All Assignments{% endif %}
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Subject</th>
+                                        <th>Due Date</th>
+                                        <th>Status</th>
+                                        <th>Total Marks</th>
+                                        <th>Submissions</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for assignment in all_assignments %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ assignment.title }}</strong>
+                                            {% if assignment.assignment_type %}
+                                            <br><small class="text-muted">{{ assignment.get_assignment_type_display }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if assignment.subject_assign %}
+                                                {{ assignment.subject_assign.subject.name }}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                        <td class="{% if assignment.due_date < now %}text-danger{% endif %}">
+                                            {{ assignment.due_date|date:"M d, Y" }}
+                                            {% if assignment.due_date < now %}
+                                            <span class="badge badge-danger ml-1">Overdue</span>
+                                            {% endif %}
+                                            <br>
+                                            <small class="text-muted">{{ assignment.due_date|time:"H:i" }}</small>
+                                        </td>
+                                        <td>
+                                            {% if assignment.status == 'active' %}
+                                                {% if assignment.due_date < now %}
+                                                <span class="badge badge-warning">Expired</span>
+                                                {% else %}
+                                                <span class="badge badge-success">Active</span>
+                                                {% endif %}
+                                            {% elif assignment.status == 'draft' %}
+                                            <span class="badge badge-secondary">Draft</span>
+                                            {% else %}
+                                            <span class="badge badge-danger">Closed</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ assignment.total_marks }}</td>
+                                        <td>
+                                            <span class="badge badge-info">{{ assignment.submissions.count }}</span>
+                                            <small>/ {{ assignment.sections.count }} sections</small>
+                                        </td>
+                                        <td>
+                                            {% if user.is_teacher %}
+                                            <a href="{% url 'assignment:teacher_assignment_detail' assignment.id %}" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-eye"></i> View
+                                            </a>
+                                            {% else %}
+                                            <a href="{% url 'assignment:student_assignment_detail' assignment.id %}" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-eye"></i> View
+                                            </a>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="7" class="text-center py-5">
+                                            <i class="fas fa-inbox fa-4x text-muted mb-3 d-block"></i>
+                                            <h5>No assignments found</h5>
+                                            <p class="text-muted">
+                                                {% if user.is_teacher %}
+                                                    You haven't created any assignments yet.
+                                                    <br><a href="{% url 'assignment:teacher_assignment_create' %}" class="btn btn-primary mt-2">
+                                                        Create Your First Assignment
+                                                    </a>
+                                                {% else %}
+                                                    No assignments available for your enrolled sections.
+                                                {% endif %}
+                                            </p>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-gradient-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .bg-gradient-success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+    .bg-gradient-warning { background: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%); }
+    .bg-gradient-danger { background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); }
+    .bg-white-30 { background: rgba(255, 255, 255, 0.2); }
+    .badge-success { background: #28a745; }
+    .badge-secondary { background: #6c757d; }
+    .badge-warning { background: #ffc107; color: #000; }
+    .badge-danger { background: #dc3545; }
+    .badge-info { background: #17a2b8; }
+    
+    .table tbody tr:hover {
+        background-color: rgba(0,0,0,0.02);
+    }
+</style>
+{% endblock %}

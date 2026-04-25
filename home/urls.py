@@ -18,8 +18,8 @@ urlpatterns = [
     path('token_app', include("token_app.urls")),
     path('timetables', include("timetables.urls")),
     path('assignm', include("assignm.urls")),
-
     path('head', include("head.urls")),
+
 
 
 

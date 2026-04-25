@@ -1,0 +1,69 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}View Disciplines - EduSphere{% endblock %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Disciplines</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'academic:dashboard' %}">Academic</a></li>
+                        <li class="breadcrumb-item active">Disciplines</li>
+                    </ul>
+                </div>
+                <div class="col-auto text-right">
+                    <a href="{% url 'academic:add_discipline' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add Discipline
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-center mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Program</th>
+                                        <th>Field</th>
+                                        <th class="text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for discipline in disciplines %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td>{{ discipline.program }}</td>
+                                        <td>{{ discipline.field }}</td>
+                                        <td class="text-right">
+                                            <a href="{% url 'academic:edit_discipline' discipline.id %}" class="btn btn-sm bg-success-light mr-2">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'academic:delete_discipline' discipline.id %}" class="btn btn-sm bg-danger-light">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center">No disciplines found</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

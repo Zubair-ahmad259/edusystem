@@ -6,7 +6,9 @@
 
 
 # home_auth/views.py
+import threading
 from django.shortcuts import render, redirect, get_object_or_404
+from django.core.paginator import Paginator
 from django.contrib import messages
 from django.utils.crypto import get_random_string
 from django.core.mail import send_mail
@@ -534,10 +536,9 @@ def reset_own_password(request):
 
 
 # ============= STUDENT MANAGEMENT =============
-
 @login_required
 def manage_students_view(request):
-    """Manage student accounts"""
+    """Manage student accounts - Optimized for speed with email threading"""
     if not (request.user.is_admin or request.user.is_superuser):
         messages.error(request, 'You do not have permission to access this page.')
         return redirect('dashboard')
@@ -572,47 +573,53 @@ def manage_students_view(request):
     # Handle POST requests
     if request.method == "POST":
         action = request.POST.get("action")
-        student_id = request.POST.get("student_id")
-        
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
         
-        if student_id:
-            student = get_object_or_404(Student, id=student_id)
-
-            if action == "create_account":
+        # Handle single account creation
+        if action == "create_account":
+            student_id = request.POST.get("student_id")
+            if student_id:
+                student = get_object_or_404(Student, id=student_id)
                 if not student.user:
                     try:
                         # Generate unique username
                         username = generate_unique_username(student.email)
                         random_password = get_random_string(10)
-
+                        
                         # Create user
                         user = CustomUser.objects.create_user(
                             username=username,
                             email=student.email,
                             password=random_password,
-                            first_name=student.first_name if hasattr(student, 'first_name') else "",
-                            last_name=student.last_name if hasattr(student, 'last_name') else "",
+                            first_name=getattr(student, 'first_name', ''),
+                            last_name=getattr(student, 'last_name', ''),
                             is_student=True,
                             temp_password=random_password,
                             password_generated=True
                         )
-
-                        # Link to student
+                        
                         student.user = user
                         student.save()
-
-                        # Send email
-                        student_name = f"{student.first_name} {student.last_name}" if hasattr(student, 'first_name') else student.email
-                        email_sent = send_account_creation_email(
-                            request, 
-                            user, 
-                            random_password, 
-                            "Student", 
-                            student.email,
-                            student_name
-                        )
-
+                        
+                        student_name = f"{getattr(student, 'first_name', '')} {getattr(student, 'last_name', '')}".strip() or student.email
+                        
+                        # Send email in background thread
+                        def send_email_thread():
+                            try:
+                                email_sent = send_account_creation_email(
+                                    request, user, random_password, "Student", 
+                                    student.email, student_name
+                                )
+                                if email_sent:
+                                    print(f"✅ Email sent to {student.email}")
+                                else:
+                                    print(f"❌ Failed to send email to {student.email}")
+                            except Exception as e:
+                                print(f"❌ Email thread error: {str(e)}")
+                        
+                        thread = threading.Thread(target=send_email_thread, daemon=True)
+                        thread.start()
+                        
                         if is_ajax:
                             return JsonResponse({
                                 'success': True,
@@ -621,11 +628,10 @@ def manage_students_view(request):
                                 'username': username,
                                 'email': student.email,
                                 'student_name': student_name,
-                                'student_id': student.id,
-                                'email_sent': email_sent
+                                'student_id': student.id
                             })
-                        
                         messages.success(request, f"Account created successfully for {student.email}")
+                        
                     except IntegrityError as e:
                         logger.error(f"Integrity error: {str(e)}")
                         if is_ajax:
@@ -649,12 +655,32 @@ def manage_students_view(request):
                             'message': f'User already exists for {student.email}'
                         })
                     messages.info(request, f'User already exists for {student.email}')
-
-            elif action == "reset_password":
+            
+            if not is_ajax:
+                return redirect('manage_students_view')
+        
+        # Handle password reset
+        elif action == "reset_password":
+            student_id = request.POST.get("student_id")
+            if student_id:
+                student = get_object_or_404(Student, id=student_id)
                 if student.user:
                     try:
                         new_password = reset_user_password(student.user)
-                        email_sent = send_password_reset_email(request, student.user, new_password, "Student")
+                        
+                        # Send email in background thread
+                        def send_reset_email_thread():
+                            try:
+                                email_sent = send_password_reset_email(request, student.user, new_password, "Student")
+                                if email_sent:
+                                    print(f"✅ Reset email sent to {student.email}")
+                                else:
+                                    print(f"❌ Failed to send reset email to {student.email}")
+                            except Exception as e:
+                                print(f"❌ Reset email thread error: {str(e)}")
+                        
+                        thread = threading.Thread(target=send_reset_email_thread, daemon=True)
+                        thread.start()
                         
                         if is_ajax:
                             return JsonResponse({
@@ -664,11 +690,10 @@ def manage_students_view(request):
                                 'username': student.user.username,
                                 'email': student.email,
                                 'student_name': getattr(student, 'name', student.user.username),
-                                'action': 'reset',
-                                'email_sent': email_sent
+                                'action': 'reset'
                             })
-                        
                         messages.success(request, f'Password reset successfully for {student.email}')
+                        
                     except Exception as e:
                         logger.error(f"Error resetting password: {str(e)}")
                         if is_ajax:
@@ -684,136 +709,193 @@ def manage_students_view(request):
                             'message': f'No user account exists for {student.email}. Create account first.'
                         })
                     messages.error(request, f'No user account exists for {student.email}. Create account first.')
-
-        if not is_ajax:
-            return redirect('manage_students_view')
-
+            
+            if not is_ajax:
+                return redirect('manage_students_view')
+    
     # Calculate statistics
     total_students = students.count()
     students_with_account = students.filter(user__isnull=False).count()
     students_without_account = students.filter(user__isnull=True).count()
     students_with_temp_password = students.filter(user__password_generated=True).count()
-
+    
+    # Pagination
+    paginator = Paginator(students, 20)
+    page_number = request.GET.get('page')
+    students_page = paginator.get_page(page_number)
+    
     context = {
         "disciplines": Discipline.objects.all(),
         "batches": Batch.objects.all(),
         "semesters": Semester.objects.all(),
         "sections": Section.objects.all(),
-        "students": students,
+        "students": students_page,
         "total_students": total_students,
         "students_with_account": students_with_account,
         "students_without_account": students_without_account,
         "students_with_temp_password": students_with_temp_password,
         "user_type": "student"
     }
-
+    
     return render(request, "authentication/register.html", context)
 
-
 # ============= TEACHER MANAGEMENT =============
-
 @login_required
 def manage_teachers_view(request):
-    """Manage teacher accounts"""
+    """Manage teacher accounts - Optimized with threading"""
     if not (request.user.is_admin or request.user.is_superuser):
         messages.error(request, 'You do not have permission to access this page.')
         return redirect('dashboard')
     
+    # Get filter parameters
+    status_filter = request.GET.get('status')
+    
+    # Base queryset
     teachers = Teacher.objects.select_related('user').all()
+    
+    # Apply status filter
+    if status_filter == 'has_account':
+        teachers = teachers.filter(user__isnull=False)
+    elif status_filter == 'no_account':
+        teachers = teachers.filter(user__isnull=True)
+    elif status_filter == 'temp_password':
+        teachers = teachers.filter(user__password_generated=True)
 
+    # Handle POST requests
     if request.method == "POST":
         action = request.POST.get("action")
         teacher_id = request.POST.get("teacher_id")
-        
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
         
-        if teacher_id:
+        if action == "create_account" and teacher_id:
             teacher = get_object_or_404(Teacher, id=teacher_id)
-
-            if action == "create_account":
-                if not teacher.user:
-                    try:
-                        username = generate_unique_username(teacher.email)
-                        random_password = get_random_string(10)
-
-                        user = CustomUser.objects.create_user(
-                            username=username,
-                            email=teacher.email,
-                            password=random_password,
-                            first_name=teacher.first_name if hasattr(teacher, 'first_name') else "",
-                            last_name=teacher.last_name if hasattr(teacher, 'last_name') else "",
-                            is_teacher=True,
-                            temp_password=random_password,
-                            password_generated=True
-                        )
-
-                        teacher.user = user
-                        teacher.save()
-
-                        # Send email
-                        teacher_name = f"{teacher.first_name} {teacher.last_name}" if hasattr(teacher, 'first_name') else teacher.email
-                        email_sent = send_account_creation_email(
-                            request, 
-                            user, 
-                            random_password, 
-                            "Teacher", 
-                            teacher.email,
-                            teacher_name
-                        )
-
-                        if is_ajax:
-                            return JsonResponse({
-                                'success': True,
-                                'message': 'Account created successfully',
-                                'password': random_password,
-                                'username': username,
-                                'email': teacher.email,
-                                'teacher_name': teacher_name,
-                                'teacher_id': teacher.id,
-                                'email_sent': email_sent
-                            })
-                        
-                        messages.success(request, f'Account created successfully for {teacher.email}')
-                    except Exception as e:
-                        logger.error(f"Error creating teacher account: {str(e)}")
-                        if is_ajax:
-                            return JsonResponse({
-                                'success': False,
-                                'message': f'Error creating account: {str(e)}'
-                            })
-                        messages.error(request, f'Error creating account: {str(e)}')
-                else:
+            if not teacher.user:
+                try:
+                    username = generate_unique_username(teacher.email)
+                    random_password = get_random_string(10)
+                    
+                    user = CustomUser.objects.create_user(
+                        username=username,
+                        email=teacher.email,
+                        password=random_password,
+                        first_name=teacher.first_name if hasattr(teacher, 'first_name') else "",
+                        last_name=teacher.last_name if hasattr(teacher, 'last_name') else "",
+                        is_teacher=True,
+                        temp_password=random_password,
+                        password_generated=True
+                    )
+                    
+                    teacher.user = user
+                    teacher.save()
+                    
+                    teacher_name = f"{teacher.first_name} {teacher.last_name}" if hasattr(teacher, 'first_name') else teacher.email
+                    
+                    # Send email in background thread (non-blocking)
+                    def send_email():
+                        try:
+                            send_account_creation_email(request, user, random_password, "Teacher", teacher.email, teacher_name)
+                        except Exception as e:
+                            logger.error(f"Email error for {teacher.email}: {str(e)}")
+                    
+                    thread = threading.Thread(target=send_email, daemon=True)
+                    thread.start()
+                    
                     if is_ajax:
                         return JsonResponse({
-                            'success': False,
-                            'message': f'User already exists for {teacher.email}'
+                            'success': True,
+                            'message': 'Account created successfully',
+                            'password': random_password,
+                            'username': username,
+                            'email': teacher.email,
+                            'teacher_name': teacher_name,
+                            'teacher_id': teacher.id
                         })
-                    messages.info(request, f'User already exists for {teacher.email}')
-
+                    messages.success(request, f'Account created successfully for {teacher.email}')
+                    
+                except IntegrityError as e:
+                    if is_ajax:
+                        return JsonResponse({'success': False, 'message': 'User with this email already exists'})
+                    messages.error(request, 'User with this email already exists')
+                except Exception as e:
+                    logger.error(f"Error creating teacher account: {str(e)}")
+                    if is_ajax:
+                        return JsonResponse({'success': False, 'message': str(e)})
+                    messages.error(request, f'Error creating account: {str(e)}')
+            else:
+                if is_ajax:
+                    return JsonResponse({'success': False, 'message': f'User already exists for {teacher.email}'})
+                messages.info(request, f'User already exists for {teacher.email}')
+        
+        elif action == "reset_password" and teacher_id:
+            teacher = get_object_or_404(Teacher, id=teacher_id)
+            if teacher.user:
+                try:
+                    new_password = reset_user_password(teacher.user)
+                    teacher_name = f"{teacher.first_name} {teacher.last_name}" if hasattr(teacher, 'first_name') else teacher.email
+                    
+                    # Send email in background thread
+                    def send_reset_email():
+                        try:
+                            send_password_reset_email(request, teacher.user, new_password, "Teacher")
+                        except Exception as e:
+                            logger.error(f"Reset email error for {teacher.email}: {str(e)}")
+                    
+                    thread = threading.Thread(target=send_reset_email, daemon=True)
+                    thread.start()
+                    
+                    if is_ajax:
+                        return JsonResponse({
+                            'success': True,
+                            'message': 'Password reset successfully',
+                            'password': new_password,
+                            'username': teacher.user.username,
+                            'email': teacher.email,
+                            'teacher_name': teacher_name,
+                            'action': 'reset'
+                        })
+                    messages.success(request, f'Password reset successfully for {teacher.email}')
+                    
+                except Exception as e:
+                    if is_ajax:
+                        return JsonResponse({'success': False, 'message': str(e)})
+                    messages.error(request, f'Error resetting password: {str(e)}')
+            else:
+                if is_ajax:
+                    return JsonResponse({'success': False, 'message': 'No account exists. Create account first.'})
+                messages.error(request, 'No account exists. Create account first.')
+        
         if not is_ajax:
-            return redirect('manage_teachers_view')
-
+            return redirect('manage_teachers')
+    
+    # Calculate statistics
+    total_teachers = teachers.count()
     teachers_with_account = teachers.filter(user__isnull=False).count()
     teachers_without_account = teachers.filter(user__isnull=True).count()
-
+    teachers_with_temp_password = teachers.filter(user__password_generated=True).count()
+    
+    # Pagination
+    paginator = Paginator(teachers, 20)
+    page_number = request.GET.get('page')
+    teachers_page = paginator.get_page(page_number)
+    
     context = {
-        "teachers": teachers,
+        "teachers": teachers_page,
+        "total_teachers": total_teachers,
         "teachers_with_account": teachers_with_account,
         "teachers_without_account": teachers_without_account,
+        "teachers_with_temp_password": teachers_with_temp_password,
         "user_type": "teacher"
     }
-
+    
     return render(request, "authentication/register_teacher.html", context)
-
-
 # ============= ADMIN MANAGEMENT =============
 
 @login_required
 def manage_admins_view(request):
-    """Manage admin accounts"""
+    """Manage admin accounts - Optimized with threading"""
     if not (request.user.is_superuser):
         messages.error(request, 'You do not have permission to access this page.')
-        # return redirect('dashboard')
+        return redirect('dashboard')
     
     discipline_id = request.GET.get('discipline')
     role_filter = request.GET.get('role')
@@ -831,28 +913,17 @@ def manage_admins_view(request):
     if request.method == "POST":
         action = request.POST.get("action")
         admin_id = request.POST.get("admin_id")
-        
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
         
         if admin_id:
             admin = get_object_or_404(AdminProfile, id=admin_id)
 
             if action == "create_account":
-                try:
-                    # Check if user with this email already exists
-                    if CustomUser.objects.filter(email=admin.email).exists():
-                        if is_ajax:
-                            return JsonResponse({
-                                'success': False,
-                                'message': f'User with email {admin.email} already exists'
-                            })
-                        messages.error(request, f'User with email {admin.email} already exists')
-                    else:
-                        # Generate unique username
+                if not admin.user:
+                    try:
                         username = generate_unique_username(admin.email)
                         random_password = get_random_string(10)
 
-                        # Create user
                         user = CustomUser.objects.create_user(
                             username=username,
                             email=admin.email,
@@ -865,16 +936,15 @@ def manage_admins_view(request):
                             password_generated=True
                         )
                         
-                        # Send email
+                        admin.user = user
+                        admin.save()
+                        
                         admin_name = f"{admin.first_name} {admin.last_name}"
-                        email_sent = send_account_creation_email(
-                            request, 
-                            user, 
-                            random_password, 
-                            "Admin", 
-                            admin.email,
-                            admin_name
-                        )
+                        
+                        # Send email in background thread
+                        def send_email():
+                            send_account_creation_email(request, user, random_password, "Admin", admin.email, admin_name)
+                        threading.Thread(target=send_email, daemon=True).start()
 
                         if is_ajax:
                             return JsonResponse({
@@ -884,98 +954,82 @@ def manage_admins_view(request):
                                 'username': username,
                                 'email': admin.email,
                                 'admin_name': admin_name,
-                                'admin_id': admin.id,
-                                'email_sent': email_sent
+                                'admin_id': admin.id
                             })
                         
                         messages.success(request, f'Admin account created successfully for {admin.email}')
-                except IntegrityError as e:
-                    logger.error(f"Integrity error: {str(e)}")
+                    except Exception as e:
+                        logger.error(f"Error creating admin account: {str(e)}")
+                        if is_ajax:
+                            return JsonResponse({'success': False, 'message': str(e)})
+                        messages.error(request, f'Error creating account: {str(e)}')
+                else:
                     if is_ajax:
-                        return JsonResponse({
-                            'success': False,
-                            'message': 'A user with this email already exists'
-                        })
-                    messages.error(request, 'A user with this email already exists')
-                except Exception as e:
-                    logger.error(f"Error creating admin account: {str(e)}")
-                    if is_ajax:
-                        return JsonResponse({
-                            'success': False,
-                            'message': f'Error creating account: {str(e)}'
-                        })
-                    messages.error(request, f'Error creating account: {str(e)}')
+                        return JsonResponse({'success': False, 'message': 'Account already exists'})
+                    messages.info(request, f'Account already exists for {admin.email}')
 
             elif action == "reset_password":
-                try:
-                    # Find user by email
-                    user = CustomUser.objects.filter(email=admin.email).first()
-                    
-                    if user:
-                        new_password = reset_user_password(user)
+                if admin.user:
+                    try:
+                        new_password = reset_user_password(admin.user)
                         admin_name = f"{admin.first_name} {admin.last_name}"
-                        email_sent = send_password_reset_email(request, user, new_password, "Admin")
+                        
+                        # Send email in background
+                        def send_reset_email():
+                            send_password_reset_email(request, admin.user, new_password, "Admin")
+                        threading.Thread(target=send_reset_email, daemon=True).start()
                         
                         if is_ajax:
                             return JsonResponse({
                                 'success': True,
                                 'message': 'Password reset successfully',
                                 'password': new_password,
-                                'username': user.username,
+                                'username': admin.user.username,
                                 'email': admin.email,
-                                'admin_name': admin_name,
-                                'action': 'reset',
-                                'email_sent': email_sent
+                                'admin_name': admin_name
                             })
-                        
-                        messages.success(request, f'Password reset successfully for {admin.email}')
-                    else:
+                    except Exception as e:
                         if is_ajax:
-                            return JsonResponse({
-                                'success': False,
-                                'message': f'No user account found for {admin.email}. Create account first.'
-                            })
-                        messages.error(request, f'No user account found for {admin.email}. Create account first.')
-                except Exception as e:
-                    logger.error(f"Error resetting password: {str(e)}")
+                            return JsonResponse({'success': False, 'message': str(e)})
+                else:
                     if is_ajax:
-                        return JsonResponse({
-                            'success': False,
-                            'message': f'Error resetting password: {str(e)}'
-                        })
-                    messages.error(request, f'Error resetting password: {str(e)}')
+                        return JsonResponse({'success': False, 'message': 'No account exists. Create account first.'})
 
         if not is_ajax:
             return redirect('manage_admins')
 
     # Calculate statistics
     total_admins = admins.count()
-    
-    # Count admins with accounts (by checking if email exists in CustomUser)
     admins_with_account = 0
     admins_without_account = 0
-    existing_users_dict = {}
+    admins_with_temp_password = 0
     
     for admin in admins:
         user = CustomUser.objects.filter(email=admin.email).first()
         if user:
+            admin.user = user
             admins_with_account += 1
-            existing_users_dict[admin.email] = user
+            if user.password_generated and user.temp_password:
+                admins_with_temp_password += 1
         else:
             admins_without_account += 1
-
+    
+    # Pagination
+    paginator = Paginator(admins, 20)
+    admins_page = paginator.get_page(request.GET.get('page'))
+    
     context = {
-        "admins": admins,
+        "admins": admins_page,
         "disciplines": Discipline.objects.all(),
         "role_choices": AdminProfile._meta.get_field('role').choices,
         "admins_with_account": admins_with_account,
         "admins_without_account": admins_without_account,
-        "existing_users": existing_users_dict,
+        "admins_with_temp_password": admins_with_temp_password,
+        "total_admins": total_admins,
         "user_type": "admin"
     }
 
     return render(request, "authentication/register_admin.html", context)
-
 
 @login_required
 def process_password_reset(request, user_type, user_id):

@@ -24,3 +24,4 @@ def add_case(request):
     else:
         form = CaseForm()
     return render(request, "cases/add_case.html", {"form": form})
+

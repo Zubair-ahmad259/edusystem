@@ -17,6 +17,7 @@ urlpatterns = [
     path('manage-teachers/', views.manage_teachers_view, name='manage_teachers'),
     path('manage-admins/', views.manage_admins_view, name='manage_admins'),
     path('test-email/', views.test_email, name='test_email'),
+    path('validate-student-email/', views.validate_student_email, name='validate_student_email'),
     # Process password reset (POST request)
     path('process-password-reset/<str:user_type>/<int:user_id>/', views.process_password_reset, name='process_password_reset'),
 ]

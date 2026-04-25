@@ -1,200 +1,142 @@
-<!-- templates/authentication/register_admin.html -->
 {% extends 'Home/base.html' %}
 {% load static %}
 
-{% block title %}Manage Administrators - Student Management System{% endblock %}
+{% block title %}Manage Administrators - EduSphere{% endblock %}
 
 {% block body %}
-<style>
-    .badge {
-        padding: 5px 10px;
-        font-size: 12px;
-    }
-    .btn-sm {
-        padding: 3px 8px;
-        font-size: 12px;
-    }
-    .page-title-box {
-        padding: 20px 0;
-    }
-    .filter-card {
-        background-color: #f8f9fa;
-        border-radius: 5px;
-    }
-    .status-badge {
-        display: inline-block;
-        margin: 2px;
-    }
-    .table th {
-        white-space: nowrap;
-    }
-    .table td {
-        vertical-align: middle;
-    }
-    .action-buttons {
-        display: flex;
-        gap: 5px;
-        flex-wrap: wrap;
-    }
-    
-    /* Password Column Styles */
-    .password-column {
-        font-family: 'Courier New', monospace;
-        font-size: 14px;
-        font-weight: bold;
-        background-color: #f8f9fa;
-        padding: 5px 8px;
-        border-radius: 4px;
-        display: inline-block;
-        border: 1px solid #dee2e6;
-    }
-    .password-masked {
-        font-family: 'Courier New', monospace;
-        color: #6c757d;
-        letter-spacing: 2px;
-    }
-    .toggle-password {
-        cursor: pointer;
-        color: #007bff;
-        margin-left: 5px;
-    }
-    .toggle-password:hover {
-        color: #0056b3;
-    }
-    
-    /* Password Modal Styles */
-    .password-display {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 30px;
-        border-radius: 10px;
-        text-align: center;
-        margin: 20px 0;
-    }
-    .password-box {
-        background: rgba(255, 255, 255, 0.2);
-        border: 2px dashed rgba(255, 255, 255, 0.5);
-        border-radius: 10px;
-        padding: 20px;
-        margin: 15px 0;
-    }
-    .password-text {
-        font-family: 'Courier New', monospace;
-        font-size: 32px;
-        font-weight: bold;
-        letter-spacing: 2px;
-        color: white;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-    }
-    .copy-btn {
-        background: white;
-        color: #667eea;
-        border: none;
-        padding: 10px 30px;
-        border-radius: 25px;
-        font-weight: bold;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        margin-top: 15px;
-    }
-    .copy-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-    }
-    .copy-btn i {
-        margin-right: 8px;
-    }
-    .warning-note {
-        background: #fff3cd;
-        border-left: 4px solid #ffc107;
-        padding: 10px;
-        margin-top: 15px;
-        border-radius: 5px;
-        font-size: 14px;
-    }
-    .modal-content {
-        border-radius: 15px;
-        overflow: hidden;
-    }
-    .modal-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-bottom: none;
-    }
-    .modal-header .close {
-        color: white;
-        opacity: 1;
-    }
-    .modal-footer {
-        border-top: none;
-        background: #f8f9fa;
-    }
-    .password-field {
-        background: #f8f9fa;
-        padding: 10px;
-        border-radius: 5px;
-        font-family: monospace;
-        font-size: 16px;
-        border: 1px solid #dee2e6;
-    }
-</style>
-
 <div class="page-wrapper">
     <div class="content container-fluid">
+        <!-- Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags == 'warning' %}warning{% else %}success{% endif %} alert-dismissible fade show">
+                    <i class="fas fa-{% if message.tags == 'error' %}exclamation-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}check-circle{% endif %} mr-2"></i>
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Page Header -->
         <div class="page-header">
-            <div class="row">
-                <div class="col-sm-12">
-                    <h3 class="page-title">Manage Administrators</h3>
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Administrator Management</h3>
                     <ul class="breadcrumb">
                         <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
                         <li class="breadcrumb-item active">Manage Administrators</li>
                     </ul>
                 </div>
+                <div class="col-auto">
+                    <div class="btn-group">
+                        <a href="{% url 'manage_admins' %}" class="btn btn-primary">
+                            <i class="fas fa-user-plus"></i> Add Admin
+                        </a>
+                        {% if admins_without_account > 0 %}
+                        <button class="btn btn-warning" onclick="bulkAuthenticateAllNoAccount()">
+                            <i class="fas fa-layer-group"></i> Bulk Auth ({{ admins_without_account }})
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card dash-widget">
+                    <div class="card-body">
+                        <span class="dash-widget-icon"><i class="fas fa-user-tie"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ admins|length }}</h3>
+                            <span>Total Admins</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card dash-widget">
+                    <div class="card-body">
+                        <span class="dash-widget-icon"><i class="fas fa-user-check"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ admins_with_account }}</h3>
+                            <span>With Account</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card dash-widget">
+                    <div class="card-body">
+                        <span class="dash-widget-icon"><i class="fas fa-user-slash"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ admins_without_account }}</h3>
+                            <span>No Account</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card dash-widget">
+                    <div class="card-body">
+                        <span class="dash-widget-icon"><i class="fas fa-key"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ admins_with_temp_password|default:0 }}</h3>
+                            <span>Temp Password</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- Filter Section -->
-        <div class="row mb-3">
-            <div class="col-12">
-                <div class="card filter-card">
-                    <div class="card-header bg-light">
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
                         <h5 class="card-title mb-0">
-                            <i class="fas fa-filter mr-2"></i>
-                            Filter Administrators
+                            <i class="fas fa-filter"></i> Filter Administrators
                         </h5>
                     </div>
                     <div class="card-body">
-                        <form method="get" class="form-row align-items-end" id="filterForm">
-                            <div class="form-group col-md-4">
-                                <label for="discipline">Discipline:</label>
-                                <select name="discipline" id="discipline" class="form-control">
-                                    <option value="">All Disciplines</option>
-                                    {% for discipline in disciplines %}
-                                    <option value="{{ discipline.id }}" {% if request.GET.discipline == discipline.id|stringformat:"s" %}selected{% endif %}>
-                                        {{ discipline.name }}
-                                    </option>
-                                    {% endfor %}
-                                </select>
+                        <form method="get" class="row">
+                            <div class="col-md-4 col-sm-6">
+                                <div class="form-group">
+                                    <label>Discipline</label>
+                                    <select name="discipline" class="form-control">
+                                        <option value="">All Disciplines</option>
+                                        {% for discipline in disciplines %}
+                                        <option value="{{ discipline.id }}" {% if request.GET.discipline == discipline.id|stringformat:"s" %}selected{% endif %}>
+                                            {{ discipline.name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
                             </div>
-                            
-                            <div class="form-group col-md-4">
-                                <label for="role">Role:</label>
-                                <select name="role" id="role" class="form-control">
-                                    <option value="">All Roles</option>
-                                    {% for value, label in role_choices %}
-                                    <option value="{{ value }}" {% if request.GET.role == value %}selected{% endif %}>
-                                        {{ label }}
-                                    </option>
-                                    {% endfor %}
-                                </select>
+                            <div class="col-md-4 col-sm-6">
+                                <div class="form-group">
+                                    <label>Role</label>
+                                    <select name="role" class="form-control">
+                                        <option value="">All Roles</option>
+                                        {% for value, label in role_choices %}
+                                        <option value="{{ value }}" {% if request.GET.role == value %}selected{% endif %}>
+                                            {{ label }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
                             </div>
-                            
-                            <div class="form-group col-md-4">
-                                <button type="submit" class="btn btn-primary btn-block">
-                                    <i class="fas fa-search"></i> Filter
-                                </button>
-                                <a href="{% url 'manage_admins' %}" class="btn btn-secondary btn-block mt-1">
-                                    <i class="fas fa-redo"></i> Reset
-                                </a>
+                            <div class="col-md-4 col-sm-12">
+                                <div class="form-group">
+                                    <label>&nbsp;</label>
+                                    <button type="submit" class="btn btn-primary btn-block">
+                                        <i class="fas fa-search"></i> Filter
+                                    </button>
+                                    <a href="{% url 'manage_admins' %}" class="btn btn-secondary btn-block mt-1">
+                                        <i class="fas fa-redo"></i> Reset
+                                    </a>
+                                </div>
                             </div>
                         </form>
                     </div>
@@ -202,196 +144,125 @@
             </div>
         </div>
 
-        <!-- Summary Cards -->
-        <div class="row mb-3">
-            <div class="col-md-3">
-                <div class="card bg-primary text-white">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="card-title text-white-50">Total Admins</h6>
-                                <h3 class="mb-0">{{ total_admins }}</h3>
-                            </div>
-                            <i class="fas fa-user-tie fa-3x text-white-50"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-success text-white">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="card-title text-white-50">With Account</h6>
-                                <h3 class="mb-0">{{ admins_with_account }}</h3>
-                            </div>
-                            <i class="fas fa-user-check fa-3x text-white-50"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-warning text-white">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="card-title text-white-50">Temp Password</h6>
-                                <h3 class="mb-0">{{ admins_with_temp_password }}</h3>
-                            </div>
-                            <i class="fas fa-key fa-3x text-white-50"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-danger text-white">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="card-title text-white-50">No Account</h6>
-                                <h3 class="mb-0">{{ admins_without_account }}</h3>
-                            </div>
-                            <i class="fas fa-user-slash fa-3x text-white-50"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Admins Table with Password Column -->
+        <!-- Administrators Table -->
         <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+            <div class="col-sm-12">
+                <div class="card card-table">
+                    <div class="card-header">
                         <h5 class="card-title mb-0">
-                            <i class="fas fa-list mr-2"></i>
-                            Administrator List
+                            <i class="fas fa-list"></i> Administrator List
                         </h5>
-                        <span class="badge badge-light">{{ total_admins }} Records</span>
                     </div>
                     <div class="card-body">
-                        {% if messages %}
-                            {% for message in messages %}
-                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %} mr-2"></i>
-                                    {{ message }}
-                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                        <span aria-hidden="true">&times;</span>
-                                    </button>
-                                </div>
-                            {% endfor %}
-                        {% endif %}
-
                         <div class="table-responsive">
-                            <table class="table table-bordered table-hover">
+                            <table class="table table-hover table-center mb-0">
                                 <thead class="thead-light">
                                     <tr>
+                                        <th width="40">
+                                            {% if admins_without_account > 0 %}
+                                            <input type="checkbox" id="selectAllNoAccount" title="Select all without account">
+                                            {% endif %}
+                                        </th>
                                         <th>ID</th>
+                                        <th>Admin ID</th>
                                         <th>Name</th>
                                         <th>Email</th>
                                         <th>Username</th>
-                                        <th>Password</th>
                                         <th>Role</th>
                                         <th>Discipline</th>
                                         <th>Account Status</th>
-                                        <th>Actions</th>
+                                        <th class="text-right">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for admin in admins %}
-                                    <tr>
-                                        <td>{{ admin.id }}</td>
+                                    <tr id="admin-row-{{ admin.id }}">
                                         <td>
-                                            <strong>{{ admin.first_name }} {{ admin.last_name }}</strong>
-                                        </td>
-                                        <td>{{ admin.email }}</td>
+                                            {% if not admin.user %}
+                                            <input type="checkbox" class="admin-no-account" data-admin-id="{{ admin.id }}" data-admin-name="{{ admin.first_name }} {{ admin.last_name }}" data-admin-email="{{ admin.email }}">
+                                            {% endif %}
+                                        </div>
+                                        <td>{{ admin.id }}</div>
+                                        <td><span class="font-weight-bold">ADM-{{ admin.id }}</span></div>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar-img rounded-circle bg-danger text-white d-flex align-items-center justify-content-center mr-2" style="width:35px;height:35px;">
+                                                    <span style="font-size:14px;">{{ admin.first_name|slice:":1"|upper }}{{ admin.last_name|slice:":1"|upper }}</span>
+                                                </div>
+                                                <div>
+                                                    <a href="#" class="font-weight-bold text-dark">
+                                                        {{ admin.first_name }} {{ admin.last_name }}
+                                                    </a>
+                                                    <br><small class="text-muted">{{ admin.email }}</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <td>{{ admin.email }}</div>
                                         <td>
                                             {% if admin.user %}
-                                                <span class="badge badge-info">{{ admin.user.username }}</span>
+                                            <span class="badge badge-info">{{ admin.user.username }}</span>
                                             {% else %}
-                                                <span class="text-muted">-</span>
+                                            <span class="text-muted">—</span>
                                             {% endif %}
-                                        </td>
+                                        </div>
+                                        <td>
+                                            <span class="badge badge-danger">{{ admin.get_role_display }}</span>
+                                        </div>
+                                        <td>{{ admin.discipline.name|default:"All Disciplines" }}</div>
                                         <td>
                                             {% if admin.user %}
                                                 {% if admin.user.temp_password %}
-                                                    <div class="password-column" id="password-{{ admin.id }}">
-                                                        <span class="password-masked">••••••••••</span>
-                                                        <span class="password-value" style="display: none;">{{ admin.user.temp_password }}</span>
-                                                        <i class="fas fa-eye toggle-password" onclick="togglePassword('{{ admin.id }}')" title="Show/Hide Password"></i>
-                                                        <i class="fas fa-copy copy-password" onclick="copyPasswordValue('{{ admin.id }}')" title="Copy Password" style="cursor:pointer; margin-left:5px; color:#28a745;"></i>
-                                                    </div>
-                                                    <br><span class="badge badge-warning">Temporary</span>
-                                                {% else %}
-                                                    <span class="badge badge-success">✓ Custom</span>
-                                                    <br><small class="text-muted">
-                                                        {% if admin.user.last_login %}
-                                                            Last: {{ admin.user.last_login|date:"M d, Y" }}
-                                                        {% else %}
-                                                            Never
-                                                        {% endif %}
-                                                    </small>
-                                                {% endif %}
-                                            {% else %}
-                                                <span class="text-muted">-</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>{{ admin.get_role_display }}</td>
-                                        <td>{{ admin.discipline.name|default:"All" }}</td>
-                                        <td>
-                                            {% if admin.user %}
-                                                <span class="badge badge-success status-badge">Account Created</span>
-                                                {% if admin.user.temp_password %}
-                                                    <span class="badge badge-warning status-badge">Temp Password</span>
-                                                {% else %}
-                                                    <span class="badge badge-info status-badge">Custom Password</span>
-                                                {% endif %}
-                                            {% else %}
-                                                <span class="badge badge-danger status-badge">No Account</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            <div class="action-buttons">
-                                                {% if admin.user %}
-                                                    <button type="button" 
-                                                            class="btn btn-warning btn-sm reset-password-btn" 
-                                                            title="Reset Password"
-                                                            data-admin-id="{{ admin.id }}"
-                                                            data-admin-name="{{ admin.first_name }} {{ admin.last_name }}"
-                                                            data-admin-email="{{ admin.email }}">
-                                                        <i class="fas fa-key"></i> Reset
+                                                <span class="badge badge-warning">
+                                                    <i class="fas fa-key"></i> Temp Password
+                                                </span>
+                                                <div class="mt-1">
+                                                    <button class="btn btn-xs btn-outline-info show-password-btn" 
+                                                            data-admin-id="{{ admin.id }}" 
+                                                            data-password="{{ admin.user.temp_password }}"
+                                                            data-admin-name="{{ admin.first_name }} {{ admin.last_name }}">
+                                                        <i class="fas fa-eye"></i> Show Password
                                                     </button>
+                                                </div>
                                                 {% else %}
-                                                    <button type="button" 
-                                                            class="btn btn-success btn-sm create-account-btn" 
-                                                            title="Create Account"
-                                                            data-admin-id="{{ admin.id }}"
-                                                            data-admin-name="{{ admin.first_name }} {{ admin.last_name }}"
-                                                            data-admin-email="{{ admin.email }}">
+                                                <span class="badge badge-success">
+                                                    <i class="fas fa-check-circle"></i> Active
+                                                </span>
+                                                {% endif %}
+                                            {% else %}
+                                            <span class="badge badge-secondary">
+                                                <i class="fas fa-clock"></i> Pending
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                        <td class="text-right">
+                                            <div class="btn-group" role="group">
+                                                {% if admin.user %}
+                                                    {% if admin.user.temp_password %}
+                                                    <button class="btn btn-sm btn-outline-warning" onclick="resetPassword('{{ admin.id }}', '{{ admin.email }}')" title="Reset Password">
+                                                        <i class="fas fa-key"></i>
+                                                    </button>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <button class="btn btn-sm btn-outline-success" onclick="createAccount('{{ admin.id }}', '{{ admin.first_name }} {{ admin.last_name }}', '{{ admin.email }}')" title="Create Account">
                                                         <i class="fas fa-user-plus"></i> Create
                                                     </button>
                                                 {% endif %}
-                                                
-                                                <button type="button" 
-                                                        class="btn btn-info btn-sm view-details-btn" 
-                                                        title="View Details"
-                                                        data-admin-id="{{ admin.id }}"
-                                                        data-admin-name="{{ admin.first_name }} {{ admin.last_name }}"
-                                                        data-admin-email="{{ admin.email }}"
-                                                        data-admin-username="{% if admin.user %}{{ admin.user.username }}{% else %}Not created{% endif %}"
-                                                        data-admin-status="{% if admin.user %}Has Account{% else %}No Account{% endif %}">
+                                                <button class="btn btn-sm btn-outline-primary" onclick="viewDetails('{{ admin.id }}')" title="View Details">
                                                     <i class="fas fa-eye"></i>
                                                 </button>
                                             </div>
-                                        </td>
+                                        </div>
                                     </tr>
                                     {% empty %}
                                     <tr>
-                                        <td colspan="9" class="text-center py-4">
-                                            <i class="fas fa-user-tie fa-3x text-muted mb-3"></i>
+                                        <td colspan="10" class="text-center py-5">
+                                            <i class="fas fa-user-tie fa-4x text-muted mb-3 d-block"></i>
                                             <h5>No administrators found</h5>
-                                            <p class="text-muted">Add administrators to get started.</p>
-                                        </td>
+                                            <p class="text-muted">Try adjusting your filters or add new administrators.</p>
+                                            <a href="{% url 'add_admin' %}" class="btn btn-primary mt-2">
+                                                <i class="fas fa-user-plus"></i> Add Administrator
+                                            </a>
+                                        </div>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
@@ -403,29 +274,29 @@
                         <nav aria-label="Page navigation" class="mt-3">
                             <ul class="pagination justify-content-center">
                                 {% if admins.has_previous %}
-                                    <li class="page-item">
-                                        <a class="page-link" href="?page={{ admins.previous_page_number }}{% if request.GET.discipline %}&discipline={{ request.GET.discipline }}{% endif %}{% if request.GET.role %}&role={{ request.GET.role }}{% endif %}">
-                                            <i class="fas fa-chevron-left"></i>
-                                        </a>
-                                    </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ admins.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </a>
+                                </li>
                                 {% endif %}
                                 
                                 {% for num in admins.paginator.page_range %}
                                     {% if admins.number == num %}
-                                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
                                     {% elif num > admins.number|add:'-3' and num < admins.number|add:'3' %}
-                                        <li class="page-item">
-                                            <a class="page-link" href="?page={{ num }}{% if request.GET.discipline %}&discipline={{ request.GET.discipline }}{% endif %}{% if request.GET.role %}&role={{ request.GET.role }}{% endif %}">{{ num }}</a>
-                                        </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                                    </li>
                                     {% endif %}
                                 {% endfor %}
                                 
                                 {% if admins.has_next %}
-                                    <li class="page-item">
-                                        <a class="page-link" href="?page={{ admins.next_page_number }}{% if request.GET.discipline %}&discipline={{ request.GET.discipline }}{% endif %}{% if request.GET.role %}&role={{ request.GET.role }}{% endif %}">
-                                            <i class="fas fa-chevron-right"></i>
-                                        </a>
-                                    </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ admins.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </a>
+                                </li>
                                 {% endif %}
                             </ul>
                         </nav>
@@ -437,105 +308,35 @@
     </div>
 </div>
 
-<!-- Password Display Modal -->
-<div class="modal fade" id="passwordModal" tabindex="-1" role="dialog" aria-labelledby="passwordModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
+<!-- Password Modal -->
+<div class="modal fade" id="passwordModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="passwordModalLabel">
-                    <i class="fas fa-key mr-2"></i>
-                    <span id="modalTitle">Account Created Successfully</span>
-                </h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="text-center mb-4">
-                    <i class="fas fa-check-circle text-success" style="font-size: 48px;"></i>
-                    <h4 class="mt-3" id="adminName"></h4>
-                    <p class="text-muted" id="adminEmail"></p>
-                </div>
-                
-                <div class="password-display">
-                    <h5 class="text-white mb-3">Generated Password</h5>
-                    <div class="password-box">
-                        <span class="password-text" id="generatedPassword"></span>
-                    </div>
-                    <button class="copy-btn" onclick="copyPassword()">
-                        <i class="fas fa-copy"></i> Copy Password
-                    </button>
-                </div>
-                
-                <div class="alert alert-info mt-3">
-                    <i class="fas fa-info-circle mr-2"></i>
-                    <strong>Login Details:</strong><br>
-                    <div class="row mt-2">
-                        <div class="col-md-6">
-                            <strong>Username:</strong>
-                            <div class="password-field" id="displayUsername"></div>
-                        </div>
-                        <div class="col-md-6">
-                            <strong>Password:</strong>
-                            <div class="password-field" id="displayPassword"></div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="warning-note">
-                    <i class="fas fa-exclamation-triangle text-warning mr-2"></i>
-                    <strong>Important:</strong> This password will only be shown once. 
-                    Please copy it now and share it securely with the administrator. 
-                    An email has also been sent to their email address.
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                    <i class="fas fa-times"></i> Close
-                </button>
-                <button type="button" class="btn btn-primary" onclick="location.reload()">
-                    <i class="fas fa-redo"></i> Refresh List
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- View Details Modal -->
-<div class="modal fade" id="detailsModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header bg-info text-white">
                 <h5 class="modal-title">
-                    <i class="fas fa-user-circle mr-2"></i>
-                    Administrator Details
+                    <i class="fas fa-key"></i> Account Credentials
                 </h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="text-center mb-3">
-                    <i class="fas fa-user-tie fa-4x text-info"></i>
+                    <i class="fas fa-user-tie fa-4x text-primary mb-2"></i>
+                    <h4 id="modalAdminName"></h4>
+                    <p id="modalAdminEmail" class="text-muted"></p>
+                    <div class="alert alert-warning">
+                        <strong>Temporary Password:</strong>
+                        <div class="mt-2">
+                            <code id="modalPassword" style="font-size: 18px;"></code>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="copyModalPassword()">
+                        <i class="fas fa-copy"></i> Copy Password
+                    </button>
                 </div>
-                <table class="table table-bordered">
-                    <tr>
-                        <th>Name:</th>
-                        <td id="detailName"></td>
-                    </tr>
-                    <tr>
-                        <th>Email:</th>
-                        <td id="detailEmail"></td>
-                    </tr>
-                    <tr>
-                        <th>Username:</th>
-                        <td id="detailUsername"></td>
-                    </tr>
-                    <tr>
-                        <th>Account Status:</th>
-                        <td id="detailStatus"></td>
-                    </tr>
-                </table>
+                <div class="alert alert-info small">
+                    <i class="fas fa-info-circle"></i>
+                    This password has been sent to the administrator's email address.
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -544,197 +345,314 @@
     </div>
 </div>
 
-<!-- Hidden form for account creation -->
-<form method="post" id="createAccountForm" style="display: none;">
-    {% csrf_token %}
-    <input type="hidden" name="action" value="create_account">
-    <input type="hidden" name="admin_id" id="createAdminId">
-</form>
+<!-- Password Toast -->
+<div id="passwordToast" style="display: none; position: fixed; bottom: 20px; right: 20px; z-index: 10000; min-width: 300px;">
+    <div class="card shadow">
+        <div class="card-header bg-warning text-dark">
+            <strong><i class="fas fa-key"></i> Temporary Password</strong>
+            <button type="button" class="close" onclick="closePasswordToast()">&times;</button>
+        </div>
+        <div class="card-body">
+            <p class="mb-2"><strong id="toastAdminName"></strong></p>
+            <code id="toastPassword" style="font-size: 16px; word-break: break-all;"></code>
+            <div class="mt-2">
+                <button class="btn btn-sm btn-primary" onclick="copyToastPassword()">
+                    <i class="fas fa-copy"></i> Copy Password
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
-<!-- Hidden form for password reset -->
-<form method="post" id="resetPasswordForm" style="display: none;">
-    {% csrf_token %}
-    <input type="hidden" name="action" value="reset_password">
-    <input type="hidden" name="admin_id" id="resetAdminId">
-</form>
+<!-- Loading Overlay -->
+<div id="loadingOverlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 9999;">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+        <div class="spinner-border text-light" style="width: 3rem; height: 3rem;"></div>
+        <p class="text-light mt-2" id="loadingMessage">Processing...</p>
+    </div>
+</div>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
-    $(document).ready(function() {
-        // Handle create account button clicks
-        $('.create-account-btn').click(function() {
-            var adminId = $(this).data('admin-id');
-            var adminName = $(this).data('admin-name');
-            var adminEmail = $(this).data('admin-email');
-            
-            // Confirm account creation
-            if (confirm('Create account for ' + adminName + '? A random password will be generated and shown.')) {
-                $('#createAdminId').val(adminId);
-                
-                var btn = $(this);
-                var originalText = btn.html();
-                btn.html('<i class="fas fa-spinner fa-spin"></i> Creating...').prop('disabled', true);
-                
-                $.ajax({
-                    url: window.location.href,
-                    type: 'POST',
-                    data: $('#createAccountForm').serialize(),
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            $('#modalTitle').text('Account Created Successfully');
-                            $('#adminName').text(adminName);
-                            $('#adminEmail').text(adminEmail);
-                            $('#generatedPassword').text(response.password);
-                            $('#displayUsername').text(response.username);
-                            $('#displayPassword').text(response.password);
-                            $('#passwordModal').modal('show');
-                        } else {
-                            alert('Error: ' + response.message);
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        alert('Error creating account: ' + error);
-                    },
-                    complete: function() {
-                        btn.html(originalText).prop('disabled', false);
-                    }
-                });
-            }
-        });
-        
-        // Handle reset password button clicks
-        $('.reset-password-btn').click(function() {
-            var adminId = $(this).data('admin-id');
-            var adminName = $(this).data('admin-name');
-            
-            if (confirm('Reset password for ' + adminName + '? A new random password will be generated.')) {
-                $('#resetAdminId').val(adminId);
-                
-                var btn = $(this);
-                var originalText = btn.html();
-                btn.html('<i class="fas fa-spinner fa-spin"></i> Resetting...').prop('disabled', true);
-                
-                $.ajax({
-                    url: window.location.href,
-                    type: 'POST',
-                    data: $('#resetPasswordForm').serialize(),
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            $('#modalTitle').text('Password Reset Successfully');
-                            $('#adminName').text(adminName);
-                            $('#adminEmail').text(response.email);
-                            $('#generatedPassword').text(response.password);
-                            $('#displayUsername').text(response.username);
-                            $('#displayPassword').text(response.password);
-                            $('#passwordModal').modal('show');
-                        } else {
-                            alert('Error: ' + response.message);
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        alert('Error resetting password: ' + error);
-                    },
-                    complete: function() {
-                        btn.html(originalText).prop('disabled', false);
-                    }
-                });
-            }
-        });
-        
-        // Handle view details button clicks
-        $('.view-details-btn').click(function() {
-            var name = $(this).data('admin-name');
-            var email = $(this).data('admin-email');
-            var username = $(this).data('admin-username');
-            var status = $(this).data('admin-status');
-            
-            $('#detailName').text(name);
-            $('#detailEmail').text(email);
-            $('#detailUsername').text(username);
-            $('#detailStatus').text(status);
-            
-            $('#detailsModal').modal('show');
-        });
-        
-        // Add loading state to filter button
-        $('#filterForm').on('submit', function() {
-            $(this).find('button[type="submit"]').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Filtering...');
-        });
-        
-        // Auto-hide alerts after 5 seconds
-        setTimeout(function() {
-            $('.alert').fadeOut('slow');
-        }, 5000);
-        
-        // Initialize tooltips if Bootstrap tooltip is available
-        if ($.fn.tooltip) {
-            $('[title]').tooltip();
+<style>
+    .dash-widget {
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .dash-widget:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .dash-widget-icon {
+        font-size: 40px;
+        float: left;
+        width: 70px;
+        height: 70px;
+        line-height: 70px;
+        text-align: center;
+        background: rgba(0,0,0,0.05);
+        border-radius: 50%;
+        margin-right: 15px;
+    }
+    .dash-widget-info {
+        overflow: hidden;
+    }
+    .dash-widget-info h3 {
+        font-size: 28px;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+    .card-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    .card-header .card-title {
+        color: white;
+    }
+    .table td {
+        vertical-align: middle;
+    }
+    .btn-group .btn {
+        margin: 0 2px;
+        border-radius: 4px;
+    }
+    .btn-xs {
+        padding: 2px 8px;
+        font-size: 11px;
+    }
+    .avatar-img {
+        width: 35px;
+        height: 35px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+    }
+    .badge {
+        padding: 5px 10px;
+        font-weight: 500;
+    }
+    .pagination .page-item.active .page-link {
+        background-color: #667eea;
+        border-color: #667eea;
+    }
+    @media (max-width: 768px) {
+        .dash-widget-icon {
+            width: 50px;
+            height: 50px;
+            line-height: 50px;
+            font-size: 25px;
         }
+        .dash-widget-info h3 {
+            font-size: 20px;
+        }
+    }
+</style>
+
+<script>
+// Get CSRF token
+function getCSRFToken() {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, 10) === 'csrftoken=') {
+                cookieValue = decodeURIComponent(cookie.substring(10));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+let currentToastPassword = '';
+
+function showLoading(message = 'Processing...') {
+    document.getElementById('loadingMessage').innerText = message;
+    document.getElementById('loadingOverlay').style.display = 'block';
+}
+
+function hideLoading() {
+    document.getElementById('loadingOverlay').style.display = 'none';
+}
+
+function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info'} alert-dismissible fade show`;
+    toast.style.position = 'fixed';
+    toast.style.top = '20px';
+    toast.style.right = '20px';
+    toast.style.zIndex = '10000';
+    toast.style.minWidth = '300px';
+    toast.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'} mr-2"></i>
+        ${message}
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+function showPasswordToast(adminName, password) {
+    document.getElementById('toastAdminName').innerText = adminName;
+    document.getElementById('toastPassword').innerText = password;
+    currentToastPassword = password;
+    document.getElementById('passwordToast').style.display = 'block';
+    setTimeout(() => closePasswordToast(), 10000);
+}
+
+function closePasswordToast() {
+    document.getElementById('passwordToast').style.display = 'none';
+    currentToastPassword = '';
+}
+
+function copyToastPassword() {
+    if (currentToastPassword) {
+        navigator.clipboard.writeText(currentToastPassword).then(() => {
+            showToast('Password copied to clipboard!', 'success');
+        });
+    }
+}
+
+// Show password button handlers
+document.addEventListener('DOMContentLoaded', function() {
+    const showPasswordBtns = document.querySelectorAll('.show-password-btn');
+    showPasswordBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const password = this.dataset.password;
+            const adminName = this.dataset.adminName;
+            showPasswordToast(adminName, password);
+        });
     });
     
-    // Function to toggle password visibility in table
-    function togglePassword(adminId) {
-        var passwordDiv = $('#password-' + adminId);
-        var maskedSpan = passwordDiv.find('.password-masked');
-        var valueSpan = passwordDiv.find('.password-value');
-        var eyeIcon = passwordDiv.find('.toggle-password');
-        
-        if (valueSpan.is(':visible')) {
-            valueSpan.hide();
-            maskedSpan.show();
-            eyeIcon.removeClass('fa-eye-slash').addClass('fa-eye');
-        } else {
-            maskedSpan.hide();
-            valueSpan.show();
-            eyeIcon.removeClass('fa-eye').addClass('fa-eye-slash');
-        }
-    }
-    
-    // Function to copy password to clipboard from table
-    function copyPasswordValue(adminId) {
-        var password = $('#password-' + adminId + ' .password-value').text();
-        
-        navigator.clipboard.writeText(password).then(function() {
-            alert('Password copied to clipboard!');
-        }, function(err) {
-            var textArea = document.createElement("textarea");
-            textArea.value = password;
-            document.body.appendChild(textArea);
-            textArea.select();
-            try {
-                document.execCommand('copy');
-                alert('Password copied to clipboard!');
-            } catch (err) {
-                alert('Failed to copy password. Please select and copy manually.');
-            }
-            document.body.removeChild(textArea);
+    const selectAllCheckbox = document.getElementById('selectAllNoAccount');
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            document.querySelectorAll('.admin-no-account').forEach(cb => cb.checked = selectAllCheckbox.checked);
         });
     }
+});
+
+// Bulk authenticate
+function bulkAuthenticateAllNoAccount() {
+    const selectedAdmins = Array.from(document.querySelectorAll('.admin-no-account:checked')).map(cb => ({
+        id: cb.dataset.adminId,
+        name: cb.dataset.adminName,
+        email: cb.dataset.adminEmail
+    }));
     
-    // Function to copy password from modal
-    function copyPassword() {
-        var password = document.getElementById('generatedPassword').textContent;
-        navigator.clipboard.writeText(password).then(function() {
-            alert('Password copied to clipboard!');
-        }, function(err) {
-            var textArea = document.createElement("textarea");
-            textArea.value = password;
-            document.body.appendChild(textArea);
-            textArea.select();
-            try {
-                document.execCommand('copy');
-                alert('Password copied to clipboard!');
-            } catch (err) {
-                alert('Failed to copy password. Please select and copy manually.');
-            }
-            document.body.removeChild(textArea);
+    if (selectedAdmins.length === 0) {
+        showToast('No administrators selected!', 'error');
+        return;
+    }
+    
+    if (confirm(`Create accounts for ${selectedAdmins.length} administrator(s)?`)) {
+        showLoading(`Creating accounts for ${selectedAdmins.length} administrator(s)...`);
+        let completed = 0, success = 0, failed = 0;
+        
+        selectedAdmins.forEach(admin => {
+            fetch(window.location.href, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': getCSRFToken(),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: new URLSearchParams({ action: 'create_account', admin_id: admin.id })
+            })
+            .then(res => res.json())
+            .then(data => {
+                completed++;
+                data.success ? (success++, showToast(`✓ ${admin.email} created`, 'success')) : (failed++, showToast(`✗ ${admin.email} - ${data.message}`, 'error'));
+                if (completed === selectedAdmins.length) {
+                    hideLoading();
+                    showToast(`Completed! ${success} created, ${failed} failed`);
+                    setTimeout(() => location.reload(), 2000);
+                }
+            })
+            .catch(() => {
+                completed++, failed++;
+                if (completed === selectedAdmins.length) {
+                    hideLoading();
+                    showToast(`Completed! ${success} created, ${failed} failed`);
+                    setTimeout(() => location.reload(), 2000);
+                }
+            });
         });
     }
+}
+
+// Single account creation
+function createAccount(adminId, adminName, adminEmail) {
+    if (confirm(`Create account for ${adminName}?`)) {
+        showLoading(`Creating account for ${adminName}...`);
+        fetch(window.location.href, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCSRFToken(),
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: new URLSearchParams({ action: 'create_account', admin_id: adminId })
+        })
+        .then(res => res.json())
+        .then(data => {
+            hideLoading();
+            if (data.success) {
+                document.getElementById('modalAdminName').innerText = adminName;
+                document.getElementById('modalAdminEmail').innerText = adminEmail;
+                document.getElementById('modalPassword').innerText = data.password;
+                $('#passwordModal').modal('show');
+                showToast(data.message, 'success');
+                setTimeout(() => location.reload(), 2000);
+            } else {
+                showToast(data.message, 'error');
+            }
+        })
+        .catch(() => hideLoading() || showToast('Error creating account', 'error'));
+    }
+}
+
+// Reset password
+function resetPassword(adminId, adminEmail) {
+    if (confirm(`Reset password for ${adminEmail}?`)) {
+        showLoading('Resetting password...');
+        fetch(window.location.href, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCSRFToken(),
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: new URLSearchParams({ action: 'reset_password', admin_id: adminId })
+        })
+        .then(res => res.json())
+        .then(data => {
+            hideLoading();
+            if (data.success) {
+                document.getElementById('modalAdminName').innerText = data.admin_name;
+                document.getElementById('modalAdminEmail').innerText = data.email;
+                document.getElementById('modalPassword').innerText = data.password;
+                $('#passwordModal').modal('show');
+                showToast(data.message, 'success');
+            } else {
+                showToast(data.message, 'error');
+            }
+        })
+        .catch(() => hideLoading() || showToast('Error resetting password', 'error'));
+    }
+}
+
+function copyModalPassword() {
+    const password = document.getElementById('modalPassword').innerText;
+    if (password) navigator.clipboard.writeText(password).then(() => showToast('Password copied!', 'success'));
+}
+
+function viewDetails(id) {
+    showToast('Administrator details feature coming soon', 'info');
+}
+
+setTimeout(() => $('.alert').fadeOut('slow'), 5000);
 </script>
 {% endblock %}

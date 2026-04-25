@@ -1,0 +1,72 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}Add Section - EduSphere{% endblock %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Add Section</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'academic:dashboard' %}">Academic</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'academic:view_section' %}">Sections</a></li>
+                        <li class="breadcrumb-item active">Add Section</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="card">
+                    <div class="card-body">
+                        <form method="POST">
+                            {% csrf_token %}
+                            <div class="row">
+                                <div class="col-12">
+                                    <h5 class="form-title"><span>Section Information</span></h5>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Section Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" name="name" placeholder="e.g., Section A" required>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Batch <span class="text-danger">*</span></label>
+                                        <select class="form-control" name="batch_id" required>
+                                            <option value="">Select Batch</option>
+                                            {% for batch in batches %}
+                                            <option value="{{ batch.id }}">{{ batch.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Discipline <span class="text-danger">*</span></label>
+                                        <select class="form-control" name="discipline" required>
+                                            <option value="">Select Discipline</option>
+                                            {% for discipline in disciplines %}
+                                            <option value="{{ discipline.id }}">{{ discipline.field }} ({{ discipline.program }})</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-primary">Submit</button>
+                                    <a href="{% url 'academic:view_section' %}" class="btn btn-secondary">Cancel</a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

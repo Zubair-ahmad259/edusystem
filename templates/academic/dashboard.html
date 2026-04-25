@@ -1,0 +1,169 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}Academic Dashboard - EduSphere{% endblock %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Academic Management</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'index' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Academic</li>
+                    </ul>
+                </div>
+                <div class="col-auto text-right">
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+                            <i class="fas fa-plus"></i> Add New
+                        </button>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="{% url 'academic:add_discipline' %}">
+                                <i class="fas fa-graduation-cap"></i> Discipline
+                            </a>
+                            <a class="dropdown-item" href="{% url 'academic:add_batch' %}">
+                                <i class="fas fa-layer-group"></i> Batch
+                            </a>
+                            <a class="dropdown-item" href="{% url 'academic:add_semester' %}">
+                                <i class="fas fa-calendar-alt"></i> Semester
+                            </a>
+                            <a class="dropdown-item" href="{% url 'academic:add_section' %}">
+                                <i class="fas fa-users"></i> Section
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card bg-gradient-primary">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-white-50">Total Disciplines</h6>
+                                <h2 class="text-white mb-0">{{ total_disciplines }}</h2>
+                            </div>
+                            <div class="bg-white-30 p-3 rounded">
+                                <i class="fas fa-graduation-cap fa-2x text-white"></i>
+                            </div>
+                        </div>
+                        <a href="{% url 'academic:view_discipline' %}" class="small-box-footer text-white mt-3 d-block">
+                            View Details <i class="fas fa-arrow-circle-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-gradient-success">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-white-50">Total Batches</h6>
+                                <h2 class="text-white mb-0">{{ total_batches }}</h2>
+                            </div>
+                            <div class="bg-white-30 p-3 rounded">
+                                <i class="fas fa-layer-group fa-2x text-white"></i>
+                            </div>
+                        </div>
+                        <a href="{% url 'academic:view_batch' %}" class="small-box-footer text-white mt-3 d-block">
+                            View Details <i class="fas fa-arrow-circle-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-gradient-info">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-white-50">Total Semesters</h6>
+                                <h2 class="text-white mb-0">{{ total_semesters }}</h2>
+                            </div>
+                            <div class="bg-white-30 p-3 rounded">
+                                <i class="fas fa-calendar-alt fa-2x text-white"></i>
+                            </div>
+                        </div>
+                        <a href="{% url 'academic:view_semester' %}" class="small-box-footer text-white mt-3 d-block">
+                            View Details <i class="fas fa-arrow-circle-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-gradient-warning">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-white-50">Total Sections</h6>
+                                <h2 class="text-white mb-0">{{ total_sections }}</h2>
+                            </div>
+                            <div class="bg-white-30 p-3 rounded">
+                                <i class="fas fa-users fa-2x text-white"></i>
+                            </div>
+                        </div>
+                        <a href="{% url 'academic:view_section' %}" class="small-box-footer text-white mt-3 d-block">
+                            View Details <i class="fas fa-arrow-circle-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title"><i class="fas fa-bolt"></i> Quick Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-3 col-6 mb-3">
+                                <a href="{% url 'academic:add_discipline' %}" class="btn btn-outline-primary btn-block py-3">
+                                    <i class="fas fa-graduation-cap fa-2x mb-2 d-block"></i>
+                                    Add Discipline
+                                </a>
+                            </div>
+                            <div class="col-md-3 col-6 mb-3">
+                                <a href="{% url 'academic:add_batch' %}" class="btn btn-outline-success btn-block py-3">
+                                    <i class="fas fa-layer-group fa-2x mb-2 d-block"></i>
+                                    Add Batch
+                                </a>
+                            </div>
+                            <div class="col-md-3 col-6 mb-3">
+                                <a href="{% url 'academic:add_semester' %}" class="btn btn-outline-info btn-block py-3">
+                                    <i class="fas fa-calendar-alt fa-2x mb-2 d-block"></i>
+                                    Add Semester
+                                </a>
+                            </div>
+                            <div class="col-md-3 col-6 mb-3">
+                                <a href="{% url 'academic:add_section' %}" class="btn btn-outline-warning btn-block py-3">
+                                    <i class="fas fa-users fa-2x mb-2 d-block"></i>
+                                    Add Section
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-gradient-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .bg-gradient-success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+    .bg-gradient-info { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); }
+    .bg-gradient-warning { background: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%); }
+    .bg-white-30 { background: rgba(255, 255, 255, 0.2); }
+    .small-box-footer { text-decoration: none; transition: all 0.3s; }
+    .small-box-footer:hover { opacity: 0.8; transform: translateX(5px); }
+</style>
+{% endblock %}

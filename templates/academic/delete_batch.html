@@ -1,0 +1,41 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}Delete Batch - EduSphere{% endblock %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Delete Batch</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'academic:dashboard' %}">Academic</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'academic:view_batch' %}">Batches</a></li>
+                        <li class="breadcrumb-item active">Delete Batch</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Are you sure you want to delete batch "{{ batch.name }}"?
+                        </div>
+                        <form method="POST">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                            <a href="{% url 'academic:view_batch' %}" class="btn btn-secondary">Cancel</a>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

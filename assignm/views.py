@@ -11,8 +11,104 @@ from student.models import Student
 from Academic.models import Section
 from django.utils import timezone
 
-# ==================== TEACHER VIEWS ====================
+# @login_required
+def assignment_dashboard(request):
+    """Main Assignment Dashboard - Shows ALL assignments"""
+    from django.utils import timezone
+    from django.core.paginator import Paginator
+    
+    now = timezone.now()
+    
+    context = {
+        'total_assignments': 0,
+        'total_submitted': 0,
+        'total_pending': 0,
+        'total_overdue': 0,
+        'all_assignments': [],
+        'now': now,
+    }
+    
+    if hasattr(request.user, 'teacher'):
+        # Teacher Dashboard - Show ALL teacher assignments
+        teacher = request.user.teacher
+        assignments = Assignment.objects.filter(teacher=teacher, is_active=True)
+        
+        context['total_assignments'] = assignments.count()
+        context['total_submitted'] = AssignmentSubmission.objects.filter(
+            assignment__in=assignments, 
+            student=request.user
+        ).count()
+        context['total_pending'] = assignments.filter(status='active', due_date__gte=now).count() - context['total_submitted']
+        context['total_overdue'] = assignments.filter(due_date__lt=now, status='active').count()
+        
+        # Pagination
+        paginator = Paginator(assignments.order_by('-created_date'), 10)
+        page_number = request.GET.get('page')
+        context['all_assignments'] = paginator.get_page(page_number)
+        
+    elif hasattr(request.user, 'student'):
+        # Student Dashboard
+        student = request.user.student
+        
+        # Get student's sections
+        student_sections = []
+        if hasattr(student, 'section') and student.section:
+            student_sections = [student.section]
+        elif hasattr(student, 'sections'):
+            student_sections = list(student.sections.all())
+        elif hasattr(student, 'section_set'):
+            student_sections = list(student.section_set.all())
+        
+        if student_sections:
+            assignments = Assignment.objects.filter(
+                sections__in=student_sections,
+                is_active=True
+            ).distinct().order_by('-created_date')
+            
+            context['total_assignments'] = assignments.count()
+            context['total_submitted'] = AssignmentSubmission.objects.filter(
+                assignment__in=assignments, student=student
+            ).count()
+            context['total_pending'] = context['total_assignments'] - context['total_submitted']
+            context['total_overdue'] = assignments.filter(due_date__lt=now).count()
+            
+            # Pagination
+            paginator = Paginator(assignments, 10)
+            page_number = request.GET.get('page')
+            context['all_assignments'] = paginator.get_page(page_number)
+    
+    return render(request, 'assignment/dashboard.html', context)
 
+@login_required
+def teacher_submit_assignment(request):
+    """Allow teachers to submit assignments"""
+    if request.method == 'POST':
+        try:
+            assignment_id = request.POST.get('assignment_id')
+            section_id = request.POST.get('section_id')
+            content = request.POST.get('content', '')
+            attachment = request.FILES.get('attachment')
+            
+            assignment = get_object_or_404(Assignment, id=assignment_id)
+            section = get_object_or_404(Section, id=section_id)
+            
+            # Create submission
+            submission = AssignmentSubmission.objects.create(
+                assignment=assignment,
+                student=request.user,  # Teacher as student
+                section=section,
+                submission_text=content,
+                submission_file=attachment,
+                status='submitted'
+            )
+            
+            messages.success(request, f'Successfully submitted "{assignment.title}"')
+        except Exception as e:
+            messages.error(request, f'Error submitting assignment: {str(e)}')
+        
+        return redirect('assignment:assignment_dashboard')
+    
+    return redirect('assignment:assignment_dashboard')
 @login_required
 def teacher_assignment_list(request):
     """Show only assignments for subjects assigned to the logged-in teacher"""

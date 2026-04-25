@@ -1,0 +1,75 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}Edit Batch - EduSphere{% endblock %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Edit Batch</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'academic:dashboard' %}">Academic</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'academic:view_batch' %}">Batches</a></li>
+                        <li class="breadcrumb-item active">Edit Batch</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="card">
+                    <div class="card-body">
+                        <form method="POST">
+                            {% csrf_token %}
+                            <div class="row">
+                                <div class="col-12">
+                                    <h5 class="form-title"><span>Batch Information</span></h5>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Batch Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" name="name" value="{{ batch.name }}" required>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Discipline <span class="text-danger">*</span></label>
+                                        <select class="form-control" name="discipline" required>
+                                            <option value="">Select Discipline</option>
+                                            {% for discipline in disciplines %}
+                                            <option value="{{ discipline.id }}" {% if batch.decipline.id == discipline.id %}selected{% endif %}>
+                                                {{ discipline.field }} ({{ discipline.program }})
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Start Session <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" name="start_session" value="{{ batch.start_session }}" required>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="form-group">
+                                        <label>End Session <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" name="end_session" value="{{ batch.end_session }}" required>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-primary">Update</button>
+                                    <a href="{% url 'academic:view_batch' %}" class="btn btn-secondary">Cancel</a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

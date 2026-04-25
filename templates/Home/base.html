@@ -491,7 +491,18 @@
                 <li class="submenu">
                     <a href="javascript:void(0);"><i class="fas fa-user-tie"></i> <span>Head / Admin</span> <i class="fas fa-chevron-down menu-arrow"></i></a>
                     <ul>
-<li><a href="{% url 'admin_profile:admin_profile_list' %}">Add Head / Admin</a></li>                    </ul>
+                        <li><a href="{% url 'admin_profile:admin_profile_list' %}">Add Head / Admin</a></li>
+                    </ul>
+                </li>
+
+                 <li class="submenu">
+                    <a href="javascript:void(0);"><i class="fas fa-user-password"></i> <span>Authentication</span> <i class="fas fa-chevron-down menu-arrow"></i></a>
+                    <ul>
+                        <li><a href="{% url 'manage_students_view' %}"> Student Atuthentication</a></li>
+                        <li><a href="{% url 'manage_teachers' %}">Teacher  Atuthentication</a></li>
+                     <li><a href="{% url 'manage_admins' %}">admin  Atuthentication</a></li>
+
+                    </ul>
                 </li>
                 
                 <li class="menu-title">Academic Management</li>
@@ -506,8 +517,7 @@
                 <li class="submenu">
                     <a href="javascript:void(0);"><i class="fas fa-tasks"></i> <span>Assignments</span> <i class="fas fa-chevron-down menu-arrow"></i></a>
                     <ul>
-                        <li><a href="#">Assignment Dashboard</a></li>
-                        <li><a href="#">Create Assignment</a></li>
+                        <li><a href="{% url 'assignment:assignment_dashboard' %}">Assignment Dashboard</a></li>
                     </ul>
                 </li>
                 <li><a href="{% url 'attendance_dashboard' %}"><i class="fas fa-calendar-check"></i> <span>Attendance</span></a></li>
