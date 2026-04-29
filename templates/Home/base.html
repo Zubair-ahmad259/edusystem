@@ -470,8 +470,133 @@
     <div class="sidebar" id="sidebar">
         <div class="sidebar-menu">
             <ul>
+                <!-- Main Menu -->
                 <li class="menu-title">Main Menu</li>
-                <li class="active"><a href="{% url 'index' %}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
+                <li><a href="{% url 'dashboard' %}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
+                
+                <!-- ACCOUNTS OFFICER MENU - Full Access -->
+                {% if user_role == 'Accounts' %}
+                
+                <!-- Student Management -->
+                <li class="menu-title">Student Management</li>
+                <li class="submenu">
+                    <a href="javascript:void(0);"><i class="fas fa-user-graduate"></i> <span>Students</span> <i class="fas fa-chevron-down menu-arrow"></i></a>
+                    <ul>
+                        <li><a href="{% url 'student_list' %}">Student List</a></li>
+                        <li><a href="{% url 'add_student' %}">Add Student</a></li>
+                        <li><a href="{% url 'manage_students_view' %}">Student Authentication</a></li>
+                    </ul>
+                </li>
+                
+                <!-- Teacher Management -->
+                <li class="submenu">
+                    <a href="javascript:void(0);"><i class="fas fa-chalkboard-teacher"></i> <span>Teachers</span> <i class="fas fa-chevron-down menu-arrow"></i></a>
+                    <ul>
+                        <li><a href="{% url 'teacher_list' %}">Teacher List</a></li>
+                        <li><a href="{% url 'add_teacher' %}">Add Teacher</a></li>
+                        <li><a href="{% url 'manage_teachers' %}">Teacher Authentication</a></li>
+                    </ul>
+                </li>
+                
+                <!-- Academic Management -->
+                <li class="menu-title">Academic Management</li>
+                <li class="submenu">
+                    <a href="javascript:void(0);"><i class="fas fa-book"></i> <span>Subjects</span> <i class="fas fa-chevron-down menu-arrow"></i></a>
+                    <ul>
+                        <li><a href="{% url 'subject:subject_dashboard' %}">Subject Dashboard</a></li>
+                        <li><a href="{% url 'subject:add_subject' %}">Add Subject</a></li>
+                        <li><a href="{% url 'subject:add_subject_assign' %}">Assign Subject</a></li>
+                    </ul>
+                </li>
+                
+                <!-- Attendance (View Only) -->
+                <li><a href="{% url 'attendance_dashboard' %}"><i class="fas fa-calendar-check"></i> <span>Attendance (View Only)</span></a></li>
+                
+                <!-- Timetable -->
+                <li><a href="{% url 'timetables:timetable_dashboard' %}"><i class="fas fa-calendar-week"></i> <span>Timetable</span></a></li>
+                
+                <!-- Financial Management -->
+                <li class="menu-title">Financial Management</li>
+                <li class="submenu">
+                    <a href="javascript:void(0);"><i class="fas fa-file-invoice-dollar"></i> <span>Fee Management</span> <i class="fas fa-chevron-down menu-arrow"></i></a>
+                    <ul>
+                        <li><a href="{% url 'upload_fee' %}">Upload Fee</a></li>
+                        <li><a href="{% url 'fee_list' %}">Fee Overview</a></li>
+                        <li><a href="{% url 'defaulter_student' %}">Defaulter Students</a></li>
+                    </ul>
+                </li>
+                
+                <!-- Token Management -->
+                <li class="menu-title">Token Management</li>
+                <li class="submenu">
+                    <a href="javascript:void(0);"><i class="fas fa-ticket-alt"></i> <span>Tokens</span> <i class="fas fa-chevron-down menu-arrow"></i></a>
+                    <ul>
+                        <li><a href="{% url 'token_app:dashboard' %}">Token Dashboard</a></li>
+                        <li><a href="#">Generate Token</a></li>
+                    </ul>
+                </li>
+                
+                <!-- Discipline Committee -->
+                <li class="menu-title">Discipline Committee</li>
+                <li class="submenu">
+                    <a href="javascript:void(0);"><i class="fas fa-gavel"></i> <span>Cases</span> <i class="fas fa-chevron-down menu-arrow"></i></a>
+                    <ul>
+                        <li><a href="{% url 'case_list' %}">View Cases</a></li>
+                        <li><a href="{% url 'add_case' %}">Add Case</a></li>
+                    </ul>
+                </li>
+                
+                <!-- END OF ACCOUNTS OFFICER MENU -->
+                
+                {% elif user_role == 'Office Clerk' %}
+                
+                <li class="menu-title">User Management</li>
+                <li class="submenu">
+                    <a href="javascript:void(0);"><i class="fas fa-user-graduate"></i> <span>Students</span> <i class="fas fa-chevron-down menu-arrow"></i></a>
+                    <ul>
+                        <li><a href="{% url 'student_list' %}">Student List</a></li>
+                    </ul>
+                </li>
+                <li class="submenu">
+                    <a href="javascript:void(0);"><i class="fas fa-chalkboard-teacher"></i> <span>Teachers</span> <i class="fas fa-chevron-down menu-arrow"></i></a>
+                    <ul>
+                        <li><a href="{% url 'teacher_list' %}">Teacher List</a></li>
+                    </ul>
+                </li>
+                
+                <li class="menu-title">Academic Management</li>
+                <li><a href="{% url 'attendance_dashboard' %}"><i class="fas fa-calendar-check"></i> <span>Attendance</span></a></li>
+                <li><a href="{% url 'timetables:timetable_dashboard' %}"><i class="fas fa-calendar-week"></i> <span>Timetable</span></a></li>
+                
+                <li class="menu-title">Examination</li>
+                <li><a href="{% url 'exam_dashboard' %}"><i class="fas fa-chart-line"></i> <span>Exam Dashboard</span></a></li>
+                
+                <li class="menu-title">Token Management</li>
+                <li><a href="{% url 'token_app:dashboard' %}"><i class="fas fa-ticket-alt"></i> <span>Token Dashboard</span></a></li>
+                
+                <li class="menu-title">Financial Management</li>
+                <li><a href="{% url 'fee_list' %}"><i class="fas fa-file-invoice-dollar"></i> <span>Fee Overview</span></a></li>
+                
+                {% elif user_role == 'Librarian' %}
+                
+                <li class="menu-title">Library Management</li>
+                <li><a href="#"><i class="fas fa-book"></i> <span>Book Management</span></a></li>
+                <li><a href="#"><i class="fas fa-book-reader"></i> <span>Issue/Return Books</span></a></li>
+                <li><a href="#"><i class="fas fa-search"></i> <span>Search Books</span></a></li>
+                
+                {% elif user_role == 'HOD' %}
+                
+                <li class="menu-title">Department Management</li>
+                <li class="submenu">
+                    <a href="javascript:void(0);"><i class="fas fa-user-graduate"></i> <span>Students</span> <i class="fas fa-chevron-down menu-arrow"></i></a>
+                    <ul>
+                        <li><a href="{% url 'student_list' %}">Student List</a></li>
+                    </ul>
+                </li>
+                <li><a href="{% url 'attendance_dashboard' %}"><i class="fas fa-calendar-check"></i> <span>Attendance</span></a></li>
+                <li><a href="{% url 'timetables:timetable_dashboard' %}"><i class="fas fa-calendar-week"></i> <span>Timetable</span></a></li>
+                
+                {% elif user.is_superuser or user.is_admin %}
                 
                 <li class="menu-title">User Management</li>
                 <li class="submenu">
@@ -491,17 +616,15 @@
                 <li class="submenu">
                     <a href="javascript:void(0);"><i class="fas fa-user-tie"></i> <span>Head / Admin</span> <i class="fas fa-chevron-down menu-arrow"></i></a>
                     <ul>
-                        <li><a href="{% url 'admin_profile:admin_profile_list' %}">Add Head / Admin</a></li>
+                        <li><a href="{% url 'admin_profile:admin_profile_list' %}">Manage Staff</a></li>
                     </ul>
                 </li>
-
-                 <li class="submenu">
+                <li class="submenu">
                     <a href="javascript:void(0);"><i class="fas fa-user-password"></i> <span>Authentication</span> <i class="fas fa-chevron-down menu-arrow"></i></a>
                     <ul>
-                        <li><a href="{% url 'manage_students_view' %}"> Student Atuthentication</a></li>
-                        <li><a href="{% url 'manage_teachers' %}">Teacher  Atuthentication</a></li>
-                     <li><a href="{% url 'manage_admins' %}">admin  Atuthentication</a></li>
-
+                        <li><a href="{% url 'manage_students_view' %}">Student Authentication</a></li>
+                        <li><a href="{% url 'manage_teachers' %}">Teacher Authentication</a></li>
+                        <li><a href="{% url 'manage_admins' %}">Admin Authentication</a></li>
                     </ul>
                 </li>
                 
@@ -561,6 +684,8 @@
                         <li><a href="{% url 'defaulter_student' %}">Defaulter Students</a></li>
                     </ul>
                 </li>
+                
+                {% endif %}
             </ul>
         </div>
     </div>
@@ -570,13 +695,12 @@
             <button class="mobile-menu-toggle" id="mobileToggle">
                 <i class="fas fa-bars"></i>
             </button>
-            <a href="{% url 'index' %}" class="logo">
+            <a href="{% url 'dashboard' %}" class="logo">
                 <img src="{% static 'assets/images/uni logo.jpg' %}" alt="LMS">
                 <span>Edu<span>Sphere</span></span>
             </a>
         </div>
 
-        <!-- Desktop Search -->
         <div class="top-nav-search">
             <form>
                 <input type="text" class="form-control" placeholder="Search here...">
@@ -584,7 +708,6 @@
             </form>
         </div>
 
-        <!-- Desktop User Menu -->
         <ul class="nav user-menu">
             <li class="nav-item dropdown noti-dropdown">
                 <a href="#" class="dropdown-toggle nav-link" data-toggle="dropdown">
@@ -630,7 +753,17 @@
                     <div class="user-header">
                         <div class="user-text">
                             <h6>{{ request.user.first_name|default:request.user.username }}</h6>
-                            <p class="text-muted mb-0">Administrator</p>
+                            <p class="text-muted mb-0">
+                                {% if user.is_superuser %}Super Admin
+                                {% elif user.is_admin %}Admin
+                                {% elif user_role == 'Accounts' %}Accounts Officer
+                                {% elif user_role == 'Office Clerk' %}Office Clerk
+                                {% elif user_role == 'Librarian' %}Librarian
+                                {% elif user_role == 'HOD' %}HOD
+                                {% elif user.is_teacher %}Teacher
+                                {% elif user.is_student %}Student
+                                {% else %}User{% endif %}
+                            </p>
                         </div>
                     </div>
                     <a class="dropdown-item" href="#">My Profile</a>
@@ -641,7 +774,6 @@
             </li>
         </ul>
 
-        <!-- Mobile User Menu -->
         <div class="mobile-user-menu">
             <div class="notification-icon-mobile">
                 <i class="far fa-bell"></i>
@@ -650,7 +782,7 @@
                 {% endif %}
             </div>
             <div class="user-img-mobile">
-                <img src="{% static 'assets/images/usericion.svg' %}" alt="Admin">
+                <img src="{% static 'assets/images/usericion.svg' %}" alt="User">
             </div>
         </div>
     </div>
@@ -668,7 +800,6 @@
         {% endblock %}
     </div>
 
-    <!-- Fixed Footer with ZEPHYR Reference -->
     <footer class="footer">
         <div class="footer-content">
             <div class="footer-logo">
@@ -694,32 +825,27 @@
     
     <script>
         $(document).ready(function() {
-            // Function to Open Sidebar
             function openSidebar() {
                 $('#sidebar').addClass('show');
                 $('#sidebarOverlay').fadeIn(200).addClass('show');
                 $('body').css('overflow', 'hidden');
             }
 
-            // Function to Close Sidebar
             function closeSidebar() {
                 $('#sidebar').removeClass('show');
                 $('#sidebarOverlay').fadeOut(200).removeClass('show');
                 $('body').css('overflow', 'auto');
             }
 
-            // Click Burger Icon
             $('#mobileToggle').on('click', function(e) {
                 e.stopPropagation();
                 openSidebar();
             });
 
-            // Click Overlay to Close
             $('#sidebarOverlay').on('click', function() {
                 closeSidebar();
             });
 
-            // Submenu Toggle
             $('.submenu > a').on('click', function(e) {
                 e.preventDefault();
                 var $parent = $(this).parent();
@@ -733,7 +859,6 @@
                 }
             });
 
-            // Reset on Window Resize
             $(window).resize(function() {
                 if ($(window).width() > 991) {
                     closeSidebar();
@@ -742,5 +867,9 @@
         });
     </script>
 
+    <script>
+        var userRole = "{{ user_role|default:'' }}";
+        console.log("User Role:", userRole);
+    </script>
 </body>
 </html>

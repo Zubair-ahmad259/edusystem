@@ -83,8 +83,6 @@ def admin_profile_detail(request, pk):
     return render(request, 'admin_profile/admin_profile_detail.html', {
         'admin_profile': admin_profile
     })
-
-
 @login_required
 def admin_profile_create(request):
     """Create a new admin profile"""
@@ -96,9 +94,22 @@ def admin_profile_create(request):
                 messages.error(request, f'Email "{email}" already exists!')
                 return redirect('admin_profile:admin_profile_create')
             
-            # Get discipline
-            discipline_id = request.POST.get('discipline')
-            discipline = Discipline.objects.get(id=discipline_id) if discipline_id else None
+            role = request.POST.get('role')
+            multi_discipline_roles = ['Office Clerk', 'Accounts', 'Librarian']
+            
+            # Get discipline based on role
+            discipline = None
+            assigned_disciplines = []
+            
+            if role in multi_discipline_roles:
+                # Get multiple disciplines
+                assigned_disciplines = request.POST.getlist('disciplines')
+                assigned_disciplines = [int(d) for d in assigned_disciplines if d]
+            else:
+                # Get single discipline
+                discipline_id = request.POST.get('discipline')
+                if discipline_id:
+                    discipline = Discipline.objects.get(id=discipline_id)
             
             # Generate employee ID
             year = datetime.now().year
@@ -113,7 +124,8 @@ def admin_profile_create(request):
                 contact_number=request.POST.get('contact_number'),
                 email=email,
                 discipline=discipline,
-                role=request.POST.get('role'),
+                assigned_disciplines=assigned_disciplines,
+                role=role,
                 address=request.POST.get('address'),
                 employee_id=employee_id,
                 joining_date=request.POST.get('joining_date') or None,
@@ -135,6 +147,64 @@ def admin_profile_create(request):
     return render(request, 'admin_profile/admin_profile_form.html', context)
 
 
+@login_required
+def admin_profile_update(request, pk):
+    """Update an existing admin profile"""
+    admin_profile = get_object_or_404(AdminProfile, pk=pk)
+    
+    if request.method == 'POST':
+        try:
+            # Check if email is being changed and if it's unique
+            new_email = request.POST.get('email')
+            if new_email != admin_profile.email and AdminProfile.objects.filter(email=new_email).exists():
+                messages.error(request, f'Email "{new_email}" already exists!')
+                return redirect('admin_profile:admin_profile_update', pk=pk)
+            
+            role = request.POST.get('role')
+            multi_discipline_roles = ['Office Clerk', 'Accounts', 'Librarian']
+            
+            # Update discipline based on role
+            discipline = None
+            assigned_disciplines = []
+            
+            if role in multi_discipline_roles:
+                # Get multiple disciplines
+                assigned_disciplines = request.POST.getlist('disciplines')
+                assigned_disciplines = [int(d) for d in assigned_disciplines if d]
+            else:
+                # Get single discipline
+                discipline_id = request.POST.get('discipline')
+                if discipline_id:
+                    discipline = Discipline.objects.get(id=discipline_id)
+            
+            # Update fields
+            admin_profile.first_name = request.POST.get('first_name')
+            admin_profile.last_name = request.POST.get('last_name')
+            admin_profile.father_name = request.POST.get('father_name')
+            admin_profile.contact_number = request.POST.get('contact_number')
+            admin_profile.email = new_email
+            admin_profile.discipline = discipline
+            admin_profile.assigned_disciplines = assigned_disciplines
+            admin_profile.role = role
+            admin_profile.address = request.POST.get('address')
+            admin_profile.joining_date = request.POST.get('joining_date') or None
+            admin_profile.is_active = request.POST.get('is_active') == 'on'
+            admin_profile.save()
+            
+            messages.success(request, f'Staff profile "{admin_profile.first_name} {admin_profile.last_name}" updated successfully!')
+            return redirect('admin_profile:admin_profile_detail', pk=admin_profile.pk)
+                
+        except Exception as e:
+            messages.error(request, f'Error updating staff profile: {str(e)}')
+    
+    # GET request - show form with current data
+    disciplines = Discipline.objects.all()
+    context = {
+        'admin_profile': admin_profile,
+        'disciplines': disciplines,
+        'role_choices': AdminProfile._meta.get_field('role').choices,
+    }
+    return render(request, 'admin_profile/admin_profile_form.html', context)
 @login_required
 def admin_profile_update(request, pk):
     """Update an existing admin profile"""
@@ -405,7 +475,19 @@ def download_sample_excel(request):
     
     wb.save(response)
     return response
-
+def get_disciplines_display(self):
+    """Get display string for disciplines"""
+    multi_discipline_roles = ['Office Clerk', 'Accounts', 'Librarian']
+    
+    if self.role in multi_discipline_roles:
+        if self.assigned_disciplines:
+            disciplines = Discipline.objects.filter(id__in=self.assigned_disciplines)
+            return ", ".join([f"{d.program} in {d.field}" for d in disciplines])
+        return "All Disciplines"
+    else:
+        if self.discipline:
+            return f"{self.discipline.program} in {self.discipline.field}"
+    return "—"
 
 @login_required
 def debug_admin_permissions(request):

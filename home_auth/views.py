@@ -1,10 +1,4 @@
 
-
-
-# new views.py/   /////////////////////////////////////////////////////////////////////////////////
-
-
-
 # home_auth/views.py
 import threading
 from django.shortcuts import render, redirect, get_object_or_404
@@ -25,6 +19,179 @@ from teachers.models import Teacher
 from head.models import AdminProfile
 
 logger = logging.getLogger(__name__)
+
+
+# ============= ROLE CHECK FUNCTIONS =============
+
+def is_office_clerk(user):
+    """Check if user is office clerk"""
+    if user.is_superuser:
+        return True
+    try:
+        return hasattr(user, 'admin_profile') and user.admin_profile.role == 'Office Clerk'
+    except:
+        return False
+
+def is_accounts_officer(user):
+    """Check if user is accounts officer"""
+    if user.is_superuser:
+        return True
+    try:
+        return hasattr(user, 'admin_profile') and user.admin_profile.role == 'Accounts'
+    except:
+        return False
+
+def is_librarian(user):
+    """Check if user is librarian"""
+    if user.is_superuser:
+        return True
+    try:
+        return hasattr(user, 'admin_profile') and user.admin_profile.role == 'Librarian'
+    except:
+        return False
+
+def get_user_role(user):
+    """Get user role"""
+    if user.is_superuser:
+        return 'superuser'
+    if user.is_admin:
+        return 'admin'
+    try:
+        return user.admin_profile.role if hasattr(user, 'admin_profile') else None
+    except:
+        return None
+
+
+# ============= ROLE-BASED DASHBOARD REDIRECT =============
+
+@login_required
+def role_based_dashboard(request):
+    """Redirect to appropriate dashboard based on user role"""
+    user = request.user
+    
+    if user.is_superuser or user.is_admin:
+        return redirect('admin_dashboard')
+    elif is_office_clerk(user):
+        return redirect('office_clerk_dashboard')
+    elif is_accounts_officer(user):
+        return redirect('accounts_dashboard')
+    elif is_librarian(user):
+        return redirect('librarian_dashboard')
+    elif user.is_teacher:
+        return redirect('teacher_dashboard')
+    elif user.is_student:
+        return redirect('student_dashboard')
+    else:
+        return redirect('index')
+
+# home_auth/context_processors.py
+
+def user_role_context(request):
+    """Add user role to all templates"""
+    if request.user.is_authenticated:
+        # Check for admin profile role
+        if hasattr(request.user, 'admin_profile') and request.user.admin_profile:
+            role = request.user.admin_profile.role
+            return {'user_role': role}
+        
+        # Check for superuser or admin
+        if request.user.is_superuser:
+            return {'user_role': 'superuser'}
+        if request.user.is_admin:
+            return {'user_role': 'admin'}
+        if request.user.is_teacher:
+            return {'user_role': 'teacher'}
+        if request.user.is_student:
+            return {'user_role': 'student'}
+    
+    return {'user_role': None}
+# ============= DASHBOARD VIEWS =============
+
+@login_required
+def admin_dashboard(request):
+    """Full admin dashboard - Superuser and Admin only"""
+    if not (request.user.is_superuser or request.user.is_admin):
+        messages.error(request, 'You do not have permission to access this page.')
+        return redirect('dashboard')
+    
+    from student.models import Student
+    from teachers.models import Teacher
+    from subject.models import Subject
+    
+    context = {
+        'total_students': Student.objects.count(),
+        'total_teachers': Teacher.objects.count(),
+        'total_subjects': Subject.objects.count(),
+        'user_role': 'Admin',
+    }
+    return render(request, 'Home/admin_dashboard.html', context)
+
+
+@login_required
+def office_clerk_dashboard(request):
+    """Office Clerk Dashboard - Can view students and teachers, cannot edit"""
+    from student.models import Student
+    from teachers.models import Teacher
+    
+    context = {
+        'total_students': Student.objects.count(),
+        'total_teachers': Teacher.objects.count(),
+        'recent_students': Student.objects.order_by('-id')[:10],
+        'recent_teachers': Teacher.objects.order_by('-id')[:5],
+        'can_edit': False,
+        'can_delete': False,
+        'can_add': False,
+        'can_view': True,
+        'user_role': 'Office Clerk',
+    }
+    return render(request, 'Home/office_clerk_dashboard.html', context)
+
+
+@login_required
+def accounts_dashboard(request):
+    """Accounts Officer Dashboard - Financial access only"""
+    from fee_system.models import UploadFee, ClearFee
+    from django.db.models import Sum
+    from decimal import Decimal
+    
+    # Calculate total fees (sum of amount + fine from UploadFee)
+    total_fees = UploadFee.objects.aggregate(
+        total=Sum('amount') + Sum('fine')
+    )['total'] or Decimal('0.00')
+    
+    # Calculate total paid (sum of cleared_amount from ClearFee)
+    total_paid = ClearFee.objects.aggregate(
+        total=Sum('cleared_amount')
+    )['total'] or Decimal('0.00')
+    
+    # Calculate pending fees
+    pending_fees = total_fees - total_paid
+    
+    # Get recent payments
+    recent_payments = ClearFee.objects.select_related('upload_fee__student').order_by('-cleared_date')[:10]
+    
+    context = {
+        'total_fees': total_fees,
+        'total_paid': total_paid,
+        'pending_fees': pending_fees,
+        'recent_payments': recent_payments,
+        'can_edit': True,
+        'can_delete': False,
+        'user_role': 'Accounts Officer',
+    }
+    return render(request, 'Home/accounts_dashboard.html', context)
+
+@login_required
+def librarian_dashboard(request):
+    """Librarian Dashboard - Library management access"""
+    context = {
+        'total_books': 0,
+        'books_issued': 0,
+        'can_edit': True,
+        'can_delete': False,
+        'user_role': 'Librarian',
+    }
+    return render(request, 'Home/librarian_dashboard.html', context)
 
 # ============= TEST EMAIL FUNCTION =============
 
@@ -159,7 +326,27 @@ def reset_user_password(user):
 
 
 # ============= AUTHENTICATION VIEWS =============
-
+# Add this function before login_view
+def get_user_role_and_redirect(user):
+    """Get user role and return appropriate redirect URL name"""
+    if user.is_superuser or user.is_admin:
+        return 'admin_dashboard'
+    elif hasattr(user, 'admin_profile') and user.admin_profile:
+        role = user.admin_profile.role
+        if role == 'Office Clerk':
+            return 'office_clerk_dashboard'
+        elif role == 'Accounts':
+            return 'accounts_dashboard'
+        elif role == 'Librarian':
+            return 'librarian_dashboard'
+        elif role == 'HOD':
+            return 'hod_dashboard'
+    elif user.is_teacher:
+        return 'teacher_dashboard'
+    elif user.is_student:
+        return 'student_dashboard'
+    else:
+        return 'dashboard'
 def login_view(request):
     """Handle user login"""
     if request.method == 'POST':
@@ -189,14 +376,8 @@ def login_view(request):
                     messages.warning(request, 'Please change your temporary password.')
                 
                 # Redirect based on role
-                if user.is_superuser or user.is_admin:
-                    return redirect('admin_dashboard')
-                elif user.is_teacher:
-                    return redirect('teacher_dashboard')
-                elif user.is_student:
-                    return redirect('student_dashboard')
-                else:
-                    return redirect('dashboard')
+                redirect_url = get_user_role_and_redirect(user)
+                return redirect(redirect_url)
             else:
                 messages.error(request, 'Invalid email or password.')
         except Exception as e:
@@ -204,8 +385,6 @@ def login_view(request):
             messages.error(request, 'An error occurred during login.')
     
     return render(request, 'authentication/login.html')
-
-
 def logout_view(request):
     """Handle user logout"""
     logout(request)
@@ -486,10 +665,9 @@ def reset_password_success_view(request):
     """Show success message after reset link is sent"""
     return render(request, 'authentication/forgot_password.html')
 
-
 @login_required
 def reset_own_password(request):
-    """Allow users to change their own password"""
+    """Allow users to change their own password - No expiration"""
     if request.method == 'POST':
         current_password = request.POST.get('current_password')
         new_password = request.POST.get('new_password')
@@ -512,6 +690,7 @@ def reset_own_password(request):
                 user.set_password(new_password)
                 user.password_generated = False
                 user.temp_password = None
+                user.password_change_deadline = None  # Clear any existing deadline
                 user.save()
                 
                 # Keep user logged in
@@ -533,8 +712,6 @@ def reset_own_password(request):
                 messages.error(request, 'An error occurred. Please try again.')
     
     return render(request, 'authentication/reset_own_password.html')
-
-
 # ============= STUDENT MANAGEMENT =============
 @login_required
 def manage_students_view(request):
@@ -890,6 +1067,8 @@ def manage_teachers_view(request):
     return render(request, "authentication/register_teacher.html", context)
 # ============= ADMIN MANAGEMENT =============
 
+# ============= ADMIN MANAGEMENT =============
+
 @login_required
 def manage_admins_view(request):
     """Manage admin accounts - Optimized with threading"""
@@ -900,8 +1079,8 @@ def manage_admins_view(request):
     discipline_id = request.GET.get('discipline')
     role_filter = request.GET.get('role')
     
-    # Get all admin profiles
-    admins = AdminProfile.objects.select_related('discipline').all()
+    # Get all admin profiles with user relation
+    admins = AdminProfile.objects.select_related('user', 'discipline').all()
     
     # Apply filters
     if discipline_id:
@@ -919,7 +1098,16 @@ def manage_admins_view(request):
             admin = get_object_or_404(AdminProfile, id=admin_id)
 
             if action == "create_account":
-                if not admin.user:
+                # Double-check if user already exists (prevent duplicate on refresh)
+                if admin.user:
+                    if is_ajax:
+                        return JsonResponse({
+                            'success': False, 
+                            'message': f'Account already exists for {admin.email}',
+                            'already_exists': True
+                        })
+                    messages.info(request, f'Account already exists for {admin.email}')
+                else:
                     try:
                         username = generate_unique_username(admin.email)
                         random_password = get_random_string(10)
@@ -943,8 +1131,13 @@ def manage_admins_view(request):
                         
                         # Send email in background thread
                         def send_email():
-                            send_account_creation_email(request, user, random_password, "Admin", admin.email, admin_name)
-                        threading.Thread(target=send_email, daemon=True).start()
+                            try:
+                                send_account_creation_email(request, user, random_password, "Admin", admin.email, admin_name)
+                            except Exception as e:
+                                logger.error(f"Email error for {admin.email}: {str(e)}")
+                        
+                        thread = threading.Thread(target=send_email, daemon=True)
+                        thread.start()
 
                         if is_ajax:
                             return JsonResponse({
@@ -963,10 +1156,6 @@ def manage_admins_view(request):
                         if is_ajax:
                             return JsonResponse({'success': False, 'message': str(e)})
                         messages.error(request, f'Error creating account: {str(e)}')
-                else:
-                    if is_ajax:
-                        return JsonResponse({'success': False, 'message': 'Account already exists'})
-                    messages.info(request, f'Account already exists for {admin.email}')
 
             elif action == "reset_password":
                 if admin.user:
@@ -976,8 +1165,13 @@ def manage_admins_view(request):
                         
                         # Send email in background
                         def send_reset_email():
-                            send_password_reset_email(request, admin.user, new_password, "Admin")
-                        threading.Thread(target=send_reset_email, daemon=True).start()
+                            try:
+                                send_password_reset_email(request, admin.user, new_password, "Admin")
+                            except Exception as e:
+                                logger.error(f"Reset email error for {admin.email}: {str(e)}")
+                        
+                        thread = threading.Thread(target=send_reset_email, daemon=True)
+                        thread.start()
                         
                         if is_ajax:
                             return JsonResponse({
@@ -988,31 +1182,25 @@ def manage_admins_view(request):
                                 'email': admin.email,
                                 'admin_name': admin_name
                             })
+                        messages.success(request, f'Password reset successfully for {admin.email}')
                     except Exception as e:
+                        logger.error(f"Error resetting password: {str(e)}")
                         if is_ajax:
                             return JsonResponse({'success': False, 'message': str(e)})
+                        messages.error(request, f'Error resetting password: {str(e)}')
                 else:
                     if is_ajax:
                         return JsonResponse({'success': False, 'message': 'No account exists. Create account first.'})
+                    messages.error(request, 'No account exists. Create account first.')
 
         if not is_ajax:
             return redirect('manage_admins')
 
     # Calculate statistics
     total_admins = admins.count()
-    admins_with_account = 0
-    admins_without_account = 0
-    admins_with_temp_password = 0
-    
-    for admin in admins:
-        user = CustomUser.objects.filter(email=admin.email).first()
-        if user:
-            admin.user = user
-            admins_with_account += 1
-            if user.password_generated and user.temp_password:
-                admins_with_temp_password += 1
-        else:
-            admins_without_account += 1
+    admins_with_account = admins.filter(user__isnull=False).count()
+    admins_without_account = admins.filter(user__isnull=True).count()
+    admins_with_temp_password = admins.filter(user__password_generated=True).count()
     
     # Pagination
     paginator = Paginator(admins, 20)
@@ -1030,7 +1218,6 @@ def manage_admins_view(request):
     }
 
     return render(request, "authentication/register_admin.html", context)
-
 @login_required
 def process_password_reset(request, user_type, user_id):
     """Process password reset with custom password"""

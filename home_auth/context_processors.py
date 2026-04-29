@@ -6,6 +6,7 @@ def user_role_context(request):
         # Check for admin profile role
         if hasattr(request.user, 'admin_profile') and request.user.admin_profile:
             role = request.user.admin_profile.role
+            print(f"User Role from context processor: {role}")  # Debug print
             return {'user_role': role}
         
         # Check for superuser or admin

@@ -1,0 +1,52 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}Office Clerk Dashboard - EduSphere{% endblock %}
+
+{% block body %}
+<div class="content container-fluid">
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">Office Clerk Dashboard</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'role_based_dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Office Clerk</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <span class="badge badge-info">{{ user_role }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title"><i class="fas fa-users"></i> Total Students</h5>
+                </div>
+                <div class="card-body text-center">
+                    <h1 class="display-4">{{ total_students }}</h1>
+                    <a href="{% url 'student_list' %}" class="btn btn-primary mt-3">View All Students</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title"><i class="fas fa-chalkboard-teacher"></i> Total Teachers</h5>
+                </div>
+                <div class="card-body text-center">
+                    <h1 class="display-4">{{ total_teachers }}</h1>
+                    <a href="{% url 'teacher_list' %}" class="btn btn-primary mt-3">View All Teachers</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="alert alert-info mt-3">
+        <i class="fas fa-info-circle"></i> You have <strong>read-only</strong> access. Contact administrator for modifications.
+    </div>
+</div>
+{% endblock %}

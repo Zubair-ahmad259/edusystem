@@ -1,0 +1,27 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}Librarian Dashboard - EduSphere{% endblock %}
+
+{% block body %}
+<div class="content container-fluid">
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">Librarian Dashboard</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'role_based_dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Librarian</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <span class="badge badge-primary">{{ user_role }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="alert alert-info mt-3">
+        <i class="fas fa-info-circle"></i> Library management features coming soon.
+    </div>
+</div>
+{% endblock %}

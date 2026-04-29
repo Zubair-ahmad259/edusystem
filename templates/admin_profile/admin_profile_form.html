@@ -125,7 +125,7 @@
                                 <div class="col-12 col-sm-6">
                                     <div class="form-group">
                                         <label>Role <span class="text-danger">*</span></label>
-                                        <select class="form-control" name="role" required>
+                                        <select class="form-control" name="role" id="roleSelect" required>
                                             <option value="">Select Role</option>
                                             {% for role_value, role_label in role_choices %}
                                                 <option value="{{ role_value }}" 
@@ -139,16 +139,47 @@
                                 <div class="col-12 col-sm-6">
                                     <div class="form-group">
                                         <label>Discipline</label>
-                                        <select class="form-control" name="discipline">
-                                            
-                                                    <option value="">Select Discipline</option>
-                                                    {% for discipline in disciplines %}
-                                                    <option value="{{ discipline.id }}">{{ discipline.program}}   {{ discipline.field }}</option>
+                                        <select class="form-control" name="discipline" id="disciplineSelect">
+                                            <option value="">Select Discipline</option>
+                                            {% for discipline in disciplines %}
+                                                <option value="{{ discipline.id }}">
+                                                    {{ discipline.program }} in {{ discipline.field }}
+                                                </option>
                                             {% endfor %}
                                         </select>
+                                        <small class="form-text text-muted" id="disciplineHelpText">
+                                            For HOD, Coordinator, and Section Head, select one discipline.<br>
+                                            For Office Clerk, Accounts Officer, and Librarian, you can select multiple disciplines.
+                                        </small>
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- Multi-Discipline Selection Section (Shown for specific roles) -->
+                            <div class="row" id="multiDisciplineSection" style="display: none;">
+                                <div class="col-12">
+                                    <div class="form-group">
+                                        <label>Multiple Disciplines <span class="text-info">(Hold Ctrl to select multiple)</span></label>
+                                        <select class="form-control" name="disciplines" id="multiDisciplineSelect" multiple size="6">
+                                            {% for discipline in disciplines %}
+                                                <option value="{{ discipline.id }}">
+                                                    {{ discipline.program }} in {{ discipline.field }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        <small class="form-text text-muted">
+                                            <i class="fas fa-info-circle"></i> 
+                                            Hold Ctrl (Windows) or Cmd (Mac) to select multiple disciplines.
+                                            This staff member will have access to all selected disciplines.
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Store selected disciplines as JSON (for editing existing profiles) -->
+                            {% if admin_profile and admin_profile.assigned_disciplines %}
+                            <input type="hidden" id="existingDisciplines" value='{{ admin_profile.assigned_disciplines|safe }}'>
+                            {% endif %}
 
                             <!-- Address Section -->
                             <div class="row">
@@ -200,40 +231,189 @@
     </div>
 </div>
 
-<!-- JavaScript for form validation -->
+<!-- JavaScript for form validation and multi-discipline handling -->
 <script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
 <script>
     $(document).ready(function() {
+        // Roles that can have multiple disciplines
+        const multiDisciplineRoles = ['Office Clerk', 'Accounts', 'Librarian'];
+        
+        // Roles that require a single discipline
+        const singleDisciplineRoles = ['HOD', 'Coordinator', 'Section Head'];
+        
+        // Function to toggle discipline selection mode
+        function toggleDisciplineMode() {
+            const selectedRole = $('#roleSelect').val();
+            const multiDisciplineSection = $('#multiDisciplineSection');
+            const singleDisciplineSelect = $('#disciplineSelect');
+            const singleDisciplineGroup = singleDisciplineSelect.closest('.form-group');
+            
+            if (multiDisciplineRoles.includes(selectedRole)) {
+                // Show multi-discipline selection
+                multiDisciplineSection.show();
+                singleDisciplineGroup.hide();
+                $('#disciplineHelpText').hide();
+                
+                // Clear single discipline selection
+                singleDisciplineSelect.val('');
+                
+                // Load existing assigned disciplines if editing
+                const existingDisciplines = $('#existingDisciplines').val();
+                if (existingDisciplines) {
+                    try {
+                        const disciplines = JSON.parse(existingDisciplines);
+                        $('#multiDisciplineSelect').val(disciplines);
+                    } catch(e) {
+                        console.log('Error parsing existing disciplines');
+                    }
+                }
+            } 
+            else if (singleDisciplineRoles.includes(selectedRole)) {
+                // Show single discipline selection
+                multiDisciplineSection.hide();
+                singleDisciplineGroup.show();
+                $('#disciplineHelpText').show();
+                
+                // Clear multi-discipline selection
+                $('#multiDisciplineSelect').val([]);
+                
+                // Load existing discipline if editing
+                const existingDiscipline = $('#disciplineSelect').data('existing-value');
+                if (existingDiscipline) {
+                    singleDisciplineSelect.val(existingDiscipline);
+                }
+            }
+            else if (selectedRole === '') {
+                // No role selected, hide both
+                multiDisciplineSection.hide();
+                singleDisciplineGroup.show();
+                $('#disciplineHelpText').show();
+            }
+        }
+        
+        // Watch for role change
+        $('#roleSelect').on('change', function() {
+            toggleDisciplineMode();
+        });
+        
+        // Initialize on page load
+        toggleDisciplineMode();
+        
+        // Store existing discipline value for editing
+        {% if admin_profile and admin_profile.discipline %}
+            $('#disciplineSelect').data('existing-value', '{{ admin_profile.discipline.id }}');
+        {% endif %}
+        
         // Form validation
         $('#adminProfileForm').on('submit', function(e) {
             let isValid = true;
+            const selectedRole = $('#roleSelect').val();
+            let errorMessage = '';
             
             // Check name fields
             $('input[name="first_name"], input[name="last_name"], input[name="father_name"]').each(function() {
                 const value = $(this).val();
                 if (value && !/^[A-Za-z ]+$/.test(value)) {
-                    alert($(this).attr('name').replace('_', ' ') + ' can only contain alphabets');
+                    errorMessage = $(this).attr('name').replace('_', ' ') + ' can only contain alphabets';
                     isValid = false;
                     return false;
                 }
             });
             
+            if (!isValid) {
+                alert(errorMessage);
+                return false;
+            }
+            
             // Check email format
             const email = $('input[name="email"]').val();
             if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
                 alert('Please enter a valid email address');
-                isValid = false;
+                return false;
             }
             
             // Check contact number if provided
             const contact = $('input[name="contact_number"]').val();
             if (contact && !/^[0-9+\-\s]+$/.test(contact)) {
                 alert('Please enter a valid contact number');
-                isValid = false;
+                return false;
             }
             
-            return isValid;
+            // Validate discipline selection based on role
+            if (multiDisciplineRoles.includes(selectedRole)) {
+                const selectedDisciplines = $('#multiDisciplineSelect').val();
+                if (!selectedDisciplines || selectedDisciplines.length === 0) {
+                    alert('Please select at least one discipline for this role');
+                    return false;
+                }
+            }
+            else if (singleDisciplineRoles.includes(selectedRole)) {
+                const selectedDiscipline = $('#disciplineSelect').val();
+                if (!selectedDiscipline) {
+                    alert('Please select a discipline for this role');
+                    return false;
+                }
+            }
+            
+            return true;
+        });
+        
+        // Optional: Add help text for multi-select
+        $('#multiDisciplineSelect').on('mousedown', function(e) {
+            e.preventDefault();
+            const select = this;
+            const scroll = select.scrollTop;
+            e.target.selected = !e.target.selected;
+            setTimeout(function() { select.scrollTop = scroll; }, 0);
+            $(select).focus();
+        }).mousemove(function(e) {
+            e.preventDefault();
+        });
+        
+        // For better UX on multi-select
+        $('#multiDisciplineSelect').on('change', function() {
+            const selected = $(this).val();
+            if (selected && selected.length > 0) {
+                $(this).css('background-color', '#e8f0fe');
+            } else {
+                $(this).css('background-color', '');
+            }
         });
     });
 </script>
+
+<style>
+    /* Multi-select styling */
+    #multiDisciplineSelect {
+        min-height: 150px;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        padding: 10px;
+    }
+    
+    #multiDisciplineSelect option {
+        padding: 8px 12px;
+        border-bottom: 1px solid #f0f0f0;
+        cursor: pointer;
+    }
+    
+    #multiDisciplineSelect option:hover {
+        background-color: #e3f2fd;
+    }
+    
+    #multiDisciplineSelect option:checked {
+        background-color: #667eea;
+        color: white;
+    }
+    
+    .form-text i {
+        margin-right: 5px;
+    }
+    
+    .alert-info {
+        background-color: #e3f2fd;
+        border-color: #90caf9;
+        color: #1565c0;
+    }
+</style>
 {% endblock %}

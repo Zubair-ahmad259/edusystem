@@ -129,7 +129,7 @@
                                         <option value="">All Disciplines</option>
                                         {% for discipline in disciplines %}
                                             <option value="{{ discipline.id }}" {% if discipline_filter == discipline.id|stringformat:"s" %}selected{% endif %}>
-                                                {{ discipline.name }}
+                                                {{ discipline.program }} in {{ discipline.field }}
                                             </option>
                                         {% endfor %}
                                     </select>
@@ -195,7 +195,7 @@
                                         <th>Employee ID</th>
                                         <th>Name</th>
                                         <th>Role</th>
-                                        <th>Discipline</th>
+                                        <th style="min-width: 250px;">Assigned Discipline(s)</th>
                                         <th>Contact</th>
                                         <th>Status</th>
                                         <th class="text-right">Actions</th>
@@ -219,7 +219,7 @@
                                                     <small class="text-muted">{{ profile.email }}</small>
                                                 </div>
                                             </div>
-                                        </td>
+                                        </div>
                                         <td>
                                             {% if profile.role == 'HOD' %}
                                                 <span class="badge badge-danger">{{ profile.get_role_display }}</span>
@@ -227,19 +227,51 @@
                                                 <span class="badge badge-warning">{{ profile.get_role_display }}</span>
                                             {% elif profile.role == 'Office Clerk' %}
                                                 <span class="badge badge-info">{{ profile.get_role_display }}</span>
+                                            {% elif profile.role == 'Accounts' %}
+                                                <span class="badge badge-success">{{ profile.get_role_display }}</span>
+                                            {% elif profile.role == 'Librarian' %}
+                                                <span class="badge badge-primary">{{ profile.get_role_display }}</span>
                                             {% else %}
                                                 <span class="badge badge-secondary">{{ profile.get_role_display }}</span>
                                             {% endif %}
-                                        </td>
-                                        <td>{{ profile.discipline.name|default:"-" }}</td>
-                                        <td><small>{{ profile.contact_number|default:"-" }}</small></td>
+                                        </div>
+                                        <td style="vertical-align: middle;">
+                                            {% if profile.role in 'Office Clerk,Accounts,Librarian' %}
+                                                {% if profile.assigned_disciplines %}
+                                                    <div class="discipline-list">
+                                                        {% for discipline_id in profile.assigned_disciplines %}
+                                                            {% for discipline in disciplines %}
+                                                                {% if discipline.id == discipline_id %}
+                                                                    <div class="discipline-item">
+                                                                        <i class="fas fa-book text-primary mr-1"></i>
+                                                                        <span class="discipline-name">{{ discipline.program }} in {{ discipline.field }}</span>
+                                                                    </div>
+                                                                {% endif %}
+                                                            {% endfor %}
+                                                        {% endfor %}
+                                                    </div>
+                                                {% else %}
+                                                    <span class="text-muted"><i class="fas fa-globe"></i> All Disciplines</span>
+                                                {% endif %}
+                                            {% else %}
+                                                {% if profile.discipline %}
+                                                    <div class="discipline-item">
+                                                        <i class="fas fa-book text-primary mr-1"></i>
+                                                        <span class="discipline-name">{{ profile.discipline.program }} in {{ profile.discipline.field }}</span>
+                                                    </div>
+                                                {% else %}
+                                                    <span class="text-muted">—</span>
+                                                {% endif %}
+                                            {% endif %}
+                                        </div>
+                                        <td><small>{{ profile.contact_number|default:"-" }}</small></div>
                                         <td>
                                             {% if profile.is_active %}
                                                 <span class="badge badge-success">Active</span>
                                             {% else %}
                                                 <span class="badge badge-danger">Inactive</span>
                                             {% endif %}
-                                        </td>
+                                        </div>
                                         <td class="text-right">
                                             <div class="btn-group" role="group">
                                                 <a href="{% url 'admin_profile:admin_profile_detail' profile.pk %}" class="btn btn-sm btn-outline-info mr-1" title="View">
@@ -252,7 +284,7 @@
                                                     <i class="fas fa-trash-alt"></i>
                                                 </a>
                                             </div>
-                                        </td>
+                                        </div>
                                      </tr>
                                     {% empty %}
                                      <tr>
@@ -260,7 +292,7 @@
                                             <i class="fas fa-users fa-4x text-muted mb-3 d-block"></i>
                                             <h5>No staff found</h5>
                                             <a href="{% url 'admin_profile:admin_profile_create' %}" class="btn btn-primary mt-2">Add Your First Staff Member</a>
-                                        </td>
+                                        </div>
                                      </tr>
                                     {% endfor %}
                                 </tbody>
@@ -360,5 +392,73 @@
     .table td {
         vertical-align: middle;
     }
+    
+    /* Discipline List Styles - Vertical Layout */
+    .discipline-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    
+    .discipline-item {
+        display: flex;
+        align-items: center;
+        padding: 4px 8px;
+        background-color: #f8f9fa;
+        border-radius: 6px;
+        border-left: 3px solid #667eea;
+        font-size: 12px;
+        transition: all 0.2s ease;
+    }
+    
+    .discipline-item:hover {
+        background-color: #e9ecef;
+        transform: translateX(3px);
+    }
+    
+    .discipline-item i {
+        font-size: 12px;
+        width: 20px;
+    }
+    
+    .discipline-name {
+        color: #495057;
+        font-weight: 500;
+    }
+    
+    /* For single discipline or no disciplines */
+    .discipline-single {
+        display: inline-block;
+        padding: 4px 10px;
+        background-color: #e3f2fd;
+        border-radius: 20px;
+        font-size: 12px;
+        color: #1565c0;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .discipline-item {
+            font-size: 10px;
+            padding: 3px 6px;
+        }
+        .discipline-item i {
+            font-size: 10px;
+        }
+    }
+    
+    /* Badge styles */
+    .badge {
+        padding: 6px 12px;
+        font-weight: 500;
+        border-radius: 20px;
+    }
+    
+    .badge-danger { background-color: #dc3545; }
+    .badge-warning { background-color: #ffc107; color: #333; }
+    .badge-info { background-color: #17a2b8; }
+    .badge-success { background-color: #28a745; }
+    .badge-primary { background-color: #667eea; }
+    .badge-secondary { background-color: #6c757d; }
 </style>
 {% endblock %}

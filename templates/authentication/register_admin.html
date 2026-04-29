@@ -450,6 +450,223 @@
 </style>
 
 <script>
+// Prevent form resubmission on page refresh
+if (window.history.replaceState) {
+    window.history.replaceState(null, null, window.location.href);
+}
+
+// Track created accounts to prevent duplicate AJAX requests
+let createdAccounts = new Set();
+
+// Get CSRF token
+function getCSRFToken() {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, 10) === 'csrftoken=') {
+                cookieValue = decodeURIComponent(cookie.substring(10));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Single account creation with duplicate prevention
+function createAccount(adminId, adminName, adminEmail) {
+    // Check if already created in this session
+    if (createdAccounts.has(adminId)) {
+        showToast(`Account for ${adminName} was already created!`, 'warning');
+        return;
+    }
+    
+    if (confirm(`Create account for ${adminName}?`)) {
+        showLoading(`Creating account for ${adminName}...`);
+        
+        fetch(window.location.href, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCSRFToken(),
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: new URLSearchParams({
+                'action': 'create_account',
+                'admin_id': adminId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideLoading();
+            if (data.success) {
+                // Mark as created to prevent duplicate
+                createdAccounts.add(adminId);
+                
+                document.getElementById('modalAdminName').innerText = adminName;
+                document.getElementById('modalAdminEmail').innerText = adminEmail;
+                document.getElementById('modalPassword').innerText = data.password;
+                $('#passwordModal').modal('show');
+                showToast(data.message, 'success');
+                
+                // Update the UI to show account is created
+                const row = document.getElementById(`admin-row-${adminId}`);
+                if (row) {
+                    // Hide create button, show reset button or status
+                    const actionCell = row.querySelector('td:last-child');
+                    if (actionCell) {
+                        actionCell.innerHTML = `
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-sm btn-outline-warning" onclick="resetPassword('${adminId}', '${adminEmail}')" title="Reset Password">
+                                    <i class="fas fa-key"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-primary" onclick="viewDetails('${adminId}')" title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        `;
+                    }
+                }
+            } else {
+                if (data.already_exists) {
+                    createdAccounts.add(adminId);
+                    showToast(data.message, 'warning');
+                } else {
+                    showToast(data.message, 'error');
+                }
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            console.error('Error:', error);
+            showToast('Error creating account', 'error');
+        });
+    }
+}
+
+// Bulk authenticate with duplicate prevention
+function bulkAuthenticateAllNoAccount() {
+    const checkboxes = document.querySelectorAll('.admin-no-account:checked');
+    const selectedAdmins = [];
+    
+    checkboxes.forEach(checkbox => {
+        const adminId = checkbox.dataset.adminId;
+        // Skip already created in this session
+        if (!createdAccounts.has(adminId)) {
+            selectedAdmins.push({
+                id: adminId,
+                name: checkbox.dataset.adminName,
+                email: checkbox.dataset.adminEmail
+            });
+        }
+    });
+    
+    if (selectedAdmins.length === 0) {
+        showToast('No new administrators selected or all already created!', 'warning');
+        return;
+    }
+    
+    if (confirm(`Create accounts for ${selectedAdmins.length} administrator(s)?`)) {
+        showLoading(`Creating accounts for ${selectedAdmins.length} administrator(s)...`);
+        let completed = 0, success = 0, failed = 0;
+        
+        selectedAdmins.forEach(admin => {
+            fetch(window.location.href, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': getCSRFToken(),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: new URLSearchParams({ action: 'create_account', admin_id: admin.id })
+            })
+            .then(res => res.json())
+            .then(data => {
+                completed++;
+                if (data.success) {
+                    success++;
+                    createdAccounts.add(admin.id);
+                    showToast(`✓ ${admin.email} created`, 'success');
+                } else {
+                    failed++;
+                    if (data.already_exists) {
+                        createdAccounts.add(admin.id);
+                        showToast(`⚠ ${admin.email} - already exists`, 'warning');
+                    } else {
+                        showToast(`✗ ${admin.email} - ${data.message}`, 'error');
+                    }
+                }
+                
+                if (completed === selectedAdmins.length) {
+                    hideLoading();
+                    showToast(`Completed! ${success} created, ${failed} failed`, success > 0 ? 'success' : 'error');
+                    setTimeout(() => location.reload(), 2000);
+                }
+            })
+            .catch(() => {
+                completed++, failed++;
+                if (completed === selectedAdmins.length) {
+                    hideLoading();
+                    showToast(`Completed! ${success} created, ${failed} failed`, 'info');
+                    setTimeout(() => location.reload(), 2000);
+                }
+            });
+        });
+    }
+}
+
+// Also add this to your existing code for reset password
+function resetPassword(adminId, adminEmail) {
+    if (confirm(`Reset password for ${adminEmail}?`)) {
+        showLoading('Resetting password...');
+        
+        fetch(window.location.href, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCSRFToken(),
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: new URLSearchParams({ action: 'reset_password', admin_id: adminId })
+        })
+        .then(res => res.json())
+        .then(data => {
+            hideLoading();
+            if (data.success) {
+                document.getElementById('modalAdminName').innerText = data.admin_name;
+                document.getElementById('modalAdminEmail').innerText = data.email;
+                document.getElementById('modalPassword').innerText = data.password;
+                $('#passwordModal').modal('show');
+                showToast(data.message, 'success');
+            } else {
+                showToast(data.message, 'error');
+            }
+        })
+        .catch(() => hideLoading() || showToast('Error resetting password', 'error'));
+    }
+}
+
+// Prevent page refresh from resubmitting POST data
+window.addEventListener('beforeunload', function() {
+    // Clear any pending requests
+    sessionStorage.removeItem('pendingCreation');
+});
+
+// On page load, check for any existing accounts and mark them as created
+document.addEventListener('DOMContentLoaded', function() {
+    // Mark existing accounts as already created
+    document.querySelectorAll('#adminsTable tbody tr').forEach(row => {
+        const statusCell = row.querySelector('td:nth-child(8)');
+        if (statusCell && statusCell.innerText.includes('Active') || statusCell.innerText.includes('Temp Password')) {
+            const adminId = row.getAttribute('data-admin-id');
+            if (adminId) createdAccounts.add(adminId);
+        }
+    });
+});
+</script>
+<script>
+    
 // Get CSRF token
 function getCSRFToken() {
     let cookieValue = null;

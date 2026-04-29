@@ -2,6 +2,12 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    # Add to urlpatterns
+    path('', views.role_based_dashboard, name='dashboard'),
+    path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
+    path('office-clerk-dashboard/', views.office_clerk_dashboard, name='office_clerk_dashboard'),
+    path('accounts-dashboard/', views.accounts_dashboard, name='accounts_dashboard'),
+    path('librarian-dashboard/', views.librarian_dashboard, name='librarian_dashboard'),
     # Authentication URLs
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
