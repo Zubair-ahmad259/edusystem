@@ -22,7 +22,7 @@ class CustomUser(AbstractUser):
     is_teacher = models.BooleanField(default=False)
     
     # Password management fields
-    password_change_deadline = models.DateTimeField(blank=True, null=True)
+    password_change_deadline = models.DateTimeField(blank=True, null=True)  # Keep but won't be used
     password_generated = models.BooleanField(default=False)
     temp_password = models.CharField(max_length=100, blank=True, null=True)
 
@@ -45,7 +45,8 @@ class CustomUser(AbstractUser):
             self.set_password(random_password)
             self.password_generated = True
             self.temp_password = random_password
-            self.password_change_deadline = timezone.now() + timedelta(hours=24)
+            # Remove the deadline - set to None (no expiration)
+            self.password_change_deadline = None
             super().save(*args, **kwargs)
             self.send_password_email(random_password)
         else:
@@ -55,30 +56,27 @@ class CustomUser(AbstractUser):
         subject = "Your Account Password"
         message = (
             f"Dear {self.first_name or 'User'},\n\n"
-            f"Welcome to the Learning Management System.\n\n"
+            f"Welcome to the edusphare  System.\n\n"
             f"Your account has been successfully created.\n\n"
             f"Login Details:\n"
             f"Username: {self.username}\n"
             f"Temporary Password: {password}\n\n"
-            f"For security reasons, please log in and change your password as soon as possible.\n"
-            f"We recommend changing your password after your first login.\n"
-            f"Note: You have 24 hours to change your password.\n\n"
-            f"Thank you for joining us.\n"
+            f"Important Information:\n"
+            f"• You can change your password anytime from your profile settings\n"
+            f"• Keep your credentials secure\n"
+            f"• Do not share your password with anyone\n\n"
+            f"Login URL: http://127.0.0.1:8000/login/\n\n"
             f"Best regards,\n"
-            f"LMS Administration Team"
+            f"edusphare Administration Team"
         )
         send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [self.email], fail_silently=False)
 
     def can_change_password(self):
-        """Check if user can change password (within deadline)"""
-        if self.password_change_deadline:
-            return timezone.now() <= self.password_change_deadline
-        return True
+        """Check if user can change password (always True now)"""
+        return True  # Always allow password change
 
     def __str__(self):
         return self.username
-
-
 # Define PasswordResetRequest AFTER CustomUser
 class PasswordResetRequest(models.Model):
     # Use string reference 'CustomUser' instead of the class name
