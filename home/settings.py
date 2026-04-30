@@ -10,8 +10,11 @@ SECRET_KEY = 'django-insecure-=th8d_##xz1lm4^be3ir)b-oh^+ifhcld8=azkqwvbvft5@ujr
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True  # Set to True for local development
 
-ALLOWED_HOSTS = []  # Empty list for local development - only localhost allowed
-
+ALLOWED_HOSTS = [
+    'edusphares.pythonanywhere.com',
+    '127.0.0.1',
+    'localhost',
+]
 # Application definition
 AUTH_USER_MODEL = 'home_auth.CustomUser'
 INSTALLED_APPS = [
