@@ -1,7 +1,8 @@
-{% extends 'assignment/base_assignment.html' %}
+{% extends 'teacher/teacher_dashboard.html' %}
 
 {% block assignment_title %}Create Assignment{% endblock %}
 
+{% block body %}
 {% block assignment_content %}
 <div class="container">
     <div class="row justify-content-center">
@@ -195,5 +196,6 @@
         return true;
     });
 </script>
+{% endblock %}
 {% endblock %}
 {% endblock %}
