@@ -1,119 +1,160 @@
-{% extends 'assignment/base_assignment.html' %}
+{% extends 'Home/base.html' %}
+{% load static %}
 
-{% block assignment_title %}{{ assignment.title }}{% endblock %}
+{% block title %}{{ assignment.title }} - Assignment Details{% endblock %}
 
-{% block assignment_content %}
-<div class="container">
-    <div class="row">
-        <div class="col-md-8">
-            <!-- Assignment Details -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h3>{{ assignment.title }}</h3>
-                    <p class="text-muted">
-                        {{ assignment.subject_assign.subject.code }} - {{ assignment.subject_assign.subject.name }}
-                    </p>
-                </div>
-                <div class="card-body">
-                    <h5>Description</h5>
-                    <p>{{ assignment.description|linebreaks }}</p>
-                    
-                    {% if assignment.assignment_file %}
-                        <a href="{{ assignment.assignment_file.url }}" class="btn btn-info" target="_blank">
-                            <i class="fas fa-download"></i> Download Assignment File
-                        </a>
-                    {% endif %}
-                    
-                    <hr>
-                    
-                    <h5>Instructions</h5>
-                    <ul>
-                        <li>Submit your assignment before the due date</li>
-                        <li>Late submissions will be marked as "Late"</li>
-                        <li>Plagiarism check will be performed automatically</li>
-                        <li>You can resubmit if needed (previous submission will be replaced)</li>
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">{{ assignment.title }}</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'index' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'assignment:student_assignment_list' %}">Assignments</a></li>
+                        <li class="breadcrumb-item active">Assignment Details</li>
                     </ul>
+                </div>
+                <div class="col-auto text-right">
+                    <a href="{% url 'assignment:student_assignment_list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left"></i> Back to Assignments
+                    </a>
                 </div>
             </div>
         </div>
-        
-        <div class="col-md-4">
-            <!-- Assignment Info -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5>Assignment Info</h5>
-                </div>
-                <div class="card-body">
-                    <p><strong>Due Date:</strong><br>
-                        {% if assignment.due_date > now %}
-                            <span class="text-success">{{ assignment.due_date|date:"M d, Y H:i" }}</span>
-                        {% else %}
-                            <span class="text-danger">{{ assignment.due_date|date:"M d, Y H:i" }}</span>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- Assignment Details Card -->
+                <div class="card">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-file-alt"></i> Assignment Description
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p>{{ assignment.description|linebreaks }}</p>
+                        
+                        {% if assignment.assignment_file %}
+                        <div class="mt-3">
+                            <a href="{{ assignment.assignment_file.url }}" class="btn btn-outline-primary" target="_blank">
+                                <i class="fas fa-download"></i> Download Assignment File
+                            </a>
+                        </div>
                         {% endif %}
-                    </p>
-                    <p><strong>Total Marks:</strong> {{ assignment.total_marks }}</p>
-                    <p><strong>Assignment Type:</strong> {{ assignment.get_assignment_type_display }}</p>
+                    </div>
                 </div>
             </div>
-            
-            <!-- Submission Status -->
-            <div class="card">
-                <div class="card-header">
-                    <h5>Your Submission</h5>
-                </div>
-                <div class="card-body">
-                    {% if submission %}
-                        <div class="alert alert-success">
-                            <strong>Submitted!</strong><br>
-                            Date: {{ submission.submitted_date|date:"M d, Y H:i" }}<br>
-                            Status: <span class="status-badge status-{{ submission.status }}">{{ submission.status|upper }}</span>
+
+            <div class="col-lg-4">
+                <!-- Assignment Info Card -->
+                <div class="card">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-info-circle"></i> Assignment Info
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="info-item mb-3">
+                            <label class="text-muted">Subject</label>
+                            <p class="mb-0"><strong>{{ assignment.subject_assign.subject.code }} - {{ assignment.subject_assign.subject.name }}</strong></p>
                         </div>
-                        
-                        {% if submission.marks_obtained %}
+                        <div class="info-item mb-3">
+                            <label class="text-muted">Due Date</label>
+                            <p class="mb-0">
+                                {% if assignment.due_date > now %}
+                                    <span class="text-success">{{ assignment.due_date|date:"M d, Y H:i" }}</span>
+                                {% else %}
+                                    <span class="text-danger">{{ assignment.due_date|date:"M d, Y H:i" }}</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="info-item mb-3">
+                            <label class="text-muted">Total Marks</label>
+                            <p class="mb-0"><strong>{{ assignment.total_marks }}</strong></p>
+                        </div>
+                        <div class="info-item mb-3">
+                            <label class="text-muted">Assignment Type</label>
+                            <p><span class="badge badge-primary">{{ assignment.get_assignment_type_display }}</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submission Status Card -->
+                <div class="card">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-upload"></i> Your Submission
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if submission %}
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle"></i>
+                                <strong>Submitted!</strong><br>
+                                Date: {{ submission.submitted_date|date:"M d, Y H:i" }}<br>
+                                Status: <span class="badge badge-info">{{ submission.status|upper }}</span>
+                            </div>
+                            
+                            {% if submission.marks_obtained %}
                             <div class="alert alert-info">
                                 <strong>Grade:</strong> {{ submission.marks_obtained }}/{{ assignment.total_marks }}<br>
                                 <strong>Feedback:</strong> {{ submission.teacher_feedback|default:"No feedback yet" }}
                             </div>
-                        {% endif %}
-                        
-                        {% if submission.submission_file %}
-                            <a href="{{ submission.submission_file.url }}" class="btn btn-sm btn-info" target="_blank">
+                            {% endif %}
+                            
+                            {% if submission.submission_file %}
+                            <a href="{{ submission.submission_file.url }}" class="btn btn-sm btn-outline-info" target="_blank">
                                 <i class="fas fa-download"></i> Download Your Submission
                             </a>
+                            {% endif %}
+                        {% else %}
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <strong>Not Submitted Yet</strong>
+                            </div>
                         {% endif %}
                         
                         {% if can_submit %}
-                            <hr>
-                            <p class="text-warning">You can resubmit if needed</p>
-                        {% endif %}
-                    {% else %}
-                        <div class="alert alert-warning">
-                            <strong>Not Submitted Yet</strong>
-                        </div>
-                    {% endif %}
-                    
-                    {% if can_submit %}
-                        <form method="post" enctype="multipart/form-data">
+                        <form method="post" enctype="multipart/form-data" class="mt-3">
                             {% csrf_token %}
-                            <div class="mb-3">
-                                <label for="submission_file" class="form-label">Upload Assignment</label>
-                                <input type="file" class="form-control" id="submission_file" name="submission_file" 
+                            <div class="form-group">
+                                <label>Upload Assignment</label>
+                                <input type="file" class="form-control" name="submission_file" 
                                        accept=".pdf,.doc,.docx,.txt,.zip" required>
                                 <small class="text-muted">Allowed formats: PDF, DOC, DOCX, TXT, ZIP</small>
                             </div>
-                            <button type="submit" class="btn btn-success w-100">
+                            <button type="submit" class="btn btn-success btn-block">
                                 <i class="fas fa-upload"></i> Submit Assignment
                             </button>
                         </form>
-                    {% elif not submission %}
-                        <div class="alert alert-danger">
+                        {% elif not submission %}
+                        <div class="alert alert-danger mt-3">
+                            <i class="fas fa-times-circle"></i>
                             <strong>Submission Closed!</strong><br>
                             The due date has passed or assignment is closed.
                         </div>
-                    {% endif %}
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .info-item label {
+        font-size: 12px;
+        margin-bottom: 3px;
+    }
+    .badge-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+</style>
 {% endblock %}

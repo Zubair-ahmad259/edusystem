@@ -1,527 +1,931 @@
-{% extends 'timetables/base.html' %}
+{% extends 'Home/base.html' %}
 {% load static %}
 
-{% block title %}Timetable Management Dashboard{% endblock %}
+{% block title %}Timetable Management Dashboard - EduSphere{% endblock %}
 
-{% block content %}
-<div class="container-fluid py-4">
-    <!-- Header Section -->
-    <div class="row mb-4">
-        <div class="col">
-            <h2 class="text-primary">
-                <i class="fas fa-calendar-alt"></i> Timetable Management Dashboard
-            </h2>
-            <p class="text-muted">Manage and view timetables, schedules, and assignments</p>
-        </div>
-        <div class="col text-end">
-            <div class="btn-group">
-                <button onclick="window.print()" class="btn btn-secondary">
-                    <i class="fas fa-print"></i> Print
-                </button>
-                <button onclick="location.reload()" class="btn btn-info">
-                    <i class="fas fa-sync-alt"></i> Refresh
-                </button>
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        
+        <!-- Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags == 'warning' %}warning{% else %}success{% endif %} alert-dismissible fade show">
+                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %} mr-2"></i>
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Timetable Management</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'index' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Timetable</li>
+                    </ul>
+                </div>
+                <div class="col-auto">
+                    <div class="btn-group">
+                        <button onclick="window.print()" class="btn btn-outline-primary">
+                            <i class="fas fa-print"></i> Print
+                        </button>
+                        <button onclick="location.reload()" class="btn btn-outline-info">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Statistics Cards -->
-    <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-primary shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                Total Classes
+        <!-- Statistics Cards -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card dash-widget">
+                    <div class="card-body">
+                        <span class="dash-widget-icon"><i class="fas fa-chalkboard-teacher"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ total_classes|default:0 }}</h3>
+                            <span>Total Classes</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card dash-widget">
+                    <div class="card-body">
+                        <span class="dash-widget-icon"><i class="fas fa-users"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ active_teachers|default:0 }}</h3>
+                            <span>Active Teachers</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card dash-widget">
+                    <div class="card-body">
+                        <span class="dash-widget-icon"><i class="fas fa-layer-group"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ active_sections|default:0 }}</h3>
+                            <span>Active Sections</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card dash-widget">
+                    <div class="card-body">
+                        <span class="dash-widget-icon"><i class="fas fa-door-open"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ total_classrooms|default:0 }}</h3>
+                            <span>Classrooms</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions Section -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-bolt"></i> Quick Actions
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% if user.is_superuser or user.role == 'admin' %}
+                            <div class="col-md-2 col-sm-6 mb-3">
+                                <a href="{% url 'timetables:section_list_timetable' %}" class="btn btn-outline-primary btn-block py-3">
+                                    <i class="fas fa-layer-group fa-2x mb-2 d-block"></i>
+                                    Sections
+                                </a>
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_classes }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-chalkboard-teacher fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                Total Exams
+                            <div class="col-md-2 col-sm-6 mb-3">
+                                <a href="{% url 'timetables:classroom_list' %}" class="btn btn-outline-success btn-block py-3">
+                                    <i class="fas fa-building fa-2x mb-2 d-block"></i>
+                                    Classrooms
+                                </a>
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_exams }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-file-alt fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-info shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                Active Teachers
+                            <div class="col-md-2 col-sm-6 mb-3">
+                                <a href="{% url 'timetables:laboratory_list' %}" class="btn btn-outline-info btn-block py-3">
+                                    <i class="fas fa-flask fa-2x mb-2 d-block"></i>
+                                    Laboratories
+                                </a>
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ active_teachers }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-users fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                Active Sections
+                            <div class="col-md-2 col-sm-6 mb-3">
+                                <a href="{% url 'timetables:exam_timetable' %}" class="btn btn-outline-secondary btn-block py-3">
+                                    <i class="fas fa-clock fa-2x mb-2 d-block"></i>
+                                    exam datesheets
+                                </a>
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ active_sections }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-layer-group fa-2x text-gray-300"></i>
+                            <div class="col-md-2 col-sm-6 mb-3">
+                                <a href="{% url 'timetables:generate_teacher_list' %}" class="btn btn-outline-dark btn-block py-3">
+                                    <i class="fas fa-chalkboard-teacher fa-2x mb-2 d-block"></i>
+                                    Generate
+                                </a>
+                            </div>
+                            <div class="col-md-2 col-sm-6 mb-3">
+                                <a href="{% url 'timetables:check_conflicts' %}" class="btn btn-outline-warning btn-block py-3">
+                                    <i class="fas fa-exclamation-triangle fa-2x mb-2 d-block"></i>
+                                    Conflicts
+                                </a>
+                            </div>
+                            {% endif %}
+                            {% if user.teacher %}
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <a href="{% url 'timetables:teacher_availability' %}" class="btn btn-outline-primary btn-block py-3">
+                                    <i class="fas fa-calendar-check fa-2x mb-2 d-block"></i>
+                                    My Availability
+                                </a>
+                            </div>
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <a href="{% url 'timetables:teacher_timetable' %}" class="btn btn-outline-success btn-block py-3">
+                                    <i class="fas fa-chalkboard-teacher fa-2x mb-2 d-block"></i>
+                                    My Timetable
+                                </a>
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Today's Schedule Section -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card shadow">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-calendar-day"></i> Today's Schedule - {{ today|date:"l, F j, Y" }}
-                    </h5>
-                </div>
-                <div class="card-body">
-                    {% if today_schedule %}
-                    <div class="table-responsive">
-                        <table class="table table-bordered">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>Time</th>
-                                    <th>Subject</th>
-                                    <th>Teacher</th>
-                                    <th>Section</th>
-                                    <th>Classroom</th>
-                                    <th>Type</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for entry in today_schedule %}
-                                <tr>
-                                    <td>{{ entry.time_slot.start_time|time:"g:i A" }} - {{ entry.time_slot.end_time|time:"g:i A" }}</td>
-                                    <td>
-                                        <strong>{{ entry.subject.code }}</strong><br>
-                                        <small>{{ entry.subject.name }}</small>
-                                    </td>
-                                    <td>{{ entry.teacher.first_name }} {{ entry.teacher.last_name }}</td>
-                                    <td>{{ entry.section.name }}</td>
-                                    <td>{{ entry.classroom.room_number }}</td>
-                                    <td>
-                                        {% if entry.is_exam %}
-                                        <span class="badge bg-danger">Exam</span>
-                                        {% else %}
-                                        <span class="badge bg-success">Class</span>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+        <!-- All Teachers Availability Table - Full View (No Dropdown) -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card card-table">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-users"></i> All Teachers Availability
+                        </h5>
                     </div>
-                    {% else %}
-                    <div class="alert alert-info text-center">
-                        <i class="fas fa-info-circle"></i> No classes scheduled for today.
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-center mb-0 datatable" id="teachersAvailabilityTable">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Teacher</th>
+                                        <th>Department</th>
+                                        <th>Email</th>
+                                        <th>Contact</th>
+                                        <th>Status</th>
+                                        <th class="text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if all_teachers %}
+                                    {% for teacher in all_teachers %}
+                                    <tr class="align-middle">
+                                        <td>{{ forloop.counter }}</td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar avatar-sm mr-2">
+                                                    {% if teacher.image %}
+                                                        <img class="avatar-img rounded-circle" src="{{ teacher.image.url }}" alt="{{ teacher.first_name }}" width="35" height="35">
+                                                    {% else %}
+                                                        <div class="avatar-img rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width:35px;height:35px;">
+                                                            <span style="font-size:14px;">{{ teacher.first_name|slice:":1" }}{{ teacher.last_name|slice:":1" }}</span>
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                                <div>
+                                                    <a href="#" class="font-weight-bold text-dark teacher-name" data-id="{{ teacher.id }}" data-name="{{ teacher.first_name }} {{ teacher.last_name }}">
+                                                        {{ teacher.first_name }} {{ teacher.last_name }}
+                                                    </a>
+                                                    <br>
+                                                    <small class="text-muted">{{ teacher.designation|default:"Teacher" }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-info badge-pill">{{ teacher.department|default:"CS" }}</span>
+                                        </td>
+                                        <td><small>{{ teacher.email }}</small></td>
+                                        <td><small>{{ teacher.contact_number|default:"—" }}</small></td>
+                                        <td>
+                                            {% if teacher.is_active %}
+                                                <span class="badge badge-success">
+                                                    <i class="fas fa-check-circle"></i> Active
+                                                </span>
+                                            {% else %}
+                                                <span class="badge badge-secondary">
+                                                    <i class="fas fa-clock"></i> Inactive
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            <button type="button" class="btn btn-sm btn-outline-primary view-availability" 
+                                                    data-teacher-id="{{ teacher.id }}"
+                                                    data-teacher-name="{{ teacher.first_name }} {{ teacher.last_name }}">
+                                                <i class="fas fa-calendar-alt"></i> View Schedule
+                                            </button>
+                                            <a href="{% url 'timetables:teacher_timetable' teacher.id %}" class="btn btn-sm btn-outline-success">
+                                                <i class="fas fa-chalkboard-teacher"></i> Timetable
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                    {% else %}
+                                    <tr>
+                                        <td colspan="7" class="text-center py-5">
+                                            <i class="fas fa-chalkboard-teacher fa-4x text-muted mb-3 d-block"></i>
+                                            <h5>No teachers found</h5>
+                                            <p class="text-muted">No teacher records available in the system.</p>
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                    {% endif %}
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Quick Actions and Upcoming Exams -->
-    <div class="row">
-        <!-- Quick Actions Panel -->
-        <div class="col-md-4 mb-4">
-            <div class="card shadow">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-bolt"></i> Quick Actions
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="list-group">
-                        {% if user.is_superuser or user.role == 'admin' %}
-                        <!-- Section Management -->
-                        <a href="{% url 'timetables:section_list_timetable' %}" class="list-group-item list-group-item-action">
-                            <i class="fas fa-layer-group"></i> View All Sections
-                        </a>
-                        
-                        <!-- Classroom Management -->
-                        <a href="{% url 'timetables:classroom_list' %}" class="list-group-item list-group-item-action">
-                            <i class="fas fa-building"></i> Manage Classrooms
-                        </a>
-                        <a href="{% url 'timetables:classroom_create' %}" class="list-group-item list-group-item-action">
-                            <i class="fas fa-plus-circle"></i> Add New Classroom
-                        </a>
-                        
-                        <!-- Laboratory Management -->
-                        <a href="{% url 'timetables:laboratory_list' %}" class="list-group-item list-group-item-action">
-                            <i class="fas fa-flask"></i> Manage Laboratories
-                        </a>
-                        <a href="{% url 'timetables:laboratory_create' %}" class="list-group-item list-group-item-action">
-                            <i class="fas fa-plus-circle"></i> Add Laboratory
-                        </a>
-                        
-                        <!-- Time Slot Management -->
-                        <a href="{% url 'timetables:time_slot_list' %}" class="list-group-item list-group-item-action">
-                            <i class="fas fa-clock"></i> View Time Slots
-                        </a>
-                        <a href="{% url 'timetables:time_slot_create' %}" class="list-group-item list-group-item-action">
-                            <i class="fas fa-plus-circle"></i> Add Time Slot
-                        </a>
-                        
-                        <!-- Timetable Generation -->
-                        <a href="{% url 'timetables:generate_teacher_list' %}" class="list-group-item list-group-item-action">
-                            <i class="fas fa-chalkboard-teacher"></i> Generate Teacher Timetable
-                        </a>
-                        
-                        <!-- Conflict Management -->
-                        <a href="{% url 'timetables:check_conflicts' %}" class="list-group-item list-group-item-action">
-                            <i class="fas fa-exclamation-triangle"></i> Check Conflicts
-                        </a>
-                        
-                        <!-- Exam Management -->
-                        <a href="{% url 'timetables:create_exam_timetable' %}" class="list-group-item list-group-item-action">
-                            <i class="fas fa-plus-circle"></i> Create Exam Timetable
-                        </a>
+        <!-- Classroom Utilization & Today's Schedule -->
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-door-open"></i> Classroom Utilization
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Classroom</th>
+                                        <th>Capacity</th>
+                                        <th>Classes/Week</th>
+                                        <th>Utilization</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for classroom in classroom_utilization|slice:":5" %}
+                                    <tr class="align-middle">
+                                        <td><strong>{{ classroom.room_number }}</strong></td>
+                                        <td>{{ classroom.capacity }}</td>
+                                        <td>{{ classroom.class_count }}</td>
+                                        <td>
+                                            <div class="progress" style="height: 6px;">
+                                                <div class="progress-bar 
+                                                    {% if classroom.utilization > 80 %}bg-danger
+                                                    {% elif classroom.utilization > 60 %}bg-warning
+                                                    {% else %}bg-success{% endif %}" 
+                                                    style="width: {{ classroom.utilization }}%">
+                                                </div>
+                                            </div>
+                                            <small class="text-muted">{{ classroom.utilization }}%</small>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center">No classroom data available</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% if classroom_utilization|length > 5 %}
+                        <div class="text-center mt-3">
+                            <a href="{% url 'timetables:classroom_list' %}" class="btn btn-sm btn-outline-primary">
+                                View All Classrooms
+                            </a>
+                        </div>
                         {% endif %}
-                        
-                        {% if user.teacher %}
-                        <a href="{% url 'timetables:teacher_availability' %}" class="list-group-item list-group-item-action">
-                            <i class="fas fa-calendar-check"></i> Set My Availability
-                        </a>
-                        <a href="{% url 'timetables:my_timetable' %}" class="list-group-item list-group-item-action">
-                            <i class="fas fa-chalkboard-teacher"></i> View My Timetable
-                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 mb-4">
+                <div class="card card-table">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-calendar-day"></i> Today's Schedule - {{ today|date:"l, F j, Y" }}
+                            </h5>
+                            
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        {% if today_schedule %}
+                        <div class="table-responsive">
+                            <table class="table table-hover table-center mb-0">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Subject</th>
+                                        <th>Teacher</th>
+                                        <th>Section</th>
+                                        <th>Classroom</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for entry in today_schedule %}
+                                    <tr class="align-middle">
+                                        <td>
+                                            <strong>{{ entry.time_slot.start_time|time:"g:i A" }}</strong>
+                                            <br>
+                                            <small class="text-muted">{{ entry.time_slot.end_time|time:"g:i A" }}</small>
+                                        </td>
+                                        <td>
+                                            <strong>{{ entry.subject.code }}</strong>
+                                            <br>
+                                            <small class="text-muted">{{ entry.subject.name|truncatechars:25 }}</small>
+                                        </td>
+                                        <td>{{ entry.teacher.first_name }} {{ entry.teacher.last_name }}</td>
+                                        <td><span class="badge badge-info">{{ entry.section.name }}</span></td>
+                                        <td>{{ entry.classroom.room_number }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="empty-state text-center py-4">
+                            <i class="fas fa-calendar-day fa-3x text-muted mb-2 d-block"></i>
+                            <h6>No classes scheduled for today</h6>
+                            <p class="text-muted small">Enjoy your free day!</p>
+                        </div>
                         {% endif %}
-                        
-                        <a href="{% url 'timetables:exam_timetable' %}" class="list-group-item list-group-item-action">
-                            <i class="fas fa-file-alt"></i> View Exam Timetable
-                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Weekly Statistics -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-line"></i> Weekly Statistics
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Day</th>
+                                        <th>Total Classes</th>
+                                        <th>Total Exams</th>
+                                        <th>Busy Hours</th>
+                                        <th>Most Active Section</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for day, stats in weekly_stats.items %}
+                                    <tr>
+                                        <td><strong>{{ day }}</strong></td>
+                                        <td>{{ stats.total_classes }}</td>
+                                        <td>{{ stats.total_exams }}</td>
+                                        <td>{{ stats.busy_hours }} hrs</td>
+                                        <td>{{ stats.most_active_section|default:"—" }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Upcoming Exams -->
-        <div class="col-md-4 mb-4">
-            <div class="card shadow">
-                <div class="card-header bg-danger text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-calendar-alt"></i> Upcoming Exams
-                    </h5>
-                </div>
-                <div class="card-body">
-                    {% if upcoming_exams %}
-                    <div class="list-group">
-                        {% for exam in upcoming_exams %}
-                        <div class="list-group-item">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">{{ exam.subject.code }} - {{ exam.subject.name }}</h6>
-                                <small>{{ exam.exam_date|date:"M d" }}</small>
-                            </div>
-                            <p class="mb-1">
-                                <small>
-                                    <i class="fas fa-user"></i> {{ exam.teacher.first_name }} {{ exam.teacher.last_name }}<br>
-                                    <i class="fas fa-users"></i> {{ exam.section.name }} | 
-                                    <i class="fas fa-clock"></i> {{ exam.start_time|time:"g:i A" }} - {{ exam.end_time|time:"g:i A" }}
-                                </small>
-                            </p>
-                            <small class="text-muted">
-                                <span class="badge {% if exam.exam_type == 'final' %}bg-danger{% else %}bg-warning{% endif %}">
-                                    {{ exam.get_exam_type_display }}
-                                </span>
-                            </small>
+        {% if upcoming_exams %}
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-warning text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-calendar-alt"></i> Upcoming Exams (Next 7 Days)
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Subject</th>
+                                        <th>Teacher</th>
+                                        <th>Section</th>
+                                        <th>Time</th>
+                                        <th>Classroom</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for exam in upcoming_exams %}
+                                    <tr>
+                                        <td><strong>{{ exam.exam_date|date:"M d, Y" }}</strong></td>
+                                        <td>{{ exam.subject.code }} - {{ exam.subject.name|truncatechars:30 }}</td>
+                                        <td>{{ exam.teacher.first_name }} {{ exam.teacher.last_name }}</td>
+                                        <td><span class="badge badge-info">{{ exam.section.name }}</span></td>
+                                        <td>{{ exam.start_time|time:"g:i A" }} - {{ exam.end_time|time:"g:i A" }}</td>
+                                        <td>{{ exam.classroom.room_number|default:"—" }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
                         </div>
-                        {% endfor %}
                     </div>
-                    {% else %}
-                    <div class="alert alert-info text-center">
-                        <i class="fas fa-info-circle"></i> No upcoming exams scheduled.
-                    </div>
-                    {% endif %}
                 </div>
             </div>
         </div>
+        {% endif %}
 
-        <!-- Teacher Availability Status -->
-        <div class="col-md-4 mb-4">
-            <div class="card shadow">
-                <div class="card-header bg-info text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-user-clock"></i> Teacher Availability Status
-                    </h5>
-                </div>
-                <div class="card-body">
-                    {% if teacher_availability %}
-                    <div class="table-responsive">
-                        <table class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th>Teacher</th>
-                                    <th>Today's Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for teacher in teacher_availability|slice:":5" %}
-                                <tr>
-                                    <td>{{ teacher.first_name }} {{ teacher.last_name }}</td>
-                                    <td>
-                                        {% if teacher.is_available_today %}
-                                        <span class="badge bg-success">Available</span>
-                                        {% else %}
-                                        <span class="badge bg-danger">Unavailable</span>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+        <!-- Recent Generation Requests -->
+        {% if recent_requests %}
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-history"></i> Recent Generation Requests
+                        </h5>
                     </div>
-                    {% else %}
-                    <div class="alert alert-info text-center">
-                        <i class="fas fa-info-circle"></i> No availability data available.
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Teacher/Section</th>
+                                        <th>Batch</th>
+                                        <th>Semester</th>
+                                        <th>Status</th>
+                                        <th>Created At</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for request in recent_requests %}
+                                    <tr>
+                                        <td>
+                                            {% if request.teacher %}
+                                                {{ request.teacher.first_name }} {{ request.teacher.last_name }}
+                                            {% elif request.section %}
+                                                Section: {{ request.section.name }}
+                                            {% else %}
+                                                —
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ request.batch.name|default:"—" }}</td>
+                                        <td>Semester {{ request.semester.number|default:"—" }}</td>
+                                        <td>
+                                            {% if request.status == 'completed' %}
+                                                <span class="badge badge-success">Completed</span>
+                                            {% elif request.status == 'pending' %}
+                                                <span class="badge badge-warning">Pending</span>
+                                            {% elif request.status == 'failed' %}
+                                                <span class="badge badge-danger">Failed</span>
+                                            {% endif %}
+                                        </td>
+                                        <td><small>{{ request.created_at|date:"M d, Y H:i" }}</small></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                    {% endif %}
                 </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Conflict Warnings -->
+        {% if conflicts_exist %}
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card border-danger">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-exclamation-triangle"></i> Conflict Warnings
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% if teacher_conflicts_count > 0 %}
+                            <div class="col-md-4">
+                                <div class="alert alert-danger mb-0">
+                                    <i class="fas fa-chalkboard-teacher"></i> 
+                                    <strong>{{ teacher_conflicts_count }}</strong> Teacher conflicts found
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% if section_conflicts_count > 0 %}
+                            <div class="col-md-4">
+                                <div class="alert alert-danger mb-0">
+                                    <i class="fas fa-users"></i> 
+                                    <strong>{{ section_conflicts_count }}</strong> Section conflicts found
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% if classroom_conflicts_count > 0 %}
+                            <div class="col-md-4">
+                                <div class="alert alert-danger mb-0">
+                                    <i class="fas fa-door-open"></i> 
+                                    <strong>{{ classroom_conflicts_count }}</strong> Classroom conflicts found
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="text-center mt-3">
+                            <a href="{% url 'timetables:check_conflicts' %}" class="btn btn-danger">
+                                <i class="fas fa-search"></i> View All Conflicts
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Teacher Availability Modal -->
+<div class="modal fade" id="teacherAvailabilityModal" tabindex="-1" role="dialog" aria-labelledby="teacherAvailabilityModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-gradient-primary text-white">
+                <h5 class="modal-title" id="teacherAvailabilityModalLabel">
+                    <i class="fas fa-calendar-alt"></i> Teacher Availability Schedule
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="availabilityModalBody">
+                <div class="text-center py-4">
+                    <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+                    <p class="mt-2">Loading availability data...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
-
-    <!-- Weekly Schedule Overview -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card shadow">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-calendar-week"></i> Weekly Schedule Overview
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-bordered timetable-table">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>Day</th>
-                                    <th>Total Classes</th>
-                                    <th>Total Exams</th>
-                                    <th>Busy Hours</th>
-                                    <th>Most Active Section</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for day, stats in weekly_stats.items %}
-                                <tr>
-                                    <td class="fw-bold">{{ day }}</td>
-                                    <td>{{ stats.total_classes }}</td>
-                                    <td>{{ stats.total_exams }}</td>
-                                    <td>{{ stats.busy_hours }} hours</td>
-                                    <td>{{ stats.most_active_section|default:"-" }}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Room Utilization -->
-    <div class="row mt-4">
-        <div class="col-md-6 mb-4">
-            <div class="card shadow">
-                <div class="card-header bg-warning text-dark">
-                    <h5 class="mb-0">
-                        <i class="fas fa-door-open"></i> Classroom Utilization
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th>Classroom</th>
-                                    <th>Capacity</th>
-                                    <th>Classes/Week</th>
-                                    <th>Utilization</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for classroom in classroom_utilization %}
-                                <tr>
-                                    <td>{{ classroom.room_number }}</td>
-                                    <td>{{ classroom.capacity }}</td>
-                                    <td>{{ classroom.class_count }}</td>
-                                    <td>
-                                        <div class="progress">
-                                            <div class="progress-bar {% if classroom.utilization > 80 %}bg-danger{% elif classroom.utilization > 60 %}bg-warning{% else %}bg-success{% endif %}" 
-                                                 style="width: {{ classroom.utilization }}%">
-                                                {{ classroom.utilization }}%
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Recent Timetable Generation Requests -->
-        <div class="col-md-6 mb-4">
-            <div class="card shadow">
-                <div class="card-header bg-secondary text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-history"></i> Recent Generation Requests
-                    </h5>
-                </div>
-                <div class="card-body">
-                    {% if recent_requests %}
-                    <div class="list-group">
-                        {% for request in recent_requests %}
-                        <div class="list-group-item">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">
-                                    {% if request.teacher %}
-                                    Teacher: {{ request.teacher.first_name }} {{ request.teacher.last_name }}
-                                    {% elif request.section %}
-                                    Section: {{ request.section.name }}
-                                    {% endif %}
-                                </h6>
-                                <small>{{ request.created_at|timesince }} ago</small>
-                            </div>
-                            <p class="mb-1">
-                                <small>
-                                    Batch: {{ request.batch.name }} | 
-                                    Semester: {{ request.semester.number }}
-                                </small>
-                            </p>
-                            <span class="badge {% if request.status == 'completed' %}bg-success{% elif request.status == 'failed' %}bg-danger{% elif request.status == 'processing' %}bg-info{% else %}bg-warning{% endif %}">
-                                {{ request.status|upper }}
-                            </span>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% else %}
-                    <div class="alert alert-info text-center">
-                        <i class="fas fa-info-circle"></i> No generation requests found.
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Conflict Warnings -->
-    {% if conflicts_exist %}
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card border-danger shadow">
-                <div class="card-header bg-danger text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-exclamation-triangle"></i> Conflict Warnings
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-circle"></i> 
-                        <strong>Attention!</strong> There are timetable conflicts that need your attention.
-                    </div>
-                    <div class="row">
-                        {% if teacher_conflicts_count > 0 %}
-                        <div class="col-md-4">
-                            <div class="alert alert-danger">
-                                <i class="fas fa-chalkboard-teacher"></i> 
-                                <strong>{{ teacher_conflicts_count }}</strong> Teacher conflicts found
-                            </div>
-                        </div>
-                        {% endif %}
-                        {% if section_conflicts_count > 0 %}
-                        <div class="col-md-4">
-                            <div class="alert alert-danger">
-                                <i class="fas fa-users"></i> 
-                                <strong>{{ section_conflicts_count }}</strong> Section conflicts found
-                            </div>
-                        </div>
-                        {% endif %}
-                        {% if classroom_conflicts_count > 0 %}
-                        <div class="col-md-4">
-                            <div class="alert alert-danger">
-                                <i class="fas fa-door-open"></i> 
-                                <strong>{{ classroom_conflicts_count }}</strong> Classroom conflicts found
-                            </div>
-                        </div>
-                        {% endif %}
-                    </div>
-                    <div class="text-center">
-                        <a href="{% url 'timetables:check_conflicts' %}" class="btn btn-danger">
-                            <i class="fas fa-search"></i> View All Conflicts
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
 </div>
 
 <style>
-    .border-left-primary {
-        border-left: 0.25rem solid #4e73df !important;
+    .dash-widget {
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
     }
-    .border-left-success {
-        border-left: 0.25rem solid #1cc88a !important;
+    
+    .dash-widget:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     }
-    .border-left-info {
-        border-left: 0.25rem solid #36b9cc !important;
+    
+    .dash-widget-icon {
+        font-size: 40px;
+        float: left;
+        width: 70px;
+        height: 70px;
+        line-height: 70px;
+        text-align: center;
+        background: rgba(0,0,0,0.05);
+        border-radius: 50%;
+        margin-right: 15px;
     }
-    .border-left-warning {
-        border-left: 0.25rem solid #f6c23e !important;
+    
+    .dash-widget-info {
+        overflow: hidden;
     }
+    
+    .dash-widget-info h3 {
+        font-size: 28px;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+    
+    .dash-widget-info span {
+        font-size: 14px;
+        color: #6c757d;
+        font-weight: 500;
+    }
+    
+    .card {
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-bottom: none;
+        border-radius: 10px 10px 0 0;
+        padding: 12px 20px;
+    }
+    
+    .card-header .card-title {
+        color: white;
+        margin-bottom: 0;
+    }
+    
+    .card-header.bg-warning {
+        background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+    }
+    
+    .card-header.bg-danger {
+        background: linear-gradient(135deg, #e74a3b 0%, #c0392b 100%);
+    }
+    
+    .card-header.bg-info {
+        background: linear-gradient(135deg, #36b9cc 0%, #258391 100%);
+    }
+    
+    .card-body {
+        padding: 20px;
+    }
+    
+    .card-table .card-header {
+        background: transparent;
+        color: inherit;
+        border-bottom: 1px solid rgba(0,0,0,0.125);
+        padding: 15px 20px;
+    }
+    
+    .card-table .card-header .card-title {
+        color: #2c3e50;
+        font-weight: 600;
+    }
+    
+    .btn-outline-primary, .btn-outline-success, .btn-outline-info, 
+    .btn-outline-secondary, .btn-outline-dark, .btn-outline-warning {
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+    
+    .btn-block {
+        padding: 15px;
+    }
+    
+    .btn-block i {
+        transition: all 0.3s ease;
+    }
+    
+    .btn-block:hover i {
+        transform: scale(1.05);
+    }
+    
+    .table td {
+        vertical-align: middle;
+        padding: 12px 12px;
+    }
+    
+    .table th {
+        padding: 12px;
+        font-weight: 600;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .thead-light th {
+        background: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+        color: #495057;
+    }
+    
+    .badge {
+        padding: 5px 12px;
+        font-weight: 500;
+        border-radius: 20px;
+    }
+    
+    .badge-info {
+        background: linear-gradient(135deg, #36b9cc 0%, #258391 100%);
+    }
+    
+    .badge-success {
+        background: linear-gradient(135deg, #1cc88a 0%, #13855c 100%);
+    }
+    
+    .badge-danger {
+        background: linear-gradient(135deg, #e74a3b 0%, #be2617 100%);
+    }
+    
+    .badge-warning {
+        background: linear-gradient(135deg, #f6c23e 0%, #dda20a 100%);
+    }
+    
     .progress {
-        height: 20px;
+        border-radius: 20px;
+        background-color: #e9ecef;
+        height: 6px;
     }
-    .timetable-table {
-        font-size: 0.9rem;
+    
+    .progress-bar {
+        border-radius: 20px;
     }
-    @media print {
-        .btn, .quick-actions, .card-header .btn {
-            display: none !important;
+    
+    .empty-state {
+        padding: 40px 20px;
+        text-align: center;
+    }
+    
+    .empty-state i {
+        opacity: 0.5;
+    }
+    
+    .alert {
+        border-radius: 10px;
+        border: none;
+    }
+    
+    .page-header {
+        margin-bottom: 25px;
+    }
+    
+    .page-title {
+        font-size: 24px;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 5px;
+    }
+    
+    .breadcrumb {
+        background: transparent;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .avatar {
+        display: inline-block;
+        position: relative;
+        width: 35px;
+        height: 35px;
+    }
+    
+    .avatar-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .availability-day-card {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 10px;
+        border-left: 4px solid #667eea;
+    }
+    
+    .availability-time-slot {
+        background: white;
+        border-radius: 6px;
+        padding: 8px 12px;
+        margin: 5px 0;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    
+    @media (max-width: 768px) {
+        .dash-widget-icon {
+            width: 50px;
+            height: 50px;
+            line-height: 50px;
+            font-size: 25px;
         }
-        .card {
-            break-inside: avoid;
+        .dash-widget-info h3 {
+            font-size: 20px;
+        }
+        .table td, .table th {
+            padding: 10px 8px;
+            font-size: 12px;
+        }
+        .btn-block {
+            padding: 10px;
+            font-size: 14px;
+        }
+        .btn-block i {
+            font-size: 24px !important;
         }
     }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle View Schedule button click
+    document.querySelectorAll('.view-availability').forEach(button => {
+        button.addEventListener('click', function() {
+            const teacherId = this.getAttribute('data-teacher-id');
+            const teacherName = this.getAttribute('data-teacher-name');
+            
+            const modal = $('#teacherAvailabilityModal');
+            const modalBody = document.getElementById('availabilityModalBody');
+            
+            modalBody.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+                    <p class="mt-2">Loading availability for ${teacherName}...</p>
+                </div>
+            `;
+            
+            modal.modal('show');
+            
+            // Fetch availability from API
+            const url = `/timetables/api/teacher-availability/${teacherId}/`;
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.availability && data.availability.length > 0) {
+                        let html = `
+                            <div class="mb-3">
+                                <div class="alert alert-success">
+                                    <i class="fas fa-check-circle"></i>
+                                    <strong>${data.teacher_name}</strong> - Weekly Availability Schedule
+                                </div>
+                            </div>
+                            <div class="row">
+                        `;
+                        
+                        data.availability.forEach(item => {
+                            const statusClass = item.status === 'available' ? 'success' : 'danger';
+                            const statusText = item.status === 'available' ? 'Available' : 'Unavailable';
+                            const borderColor = item.status === 'available' ? '#28a745' : '#dc3545';
+                            
+                            html += `
+                                <div class="col-md-6 mb-3">
+                                    <div class="availability-day-card" style="border-left-color: ${borderColor}">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <strong class="h6 mb-0">${item.day}</strong>
+                                            <span class="badge badge-${statusClass}">${statusText}</span>
+                                        </div>
+                                        <div class="mt-2">
+                                            <small class="text-muted">Time Slots:</small>
+                                            <div class="availability-time-slot">${item.time_slots}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        
+                        html += `</div>`;
+                        modalBody.innerHTML = html;
+                    } else {
+                        modalBody.innerHTML = `
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>No availability data found</strong>
+                                <p class="mb-0 mt-2">${teacherName} has not set their availability schedule yet.</p>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    modalBody.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Error loading availability</strong>
+                            <p class="mb-0 mt-2">Unable to load availability data for ${teacherName}. Please try again later.</p>
+                        </div>
+                    `;
+                });
+        });
+    });
+    
+    // Initialize DataTable
+    if ($.fn.DataTable && $('#teachersAvailabilityTable').length) {
+        $('#teachersAvailabilityTable').DataTable({
+            pageLength: 10,
+            order: [[0, 'asc']],
+            language: {
+                search: "<i class='fas fa-search'></i>",
+                searchPlaceholder: "Search teachers...",
+                lengthMenu: "Show _MENU_ teachers",
+                info: "Showing _START_ to _END_ of _TOTAL_ teachers"
+            }
+        });
+    }
+    
+    // Auto-dismiss alerts after 5 seconds
+    setTimeout(function() {
+        $('.alert').fadeOut('slow');
+    }, 5000);
+});
+</script>
 {% endblock %}

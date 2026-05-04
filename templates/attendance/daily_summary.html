@@ -1,58 +1,60 @@
 {% extends 'Home/base.html' %}
 {% load static %}
 
-{% block title %}Daily Attendance Summary - Student Management System{% endblock %}
+{% block title %}Daily Attendance Summary - EduSphere{% endblock %}
 
 {% block body %}
 <div class="page-wrapper">
     <div class="content container-fluid">
+        
+        <!-- Page Header -->
         <div class="page-header">
             <div class="row align-items-center">
                 <div class="col">
                     <h3 class="page-title">Daily Attendance Summary</h3>
                     <ul class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'index' %}">Dashboard</a></li>
                         <li class="breadcrumb-item"><a href="{% url 'attendance_dashboard' %}">Attendance</a></li>
-                      <!-- Add this button in the card-header or actions section -->
-
-</a>
                         <li class="breadcrumb-item active">Daily Summary</li>
                     </ul>
                 </div>
-                <div class="col-auto text-right float-right ml-auto">
-                    <button class="btn btn-outline-primary mr-2" onclick="printSummary()">
-                        <i class="fas fa-print"></i> Print
-                    </button>
-                    <a href="{% url 'attendance_dashboard' %}" class="btn btn-primary">
-                        <i class="fas fa-arrow-left"></i> Back to Dashboard
-                    </a>
+                <div class="col-auto text-right">
+                    <div class="btn-group">
+                        <button class="btn btn-outline-primary" onclick="window.print()">
+                            <i class="fas fa-print"></i> Print
+                        </button>
+                        <a href="{% url 'attendance_dashboard' %}" class="btn btn-primary">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Date Filter -->
         <div class="row mb-4">
-            <div class="col-12">
+            <div class="col-md-12">
                 <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title">Filter Summary</h5>
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-filter"></i> Filter Summary
+                        </h5>
                     </div>
                     <div class="card-body">
-                        <form method="GET" action="{% url 'daily_summary' %}">
-                            <div class="row g-3">
-                                <div class="col-md-4">
-                                    <label class="form-label">Select Date</label>
-                                    <input type="date" name="date" class="form-control" 
-                                           {% comment %} value="{{ request.GET.date|default:today|date:'Y-m-d' }}"> {% endcomment %}
+                        <form method="GET" class="row">
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label>Select Date</label>
+                                    <input type="date" name="date" class="form-control" >
                                 </div>
-                                <div class="col-md-2 d-flex align-items-end">
-                                    <button type="submit" class="btn btn-primary w-100">
-                                        <i class="fas fa-filter"></i> Filter
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <div class="btn-group w-100">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-search"></i> Filter
                                     </button>
-                                </div>
-                                <div class="col-md-2 d-flex align-items-end">
-                                    <a href="{% url 'daily_summary' %}" class="btn btn-secondary w-100">
-                                        <i class="fas fa-redo"></i> Reset
+                                    <a href="{% url 'daily_summary' %}" class="btn btn-secondary">
+                                        <i class="fas fa-sync-alt"></i> Reset
                                     </a>
                                 </div>
                             </div>
@@ -63,70 +65,48 @@
         </div>
 
         <!-- Summary Cards -->
-        <div class="row mb-4">
-            <div class="col-xl-3 col-sm-6 col-12 d-flex">
-                <div class="card bg-primary w-100">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card dash-widget">
                     <div class="card-body">
-                        <div class="db-widgets d-flex justify-content-between align-items-center">
-                            <div class="db-icon">
-                                <i class="fas fa-calendar-day"></i>
-                            </div>
-                            <div class="db-info">
-                                <h3>{{ total_days }}</h3>
-                                <h6>Total Days</h6>
-                                <p class="text-white mb-0">Attendance records</p>
-                            </div>
+                        <span class="dash-widget-icon bg-primary"><i class="fas fa-calendar-day"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ total_days }}</h3>
+                            <span>Total Days</span>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <div class="col-xl-3 col-sm-6 col-12 d-flex">
-                <div class="card bg-success w-100">
+            <div class="col-md-3">
+                <div class="card dash-widget">
                     <div class="card-body">
-                        <div class="db-widgets d-flex justify-content-between align-items-center">
-                            <div class="db-icon">
-                                <i class="fas fa-user-check"></i>
-                            </div>
-                            <div class="db-info">
-                                <h3>{{ avg_present|floatformat:1 }}%</h3>
-                                <h6>Avg. Present</h6>
-                                <p class="text-white mb-0">Overall average</p>
-                            </div>
+                        <span class="dash-widget-icon bg-success"><i class="fas fa-chart-line"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ avg_present|floatformat:1 }}%</h3>
+                            <span>Avg Present</span>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <div class="col-xl-3 col-sm-6 col-12 d-flex">
-                <div class="card bg-info w-100">
+            <div class="col-md-3">
+                <div class="card dash-widget">
                     <div class="card-body">
-                        <div class="db-widgets d-flex justify-content-between align-items-center">
-                            <div class="db-icon">
-                                <i class="fas fa-users"></i>
-                            </div>
-                            <div class="db-info">
-                                <h3>{{ total_students }}</h3>
-                                <h6>Total Students</h6>
-                                <p class="text-white mb-0">Enrolled students</p>
-                            </div>
+                        <span class="dash-widget-icon bg-info"><i class="fas fa-users"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ total_students }}</h3>
+                            <span>Total Students</span>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <div class="col-xl-3 col-sm-6 col-12 d-flex">
-                <div class="card bg-warning w-100">
+            <div class="col-md-3">
+                <div class="card dash-widget">
                     <div class="card-body">
-                        <div class="db-widgets d-flex justify-content-between align-items-center">
-                            <div class="db-icon">
-                                <i class="fas fa-chart-line"></i>
-                            </div>
-                            <div class="db-info">
-                                <h3>{{ best_day.date|date:"d M" }}</h3>
-                                <h6>Best Day</h6>
-                                <p class="text-white mb-0">{{ best_day.percentage|floatformat:1 }}% present</p>
-                            </div>
+                        <span class="dash-widget-icon bg-warning"><i class="fas fa-chart-line"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ best_day.date|date:"d M" }}</h3>
+                            <span>Best Day</span>
+                            <small>{{ best_day.percentage|floatformat:1 }}%</small>
                         </div>
                     </div>
                 </div>
@@ -136,14 +116,16 @@
         <!-- Daily Summary Table -->
         <div class="row">
             <div class="col-sm-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title">Daily Attendance Summary</h5>
+                <div class="card card-table">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-list"></i> Daily Attendance Summary
+                        </h5>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
                             <table class="table table-hover table-center mb-0">
-                                <thead>
+                                <thead class="thead-light">
                                     <tr>
                                         <th>Date</th>
                                         <th>Day</th>
@@ -152,77 +134,58 @@
                                         <th>Absent</th>
                                         <th>Attendance %</th>
                                         <th>Status</th>
-                                        <th>Actions</th>
+                                        <th class="text-right">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for summary in summaries %}
-                                    <tr>
+                                    <tr class="align-middle">
                                         <td>{{ summary.date|date:"d M Y" }}</td>
                                         <td>{{ summary.date|date:"l" }}</td>
                                         <td>{{ summary.total_students }}</td>
+                                        <td><span class="badge badge-success">{{ summary.present_count }}</span></td>
+                                        <td><span class="badge badge-danger">{{ summary.absent_count }}</span></td>
                                         <td>
-                                            <span class="badge badge-success">{{ summary.present_count }}</span>
-                                        </td>
-                                        <td>
-                                            <span class="badge badge-danger">{{ summary.absent_count }}</span>
-                                        </td>
-                                        <td>
-                                            <div class="progress" style="height: 20px;">
-                                                <div class="progress-bar 
-                                                    {% if summary.attendance_percentage >= 80 %}bg-success
-                                                    {% elif summary.attendance_percentage >= 60 %}bg-info
-                                                    {% elif summary.attendance_percentage >= 40 %}bg-warning
-                                                    {% else %}bg-danger{% endif %}" 
-                                                    style="width: {{ summary.attendance_percentage }}%">
-                                                    <span>{{ summary.attendance_percentage|floatformat:1 }}%</span>
+                                            <div class="d-flex align-items-center">
+                                                <div class="progress flex-grow-1" style="height: 8px; width: 80px;">
+                                                    <div class="progress-bar 
+                                                        {% if summary.attendance_percentage >= 80 %}bg-success
+                                                        {% elif summary.attendance_percentage >= 60 %}bg-info
+                                                        {% elif summary.attendance_percentage >= 40 %}bg-warning
+                                                        {% else %}bg-danger{% endif %}" 
+                                                        style="width: {{ summary.attendance_percentage }}%">
+                                                    </div>
                                                 </div>
+                                                <span class="ml-2">{{ summary.attendance_percentage|floatformat:1 }}%</span>
                                             </div>
                                         </td>
                                         <td>
                                             {% if summary.attendance_percentage >= 75 %}
-                                            <span class="badge badge-success">Good</span>
+                                                <span class="badge badge-success">Good</span>
                                             {% elif summary.attendance_percentage >= 50 %}
-                                            <span class="badge badge-warning">Average</span>
+                                                <span class="badge badge-warning">Average</span>
                                             {% else %}
-                                            <span class="badge badge-danger">Poor</span>
+                                                <span class="badge badge-danger">Poor</span>
                                             {% endif %}
                                         </td>
-                                        <td>
-                                            <a href="{% url 'attendance_list' %}?date={{ summary.date|date:'Y-m-d' }}" 
-                                               class="btn btn-sm btn-outline-primary">
-                                                <i class="fas fa-eye"></i> View Details
+                                        <td class="text-right">
+                                            <a href="{% url 'attendance_list' %}?date={{ summary.date|date:'Y-m-d' }}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
                                             </a>
                                         </td>
                                     </tr>
                                     {% empty %}
                                     <tr>
-                                        <td colspan="8" class="text-center text-muted">
-                                            <i class="fas fa-calendar-times fa-3x mb-3"></i>
-                                            <p class="mb-0">No attendance records found</p>
-                                            <p>Try selecting a different date or mark attendance</p>
+                                        <td colspan="8" class="text-center py-5">
+                                            <i class="fas fa-calendar-times fa-4x text-muted mb-3 d-block"></i>
+                                            <h5>No attendance records found</h5>
+                                            <p class="text-muted">Try selecting a different date</p>
                                         </td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
                         </div>
-
-                        <!-- Statistics Chart -->
-                        {% if summaries %}
-                        <div class="row mt-4">
-                            <div class="col-12">
-                                <div class="card">
-                                    <div class="card-header">
-                                        <h5 class="card-title">Attendance Trend (Last 7 Days)</h5>
-                                    </div>
-                                    <div class="card-body">
-                                        <canvas id="attendanceChart" height="100"></canvas>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -230,170 +193,28 @@
     </div>
 </div>
 
-<script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    $(document).ready(function() {
-        {% if summaries %}
-        // Prepare chart data
-        const labels = [];
-        const presentData = [];
-        const absentData = [];
-        const percentageData = [];
-        
-        // Get last 7 summaries or all if less than 7
-        const chartSummaries = {{ summaries|slice:":7"|safe }};
-        
-        chartSummaries.forEach(summary => {
-            labels.push(new Date(summary.date).toLocaleDateString('en-US', { 
-                month: 'short', 
-                day: 'numeric' 
-            }));
-            presentData.push(summary.present_count);
-            absentData.push(summary.absent_count);
-            percentageData.push(summary.attendance_percentage);
-        });
-        
-        // Create attendance chart
-        const ctx = document.getElementById('attendanceChart').getContext('2d');
-        const attendanceChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels.reverse(),
-                datasets: [
-                    {
-                        label: 'Attendance %',
-                        data: percentageData.reverse(),
-                        borderColor: '#007bff',
-                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                        fill: true,
-                        tension: 0.4,
-                        yAxisID: 'y'
-                    },
-                    {
-                        label: 'Present',
-                        data: presentData.reverse(),
-                        borderColor: '#28a745',
-                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                        fill: true,
-                        tension: 0.4,
-                        yAxisID: 'y1'
-                    },
-                    {
-                        label: 'Absent',
-                        data: absentData.reverse(),
-                        borderColor: '#dc3545',
-                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
-                        fill: true,
-                        tension: 0.4,
-                        yAxisID: 'y1'
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                interaction: {
-                    mode: 'index',
-                    intersect: false,
-                },
-                scales: {
-                    x: {
-                        grid: {
-                            display: false
-                        }
-                    },
-                    y: {
-                        type: 'linear',
-                        display: true,
-                        position: 'left',
-                        title: {
-                            display: true,
-                            text: 'Percentage (%)'
-                        },
-                        min: 0,
-                        max: 100
-                    },
-                    y1: {
-                        type: 'linear',
-                        display: true,
-                        position: 'right',
-                        title: {
-                            display: true,
-                            text: 'Count'
-                        },
-                        grid: {
-                            drawOnChartArea: false,
-                        },
-                    }
-                },
-                plugins: {
-                    legend: {
-                        position: 'top',
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.dataset.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
-                                if (context.datasetIndex === 0) {
-                                    label += context.parsed.y + '%';
-                                } else {
-                                    label += context.parsed.y + ' students';
-                                }
-                                return label;
-                            }
-                        }
-                    }
-                }
-            }
-        });
-        {% endif %}
-        
-        // Auto-refresh every 60 seconds
-        setInterval(function() {
-            location.reload();
-        }, 60000);
-    });
-    
-    function printSummary() {
-        window.print();
-    }
-</script>
-
 <style>
-    @media print {
-        .page-header, .card-header, .btn, .breadcrumb {
-            display: none !important;
-        }
-        .card {
-            border: none !important;
-            box-shadow: none !important;
-        }
-        .card-body {
-            padding: 0 !important;
-        }
-        table {
-            width: 100% !important;
-        }
-        h5 {
-            font-size: 18px !important;
-            margin-bottom: 10px !important;
-        }
-    }
-    
-    .progress {
-        position: relative;
-    }
-    .progress span {
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
-        font-size: 12px;
-        font-weight: bold;
-        color: #000;
-        text-shadow: 1px 1px 0 #fff;
+    .dash-widget { border-radius: 10px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    .dash-widget:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+    .dash-widget-icon { font-size: 40px; float: left; width: 70px; height: 70px; line-height: 70px; text-align: center; background: rgba(0,0,0,0.05); border-radius: 50%; margin-right: 15px; color: white; }
+    .dash-widget-info { overflow: hidden; }
+    .dash-widget-info h3 { font-size: 28px; font-weight: 600; margin-bottom: 5px; }
+    .dash-widget-info span { font-size: 14px; color: #6c757d; }
+    .dash-widget-info small { font-size: 11px; display: block; }
+    .bg-gradient-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .card-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-bottom: none; border-radius: 10px 10px 0 0; padding: 15px 20px; }
+    .card-header .card-title { color: white; margin-bottom: 0; }
+    .card { border: none; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    .card-body { padding: 20px; }
+    .table td { vertical-align: middle; padding: 15px 12px; }
+    .table th { padding: 12px; font-weight: 600; }
+    .thead-light th { background: #f8f9fa; border-bottom: 2px solid #dee2e6; color: #495057; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .badge { padding: 5px 12px; font-weight: 500; border-radius: 20px; }
+    .progress { border-radius: 20px; background-color: #e9ecef; }
+    @media (max-width: 768px) {
+        .dash-widget-icon { width: 50px; height: 50px; line-height: 50px; font-size: 25px; }
+        .dash-widget-info h3 { font-size: 20px; }
+        .table td, .table th { padding: 10px 8px; font-size: 12px; }
     }
 </style>
 {% endblock %}

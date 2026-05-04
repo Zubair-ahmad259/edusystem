@@ -1,114 +1,254 @@
-<!-- timetables/templates/timetables/classroom_list.html -->
-
-{% extends 'timetables/base.html' %}
+{% extends 'Home/base.html' %}
 {% load static %}
 
-{% block title %}Classrooms{% endblock %}
+{% block title %}Classrooms - EduSphere{% endblock %}
 
-{% block content %}
-<div class="container-fluid py-4">
-    <div class="row mb-4">
-        <div class="col">
-            <h2 class="text-primary">
-                <i class="fas fa-building"></i> Classroom Management
-            </h2>
-            <p class="text-muted">Manage all classrooms and their facilities</p>
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Classroom Management</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'index' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'timetables:dashboard' %}">Timetable</a></li>
+                        <li class="breadcrumb-item active">Classrooms</li>
+                    </ul>
+                </div>
+                <div class="col-auto text-right">
+                    <a href="{% url 'timetables:classroom_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus-circle"></i> Add Classroom
+                    </a>
+                </div>
+            </div>
         </div>
-        <div class="col text-end">
-            <a href="{% url 'timetables:classroom_create' %}" class="btn btn-primary">
-                <i class="fas fa-plus-circle"></i> Add Classroom
-            </a>
+
+        <!-- Statistics Cards -->
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card dash-widget">
+                    <div class="card-body">
+                        <span class="dash-widget-icon bg-primary"><i class="fas fa-door-open"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ classrooms|length }}</h3>
+                            <span>Total Classrooms</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card dash-widget">
+                    <div class="card-body">
+                        <span class="dash-widget-icon bg-success"><i class="fas fa-check-circle"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ active_count|default:0 }}</h3>
+                            <span>Active</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card dash-widget">
+                    <div class="card-body">
+                        <span class="dash-widget-icon bg-info"><i class="fas fa-flask"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ lab_count|default:0 }}</h3>
+                            <span>Laboratories</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
-    
-    <div class="card shadow">
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-bordered">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Room Number</th>
-                            <th>Building</th>
-                            <th>Capacity</th>
-                            <th>Discipline</th>
-                            <th>Batch</th>
-                            <th>Semester</th>
-                            <th>Section</th>
-                            <th>Facilities</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                         </tr>
-                    </thead>
-                    <tbody>
-                        {% for classroom in classrooms %}
-                        <tr>
-                            <td><strong>{{ classroom.room_number }}</strong></td>
-                            <td>{{ classroom.building }}</td>
-                            <td>{{ classroom.capacity }} students</td>
-                            <td>
-                                {% if classroom.discipline %}
-                                <span class="badge bg-info">{{ classroom.discipline }}</span>
-                                {% else %}
-                                <span class="text-muted">-</span>
-                                {% endif %}
+
+        <!-- Classrooms Table -->
+        <div class="card">
+            <div class="card-header bg-gradient-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list"></i> Classrooms List
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover table-center mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Room Number</th>
+                                <th>Building</th>
+                                <th>Capacity</th>
+                                <th>Facilities</th>
+                                <th>Status</th>
+                                <th class="text-right">Actions</th>
                             </td>
-                            <td>
-                                {% if classroom.batch %}
-                                <span class="badge bg-success">{{ classroom.batch.name }}</span>
-                                {% else %}
-                                <span class="text-muted">-</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if classroom.semester %}
-                                <span class="badge bg-warning">Sem {{ classroom.semester.number }}</span>
-                                {% else %}
-                                <span class="text-muted">-</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if classroom.section %}
-                                <span class="badge bg-danger">{{ classroom.section.name }}</span>
-                                {% else %}
-                                <span class="text-muted">-</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if classroom.has_projector %}📽️ {% endif %}
-                                {% if classroom.has_smartboard %}🖥️ {% endif %}
-                                {% if classroom.is_lab %}💻 {% endif %}
-                                {% if not classroom.has_projector and not classroom.has_smartboard and not classroom.is_lab %}
-                                Basic
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if classroom.is_active %}
-                                <span class="badge bg-success">Active</span>
-                                {% else %}
-                                <span class="badge bg-danger">Inactive</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <a href="{% url 'timetables:classroom_edit' classroom.id %}" class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-edit"></i> Edit
-                                </a>
-                                <a href="{% url 'timetables:classroom_delete' classroom.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')">
-                                    <i class="fas fa-trash"></i> Delete
-                                </a>
-                                <a href="{% url 'timetables:classroom_timetable' classroom.id %}" class="btn btn-sm btn-outline-info">
-                                    <i class="fas fa-calendar-alt"></i> Timetable
-                                </a>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="10" class="text-center text-muted">No classrooms found.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {% for classroom in classrooms %}
+                            <tr class="align-middle">
+                                <td><strong>{{ classroom.room_number }}</strong></td>
+                                <td>{{ classroom.building }}</td>
+                                <td>{{ classroom.capacity }} students</div></td>
+                                <td>
+                                    <div class="facilities">
+                                        {% if classroom.has_projector %}<span class="badge badge-info">📽️ Projector</span>{% endif %}
+                                        {% if classroom.has_smartboard %}<span class="badge badge-info">🖥️ Smart Board</span>{% endif %}
+                                        {% if classroom.is_lab %}<span class="badge badge-info">💻 Laboratory</span>{% endif %}
+                                        {% if not classroom.has_projector and not classroom.has_smartboard and not classroom.is_lab %}
+                                            <span class="text-muted">Basic</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <td>
+                                    {% if classroom.is_active %}
+                                    <span class="badge badge-success">Active</span>
+                                    {% else %}
+                                    <span class="badge badge-danger">Inactive</span>
+                                    {% endif %}
+                                </div>
+                                <td class="text-right">
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'timetables:classroom_edit' classroom.id %}" class="btn btn-sm btn-outline-primary" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'timetables:classroom_delete' classroom.id %}" class="btn btn-sm btn-outline-danger" title="Delete" onclick="return confirm('Are you sure?')">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </a>
+                                        <a href="{% url 'timetables:classroom_timetable' classroom.id %}" class="btn btn-sm btn-outline-info" title="Timetable">
+                                            <i class="fas fa-calendar-alt"></i>
+                                        </a>
+                                    </div>
+                                 </div>
+                             </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-5">
+                                    <div class="empty-state">
+                                        <i class="fas fa-door-open fa-4x text-muted mb-3 d-block"></i>
+                                        <h5>No classrooms found</h5>
+                                        <p class="text-muted">Click "Add Classroom" to get started.</p>
+                                        <a href="{% url 'timetables:classroom_create' %}" class="btn btn-primary mt-2">
+                                            <i class="fas fa-plus"></i> Add Your First Classroom
+                                        </a>
+                                    </div>
+                                 </div>
+                             </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .dash-widget {
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    .dash-widget:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .dash-widget-icon {
+        font-size: 40px;
+        float: left;
+        width: 70px;
+        height: 70px;
+        line-height: 70px;
+        text-align: center;
+        background: rgba(0,0,0,0.05);
+        border-radius: 50%;
+        margin-right: 15px;
+        color: white;
+    }
+    .dash-widget-info {
+        overflow: hidden;
+    }
+    .dash-widget-info h3 {
+        font-size: 28px;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+    .dash-widget-info span {
+        font-size: 14px;
+        color: #6c757d;
+    }
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .card-header {
+        border-bottom: none;
+        border-radius: 10px 10px 0 0;
+        padding: 15px 20px;
+    }
+    .card-header .card-title {
+        color: white;
+        margin-bottom: 0;
+    }
+    .card {
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    .card-body {
+        padding: 20px;
+    }
+    .table td {
+        vertical-align: middle;
+        padding: 15px 12px;
+    }
+    .table th {
+        padding: 12px;
+        font-weight: 600;
+    }
+    .thead-light th {
+        background: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+        color: #495057;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .badge {
+        padding: 5px 12px;
+        font-weight: 500;
+        border-radius: 20px;
+    }
+    .badge-info {
+        background: #17a2b8;
+        color: white;
+    }
+    .btn-group .btn {
+        border-radius: 4px;
+        margin: 0 2px;
+    }
+    .facilities .badge {
+        margin: 2px;
+    }
+    .empty-state {
+        padding: 40px 20px;
+        text-align: center;
+    }
+    @media (max-width: 768px) {
+        .dash-widget-icon {
+            width: 50px;
+            height: 50px;
+            line-height: 50px;
+            font-size: 25px;
+        }
+        .dash-widget-info h3 {
+            font-size: 20px;
+        }
+        .table td, .table th {
+            padding: 10px 8px;
+            font-size: 12px;
+        }
+    }
+</style>
 {% endblock %}

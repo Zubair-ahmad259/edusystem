@@ -1,5 +1,7 @@
-{% extends "Home/base.html" %}
+{% extends 'Home/base.html' %}
 {% load static %}
+
+{% block title %}Add New Subject - EduSphere{% endblock %}
 
 {% block body %}
 <div class="page-wrapper">
@@ -13,7 +15,7 @@
                         <li class="breadcrumb-item active">Add Subject</li>
                     </ul>
                 </div>
-                <div class="col-auto text-right float-right ml-auto">
+                <div class="col-auto text-right">
                     <a href="{% url 'subject:view_subject' %}" class="btn btn-outline-primary">
                         <i class="fas fa-list"></i> View All Subjects
                     </a>
@@ -24,171 +26,84 @@
         <div class="row">
             <div class="col-sm-12">
                 <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h5 class="card-title mb-0">
                             <i class="fas fa-book"></i> Add New Subject
-                            <small class="text-muted">Fill in the subject details below</small>
                         </h5>
                     </div>
                     <div class="card-body">
-                        <form method="post" action="{% url 'subject:add_subject' %}" id="subjectForm" novalidate>
+                        <form method="post" action="{% url 'subject:add_subject' %}" id="subjectForm">
                             {% csrf_token %}
                             
                             <div class="row">
                                 <div class="col-12">
-                                    <h5 class="form-title"><span>Basic Information</span></h5>
+                                    <div class="form-section-title">
+                                        <i class="fas fa-info-circle"></i> Basic Information
+                                    </div>
                                 </div>
 
-                                <!-- Subject Name -->
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label>Subject Name <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" name="name" required
-                                               placeholder="e.g. Introduction to Computer Science">
-                                        <small class="form-text text-muted">Full subject name</small>
+                                        <input type="text" class="form-control" name="name" required placeholder="Enter subject name">
                                     </div>
                                 </div>
                                 
-                                <!-- Subject Code -->
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label>Subject Code <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" name="code" required
-                                               placeholder="e.g. CS101" id="subjectCode">
-                                        <small class="form-text text-muted">Unique course code</small>
+                                        <input type="text" class="form-control" name="code" required placeholder="e.g., CS101" id="subjectCode">
+                                        <small class="text-muted">Unique course code (uppercase letters + numbers)</small>
                                     </div>
                                 </div>
 
-                                <!-- Credit Hours -->
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label>Credit Hours</label>
-                                        <input type="number" class="form-control" name="credit_hours" 
-                                               min="1" max="10" value="3">
-                                        <small class="form-text text-muted">Typically 1-10 credits</small>
+                                        <input type="number" class="form-control" name="credit_hours" min="1" max="10" value="3">
                                     </div>
                                 </div>
                                 
-                                <!-- Subject Type -->
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label>Subject Type</label>
                                         <select class="form-control" name="subject_type">
                                             {% for value, name in subject_type_choices %}
-                                            <option value="{{ value }}" {% if value == 'core' %}selected{% endif %}>{{ name }}</option>
+                                            <option value="{{ value }}">{{ name }}</option>
                                             {% endfor %}
                                         </select>
                                     </div>
                                 </div>
-                                
-                                <!-- Prerequisites Section -->
-                                <div class="col-12">
-                                    <div class="form-group">
-                                        <h5 class="form-title">
-                                            <span>Prerequisites</span>
-                                            <small class="text-muted ml-2">(Select subjects that must be completed before this subject)</small>
-                                        </h5>
-                                        
-                                        <!-- Prerequisites Selection Area -->
-                                        <div class="prerequisites-container">
-                                            <div class="row">
-                                                <div class="col-md-12">
-                                                    <div class="card">
-                                                        <div class="card-header">
-                                                            <h6 class="mb-0">Available Prerequisites</h6>
-                                                            <div class="card-tools">
-                                                                <div class="input-group input-group-sm" style="width: 200px;">
-                                                                    <input type="text" id="subjectSearch" class="form-control" placeholder="Search subjects...">
-                                                                    <div class="input-group-append">
-                                                                        <span class="input-group-text"><i class="fas fa-search"></i></span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="card-body" style="max-height: 300px; overflow-y: auto;">
-                                                            <div id="prerequisitesList">
-                                                                {% for subject in prerequisite_subjects %}
-                                                                <div class="form-check mb-2 subject-item">
-                                                                    <input class="form-check-input prerequisite-checkbox" 
-                                                                           type="checkbox" 
-                                                                           name="prerequisites_temp" 
-                                                                           value="{{ subject.id }}" 
-                                                                           id="prereq_{{ subject.id }}"
-                                                                           data-code="{{ subject.code }}"
-                                                                           data-name="{{ subject.name }}">
-                                                                    <label class="form-check-label" for="prereq_{{ subject.id }}">
-                                                                        <strong>{{ subject.code }}</strong> - {{ subject.name }}
-                                                                    </label>
-                                                                </div>
-                                                                {% empty %}
-                                                                <div class="text-center text-muted py-3">
-                                                                    <i class="fas fa-info-circle"></i> No subjects available
-                                                                </div>
-                                                                {% endfor %}
-                                                            </div>
-                                                        </div>
-                                                        <div class="card-footer">
-                                                            <div class="row">
-                                                                <div class="col-md-6">
-                                                                    <small class="text-muted">
-                                                                        <span id="availableCount">{{ prerequisite_subjects|length }}</span> subjects available
-                                                                    </small>
-                                                                </div>
-                                                                <div class="col-md-6 text-right">
-                                                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="selectAllPrereqs">
-                                                                        <i class="fas fa-check-square"></i> Select All
-                                                                    </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-secondary ml-1" id="deselectAllPrereqs">
-                                                                        <i class="fas fa-times-circle"></i> Deselect All
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            
-                                            <!-- Selected Prerequisites Display -->
-                                            <div class="row mt-3">
-                                                <div class="col-md-12">
-                                                    <div class="card bg-light">
-                                                        <div class="card-header">
-                                                            <h6 class="mb-0">Selected Prerequisites</h6>
-                                                            <small class="text-muted">
-                                                                <span id="selectedCount">0</span> prerequisites selected
-                                                            </small>
-                                                        </div>
-                                                        <div class="card-body">
-                                                            <div id="selectedPrereqs" class="selected-prereqs-container">
-                                                                <span class="text-muted">No prerequisites selected</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
 
-                                <!-- Description -->
                                 <div class="col-12">
                                     <div class="form-group">
                                         <label>Description</label>
-                                        <textarea class="form-control" name="description" rows="3"
-                                                  placeholder="Optional subject description"></textarea>
+                                        <textarea class="form-control" name="description" rows="3" placeholder="Optional subject description"></textarea>
                                     </div>
+                                </div>
 
+                                <div class="col-12">
+                                    <div class="form-section-title">
+                                        <i class="fas fa-link"></i> Prerequisites
+                                    </div>
                                     <div class="form-group">
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" name="is_active" id="is_active" checked>
-                                            <label class="form-check-label" for="is_active">Active</label>
-                                        </div>
-                                        <small class="form-text text-muted">Uncheck to deactivate this subject</small>
+                                        <select name="prerequisites" multiple class="form-control" size="8">
+                                            {% for subject in prerequisite_subjects %}
+                                            <option value="{{ subject.id }}">{{ subject.code }} - {{ subject.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <small class="text-muted">Hold Ctrl (Windows) or Cmd (Mac) to select multiple prerequisites</small>
+                                    </div>
+                                </div>
+
+                                <div class="col-12">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" name="is_active" id="is_active" checked>
+                                        <label class="form-check-label" for="is_active">Active</label>
                                     </div>
                                 </div>
                                 
-                                <!-- Action Buttons -->
-                                <div class="col-12 mt-3">
+                                <div class="col-12 mt-4">
                                     <button type="submit" class="btn btn-primary">
                                         <i class="fas fa-save"></i> Save Subject
                                     </button>
@@ -196,7 +111,7 @@
                                         <i class="fas fa-redo"></i> Reset
                                     </button>
                                     <a href="{% url 'subject:view_subject' %}" class="btn btn-link">
-                                        <i class="fas fa-times"></i> Cancel
+                                        Cancel
                                     </a>
                                 </div>
                             </div>
@@ -208,203 +123,33 @@
     </div>
 </div>
 
-<script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
+<style>
+    .form-section-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #667eea;
+    }
+    .form-section-title i {
+        color: #667eea;
+        margin-right: 10px;
+    }
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    select[multiple] {
+        min-height: 150px;
+    }
+</style>
+
 <script>
-$(document).ready(function() {
-    const form = $('#subjectForm');
-    const codeInput = $('#subjectCode');
-    const selectedPrereqs = $('#selectedPrereqs');
-    const selectedCount = $('#selectedCount');
-    
-    let selectedPrerequisiteIds = [];
-    
-    // Auto-uppercase subject code
-    codeInput.on('input', function() {
+document.addEventListener('DOMContentLoaded', function() {
+    const codeInput = document.getElementById('subjectCode');
+    codeInput.addEventListener('input', function() {
         this.value = this.value.toUpperCase();
-    });
-    
-    // Search subjects
-    $('#subjectSearch').on('input', function() {
-        const searchTerm = $(this).val().toLowerCase();
-        filterSubjects(searchTerm);
-    });
-    
-    // Select all prerequisites
-    $('#selectAllPrereqs').click(function() {
-        $('.prerequisite-checkbox').prop('checked', true).trigger('change');
-    });
-    
-    // Deselect all prerequisites
-    $('#deselectAllPrereqs').click(function() {
-        $('.prerequisite-checkbox').prop('checked', false).trigger('change');
-    });
-    
-    // Filter subjects based on search term
-    function filterSubjects(searchTerm) {
-        if (!searchTerm) {
-            $('.subject-item').show();
-            updateAvailableCount();
-            return;
-        }
-        
-        let visibleCount = 0;
-        $('.prerequisite-checkbox').each(function() {
-            const label = $(this).next('label').text().toLowerCase();
-            const code = $(this).data('code').toLowerCase();
-            const name = $(this).data('name').toLowerCase();
-            
-            if (label.includes(searchTerm) || code.includes(searchTerm) || name.includes(searchTerm)) {
-                $(this).parent().show();
-                visibleCount++;
-            } else {
-                $(this).parent().hide();
-            }
-        });
-        
-        $('#availableCount').text(visibleCount);
-    }
-    
-    function updateAvailableCount() {
-        const count = $('.subject-item:visible').length;
-        $('#availableCount').text(count);
-    }
-    
-    // Update selected prerequisites display
-    function updateSelectedPrerequisitesDisplay() {
-        const checkedBoxes = $('.prerequisite-checkbox:checked');
-        selectedCount.text(checkedBoxes.length);
-        
-        if (checkedBoxes.length === 0) {
-            selectedPrereqs.html('<span class="text-muted">No prerequisites selected</span>');
-            return;
-        }
-        
-        let html = '<div class="row">';
-        checkedBoxes.each(function() {
-            const code = $(this).data('code');
-            const name = $(this).data('name');
-            const id = $(this).val();
-            
-            html += `
-                <div class="col-md-4 mb-2">
-                    <div class="card border-primary">
-                        <div class="card-body py-2">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="mb-0">${code}</h6>
-                                    <small class="text-muted">${name}</small>
-                                </div>
-                                <button type="button" class="btn btn-sm btn-outline-danger remove-prereq" data-id="${id}">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-        html += '</div>';
-        selectedPrereqs.html(html);
-    }
-    
-    // Handle prerequisite checkbox change
-    $(document).on('change', '.prerequisite-checkbox', function() {
-        const id = $(this).val();
-        
-        if ($(this).is(':checked')) {
-            if (!selectedPrerequisiteIds.includes(id)) {
-                selectedPrerequisiteIds.push(id);
-            }
-        } else {
-            selectedPrerequisiteIds = selectedPrerequisiteIds.filter(item => item != id);
-        }
-        
-        updateSelectedPrerequisitesDisplay();
-    });
-    
-    // Handle remove prerequisite
-    $(document).on('click', '.remove-prereq', function() {
-        const id = $(this).data('id');
-        selectedPrerequisiteIds = selectedPrerequisiteIds.filter(item => item != id);
-        $(`#prereq_${id}`).prop('checked', false);
-        updateSelectedPrerequisitesDisplay();
-    });
-    
-    // Form validation
-    form.on('submit', function(e) {
-        let isValid = true;
-        
-        // Clear previous errors
-        $('.is-invalid').removeClass('is-invalid');
-        $('.invalid-feedback').remove();
-        
-        // Check required fields
-        $('[required]').each(function() {
-            if (!$(this).val().trim()) {
-                isValid = false;
-                $(this).addClass('is-invalid');
-                $(this).after(`<div class="invalid-feedback">This field is required</div>`);
-            }
-        });
-        
-        // Validate subject code format
-        const codePattern = /^[A-Z]{2,5}\d{3}$/;
-        if (codeInput.val() && !codePattern.test(codeInput.val())) {
-            isValid = false;
-            codeInput.addClass('is-invalid');
-            codeInput.after(`<div class="invalid-feedback">Format: 2-5 letters followed by 3 numbers (e.g. CS101)</div>`);
-        }
-        
-        // Remove any existing prerequisite hidden fields
-        $('input[name="prerequisites"][type="hidden"]').remove();
-        
-        // Add hidden fields for selected prerequisites
-        selectedPrerequisiteIds.forEach(function(id) {
-            form.append(`<input type="hidden" name="prerequisites" value="${id}">`);
-        });
-        
-        if (!isValid) {
-            e.preventDefault();
-            $('.is-invalid').first().focus();
-        }
-    });
-    
-    // Clear errors on input
-    form.on('input', '[required]', function() {
-        if ($(this).val().trim()) {
-            $(this).removeClass('is-invalid');
-            $(this).next('.invalid-feedback').remove();
-        }
     });
 });
 </script>
-
-<style>
-.prerequisite-checkbox:checked + label {
-    font-weight: bold;
-    color: #007bff;
-}
-.subject-item {
-    transition: all 0.3s ease;
-}
-.subject-item:hover {
-    background-color: #f8f9fa;
-    padding-left: 10px;
-    border-left: 3px solid #007bff;
-}
-.selected-prereqs-container .card {
-    transition: all 0.3s ease;
-}
-.selected-prereqs-container .card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-.remove-prereq {
-    transition: all 0.3s ease;
-}
-.remove-prereq:hover {
-    background-color: #dc3545;
-    color: white;
-}
-</style>
 {% endblock %}

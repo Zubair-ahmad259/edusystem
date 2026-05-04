@@ -2,6 +2,7 @@
 {% load static %}
 
 {% block title %}Add Students - EduSphere{% endblock %}
+
 {% block body %}
 <div class="page-wrapper">
     <div class="content container-fluid">
@@ -35,13 +36,18 @@
                                     <i class="fas fa-user-plus mr-2"></i> Single Student
                                 </a>
                             </li>
-                            <div class="alert alert-success">
-    <i class="fas fa-paste"></i>
-    <strong>Quick Paste Method:</strong> 
-    <a href="{% url 'bulk_paste_students' %}" class="alert-link">Click here</a> to paste data directly from Excel/Sheets
-</div>
-
+                            <li class="nav-item">
+                                <a class="nav-link" data-toggle="tab" href="#bulk-import">
+                                    <i class="fas fa-file-excel mr-2"></i> Bulk Import
+                                </a>
+                            </li>
                         </ul>
+
+                        <div class="alert alert-success mt-3">
+                            <i class="fas fa-paste"></i>
+                            <strong>Quick Paste Method:</strong> 
+                            <a href="{% url 'bulk_paste_students' %}" class="alert-link">Click here</a> to paste data directly from Excel/Sheets
+                        </div>
 
                         <div class="tab-content">
                             <!-- Tab 1: Single Student Form -->
@@ -122,18 +128,64 @@
                                                 <i class="fas fa-graduation-cap"></i> Academic Information
                                             </div>
                                         </div>
-                                        <div class="col-md-3">
+                                        
+                                        <!-- Batch Selection (Primary) -->
+                                        <div class="col-md-4">
                                             <div class="form-group">
                                                 <label>Batch <span class="text-danger">*</span></label>
-                                                <select class="form-control" name="batch" id="batch_select" required>
+                                                <select class="form-control" name="batch" id="batchSelect" required>
                                                     <option value="">Select Batch</option>
                                                     {% for batch in batches %}
-                                                    <option value="{{ batch.id }}">{{ batch.name }}</option>
+                                                    <option value="{{ batch.id }}" data-discipline="{{ batch.discipline.id }}">
+                                                        {{ batch.name }} ({{ batch.discipline.field }})
+                                                    </option>
                                                     {% endfor %}
                                                 </select>
+                                                <small class="form-text text-muted mt-1" id="batchHelpText">
+                                                    <i class="fas fa-info-circle me-1"></i>
+                                                    Select batch first
+                                                </small>
                                             </div>
                                         </div>
-                                        <div class="col-md-3">
+
+                                        <!-- Discipline (Auto-filled from batch, hidden but submitted) -->
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>Discipline <span class="text-danger">*</span></label>
+                                                <select class="form-control" name="discipline" id="disciplineSelect" required disabled>
+                                                    <option value="">Select Batch First</option>
+                                                    {% for discipline in disciplines %}
+                                                    <option value="{{ discipline.id }}">{{ discipline.field }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                                <small class="form-text text-muted">
+                                                    <i class="fas fa-sync-alt me-1"></i>
+                                                    Auto-filled from batch selection
+                                                </small>
+                                            </div>
+                                        </div>
+
+                                        <!-- Section (Filtered by Batch) -->
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>Section <span class="text-danger">*</span></label>
+                                                <select class="form-control" name="section" id="sectionSelect" required disabled>
+                                                    <option value="">Select Batch First</option>
+                                                    {% for section in sections %}
+                                                    <option value="{{ section.id }}" data-batch="{{ section.batch.id }}">
+                                                        Section {{ section.name }}
+                                                    </option>
+                                                    {% endfor %}
+                                                </select>
+                                                <small class="form-text text-muted" id="sectionHelpText">
+                                                    <i class="fas fa-info-circle me-1"></i>
+                                                    Select batch first
+                                                </small>
+                                            </div>
+                                        </div>
+
+                                        <!-- Semester -->
+                                        <div class="col-md-4">
                                             <div class="form-group">
                                                 <label>Semester <span class="text-danger">*</span></label>
                                                 <select class="form-control" name="semester" id="semester_select" required>
@@ -144,30 +196,7 @@
                                                 </select>
                                             </div>
                                         </div>
-                                        <div class="col-md-3">
-                                            <div class="form-group">
-                                                <label>Discipline <span class="text-danger">*</span></label>
-                                                <select class="form-control" name="discipline" id="discipline_select" required>
-                                                    <option value="">Select Discipline</option>
-                                                    {% for discipline in disciplines %}
-                                                    <option value="{{ discipline.id }}">{{ discipline.field }}</option>
-                                                    {% endfor %}
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <div class="form-group">
-                                                <label>Section <span class="text-danger">*</span></label>
-                                                <select class="form-control" name="section" id="section_select" required>
-                                                    <option value="">Select Section</option>
-                                                    {% for section in sections %}
-                                                    <option value="{{ section.id }}" data-batch="{{ section.batch.id }}">
-                                                        {{ section.name }}
-                                                    </option>
-                                                    {% endfor %}
-                                                </select>
-                                            </div>
-                                        </div>
+
                                         <div class="col-12">
                                             <div class="form-group">
                                                 <label>Address <span class="text-danger">*</span></label>
@@ -224,7 +253,7 @@
                                 </form>
                             </div>
 
-                            <!-- Tab 2: Bulk Import Excel - Professional Design -->
+                            <!-- Tab 2: Bulk Import Excel -->
                             <div class="tab-pane fade pt-4" id="bulk-import">
                                 <div class="row">
                                     <div class="col-md-12">
@@ -262,7 +291,7 @@
                                                         <li><strong>Gender* (Male/Female/Other)</strong> - Use full words (Male, Female, Other)</li>
                                                         <li><strong>Date of Birth* (YYYY-MM-DD)</strong> - Format: 2000-01-15</li>
                                                         <li><strong>Email*</strong> - Must be unique email address</li>
-                                                        <li><strong>Batch Name*, Semester Number*, Section Name*, Discipline Name*</strong> - These must match existing records</li>
+                                                        <li><strong>Batch Name*, Semester Number*, Section Name*</strong> - These must match existing records</li>
                                                         <li><strong>Address*</strong> - Student's residential address</li>
                                                     </ul>
                                                 </div>
@@ -271,7 +300,7 @@
                                                     <strong>Important Notes:</strong>
                                                     <ul class="mb-0 mt-2">
                                                         <li>Student ID and Email must be unique - duplicate entries will be rejected</li>
-                                                        <li>Batch, Semester, Section, Discipline must already exist in the system</li>
+                                                        <li>Batch, Semester, Section must already exist in the system</li>
                                                         <li>Parent fields are optional</li>
                                                         <li>Date format must be exactly: <strong>YYYY-MM-DD</strong> (e.g., 2005-06-15)</li>
                                                         <li>Do not change the column headers in the template</li>
@@ -279,8 +308,6 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <!-- Add this anywhere in the bulk-import tab -->
-
 
                                         <!-- Step 3: Upload File -->
                                         <div class="card">
@@ -316,7 +343,7 @@
                                             </div>
                                         </div>
 
-                                        <!-- Preview Section -->
+                                        <!-- Sample Data Preview -->
                                         <div class="card mt-4">
                                             <div class="card-header bg-secondary text-white">
                                                 <h5 class="mb-0"><i class="fas fa-eye mr-2"></i> Sample Data Format</h5>
@@ -337,7 +364,6 @@
                                                                 <th>Batch Name*</th>
                                                                 <th>Semester Number*</th>
                                                                 <th>Section Name*</th>
-                                                                <th>Discipline Name*</th>
                                                                 <th>Address*</th>
                                                                 <th>Father's Name</th>
                                                                 <th>Mother's Name</th>
@@ -359,7 +385,6 @@
                                                                 <td>Batch 2024</td>
                                                                 <td>1</td>
                                                                 <td>Section A</td>
-                                                                <td>Computer Science</td>
                                                                 <td>123 Main Street, Lahore</td>
                                                                 <td>Robert Doe</td>
                                                                 <td>Jane Doe</td>
@@ -379,7 +404,6 @@
                                                                 <td>Batch 2024</td>
                                                                 <td>1</td>
                                                                 <td>Section B</td>
-                                                                <td>Software Engineering</td>
                                                                 <td>456 Oak Avenue, Karachi</td>
                                                                 <td>Michael Smith</td>
                                                                 <td>Sarah Smith</td>
@@ -388,7 +412,7 @@
                                                                 <td>456 Oak Avenue, Karachi</td>
                                                             </tr>
                                                         </tbody>
-                                                    </table>
+                                                    弦
                                                 </div>
                                             </div>
                                         </div>
@@ -433,57 +457,118 @@
 </style>
 
 <script>
-$(document).ready(function() {
-    // Filter sections based on batch
-    $('#batch_select').change(function() {
-        var batchId = $(this).val();
-        var $sectionSelect = $('#section_select');
+document.addEventListener('DOMContentLoaded', function() {
+    const batchSelect = document.getElementById('batchSelect');
+    const disciplineSelect = document.getElementById('disciplineSelect');
+    const sectionSelect = document.getElementById('sectionSelect');
+    const batchHelpText = document.getElementById('batchHelpText');
+    const sectionHelpText = document.getElementById('sectionHelpText');
+
+    function filterSections() {
+        const batchId = batchSelect.value;
+        const selectedBatchText = batchSelect.options[batchSelect.selectedIndex]?.text || '';
         
+        // Filter sections based on batch
+        sectionSelect.querySelectorAll('option').forEach(option => {
+            if (!option.value) return;
+            
+            const optionBatch = option.getAttribute('data-batch');
+            if (!batchId || optionBatch === batchId) {
+                option.style.display = '';
+                option.disabled = false;
+            } else {
+                option.style.display = 'none';
+                option.disabled = true;
+            }
+        });
+
+        // Update section help text
         if (batchId) {
-            $.ajax({
-                url: '{% url "get_sections_by_batch" %}',
-                data: {'batch_id': batchId},
-                dataType: 'json',
-                success: function(data) {
-                    $sectionSelect.empty();
-                    $sectionSelect.append('<option value="">Select Section</option>');
-                    $.each(data, function(index, section) {
-                        $sectionSelect.append('<option value="' + section.id + '">' + section.name + '</option>');
-                    });
-                    $sectionSelect.prop('disabled', false);
-                },
-                error: function(xhr, status, error) {
-                    console.error("AJAX Error:", error);
-                    $sectionSelect.empty();
-                    $sectionSelect.append('<option value="">Error loading sections</option>');
-                }
-            });
+            sectionHelpText.innerHTML = `<i class="fas fa-info-circle me-1"></i>Sections for ${selectedBatchText}`;
+            sectionHelpText.classList.remove('text-muted');
+            sectionHelpText.classList.add('text-primary');
+            sectionSelect.disabled = false;
         } else {
-            $sectionSelect.empty();
-            $sectionSelect.append('<option value="">Select Section</option>');
-            $sectionSelect.prop('disabled', true);
+            sectionHelpText.innerHTML = `<i class="fas fa-info-circle me-1"></i>Select batch first`;
+            sectionHelpText.classList.remove('text-primary');
+            sectionHelpText.classList.add('text-muted');
+            sectionSelect.disabled = true;
         }
+
+        // Clear section if it doesn't belong to selected batch
+        if (sectionSelect.value && sectionSelect.selectedOptions[0]?.style.display === 'none') {
+            sectionSelect.value = '';
+        }
+    }
+
+    function updateDiscipline() {
+        const selectedOption = batchSelect.options[batchSelect.selectedIndex];
+        const disciplineId = selectedOption ? selectedOption.getAttribute('data-discipline') : '';
+        
+        if (disciplineId) {
+            // Enable and set discipline
+            disciplineSelect.disabled = false;
+            disciplineSelect.value = disciplineId;
+            
+            // Update batch help text
+            const batchName = selectedOption.text.split(' (')[0];
+            batchHelpText.innerHTML = `<i class="fas fa-check-circle me-1 text-success"></i>Selected: ${batchName}`;
+            batchHelpText.classList.remove('text-muted');
+            batchHelpText.classList.add('text-success');
+        } else {
+            disciplineSelect.disabled = true;
+            disciplineSelect.value = '';
+            batchHelpText.innerHTML = `<i class="fas fa-info-circle me-1"></i>Select batch first`;
+            batchHelpText.classList.remove('text-success');
+            batchHelpText.classList.add('text-muted');
+        }
+    }
+
+    // Event listeners
+    batchSelect.addEventListener('change', function() {
+        updateDiscipline();
+        filterSections();
     });
 
+    // Initialize on page load
+    if (batchSelect.value) {
+        updateDiscipline();
+        filterSections();
+    }
+
     // Show loading indicator on form submit
-    $('#excelUploadForm').on('submit', function(e) {
-        var fileInput = $('input[name="excel_file"]');
-        if (fileInput.val() === '') {
-            e.preventDefault();
-            alert('Please select an Excel file first');
-            return false;
-        }
-        
-        $('#uploadBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Processing...');
-        $('#uploadLoader').show();
-    });
+    const excelUploadForm = document.getElementById('excelUploadForm');
+    if (excelUploadForm) {
+        excelUploadForm.addEventListener('submit', function(e) {
+            var fileInput = document.querySelector('input[name="excel_file"]');
+            if (fileInput && fileInput.value === '') {
+                e.preventDefault();
+                alert('Please select an Excel file first');
+                return false;
+            }
+            
+            const uploadBtn = document.getElementById('uploadBtn');
+            const uploadLoader = document.getElementById('uploadLoader');
+            if (uploadBtn && uploadLoader) {
+                uploadBtn.disabled = true;
+                uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+                uploadLoader.style.display = 'block';
+            }
+        });
+    }
     
     // Reset button functionality
-    $('button[type="reset"]').click(function() {
-        setTimeout(function() {
-            $('#section_select').prop('disabled', false);
-        }, 100);
-    });
+    const resetBtn = document.querySelector('button[type="reset"]');
+    if (resetBtn) {
+        resetBtn.addEventListener('click', function() {
+            setTimeout(function() {
+                if (batchSelect.value) {
+                    updateDiscipline();
+                    filterSections();
+                }
+            }, 100);
+        });
+    }
 });
 </script>
 {% endblock %}

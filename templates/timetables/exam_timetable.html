@@ -1,97 +1,207 @@
-{% extends 'timetables/base.html' %}
+{% extends 'Home/base.html' %}
 {% load static %}
 
-{% block title %}Exam Timetable{% endblock %}
+{% block title %}Exam Timetable - EduSphere{% endblock %}
 
-{% block content %}
-<div class="container-fluid py-4">
-    <div class="row mb-4">
-        <div class="col">
-            <h2 class="text-primary">
-                <i class="fas fa-calendar-check"></i> Exam Timetable
-            </h2>
-        </div>
-        <div class="col text-end">
-            {% if user.is_superuser or user.role == 'admin' %}
-            <a href="{% url 'timetables:create_exam_timetable' %}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Add Exam
-            </a>
-            {% endif %}
-            <a href="javascript:window.print()" class="btn btn-secondary">
-                <i class="fas fa-print"></i> Print
-            </a>
-        </div>
-    </div>
-    
-    <div class="row mb-3">
-        <div class="col">
-            <div class="btn-group" role="group">
-                <a href="?type=all" class="btn btn-outline-primary {% if current_type == 'all' %}active{% endif %}">All</a>
-                <a href="?type=midterm" class="btn btn-outline-primary {% if current_type == 'midterm' %}active{% endif %}">Midterm</a>
-                <a href="?type=final" class="btn btn-outline-primary {% if current_type == 'final' %}active{% endif %}">Final</a>
-                <a href="?type=quiz" class="btn btn-outline-primary {% if current_type == 'quiz' %}active{% endif %}">Quiz</a>
-                <a href="?type=practical" class="btn btn-outline-primary {% if current_type == 'practical' %}active{% endif %}">Practical</a>
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Exam Timetable</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'index' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'timetables:dashboard' %}">Timetable</a></li>
+                        <li class="breadcrumb-item active">Exams</li>
+                    </ul>
+                </div>
+                <div class="col-auto text-right">
+                    <div class="btn-group">
+                        {% if user.is_superuser or user.role == 'admin' %}
+                        <a href="{% url 'timetables:create_exam_timetable' %}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Add Exam
+                        </a>
+                        {% endif %}
+                        <button onclick="window.print()" class="btn btn-outline-primary">
+                            <i class="fas fa-print"></i> Print
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-    
-    {% for date, exams in exam_by_date.items %}
-    <div class="card shadow mb-4">
-        <div class="card-header bg-info text-white">
-            <h5 class="mb-0">
-                <i class="fas fa-calendar-day"></i> {{ date|date:"l, F j, Y" }}
-            </h5>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-bordered">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Time</th>
-                            <th>Subject</th>
-                            <th>Teacher</th>
-                            <th>Section</th>
-                            <th>Classroom</th>
-                            <th>Type</th>
-                            <th>Duration</th>
-                            <th>Total Marks</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for exam in exams %}
-                        <tr>
-                            <td>{{ exam.start_time|time:"g:i A" }} - {{ exam.end_time|time:"g:i A" }}</td>
-                            <td>
-                                <strong>{{ exam.subject.code }}</strong><br>
-                                <small>{{ exam.subject.name }}</small>
-                            </td>
-                            <td>{{ exam.teacher.first_name }} {{ exam.teacher.last_name }}</td>
-                            <td>{{ exam.section.name }}</td>
-                            <td>{{ exam.classroom.room_number }}</td>
-                            <td>
-                                <span class="badge {% if exam.exam_type == 'final' %}bg-danger{% elif exam.exam_type == 'midterm' %}bg-warning{% else %}bg-info{% endif %}">
-                                    {{ exam.get_exam_type_display }}
-                                </span>
-                            </td>
-                            <td>{{ exam.duration_minutes }} mins</td>
-                            <td>{{ exam.total_marks }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+
+        <!-- Filter Tabs -->
+        <div class="filter-card mb-4">
+            <div class="card-header bg-gradient-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-filter"></i> Filter Exams
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="btn-group" role="group">
+                    <a href="?type=all" class="btn btn-outline-primary {% if current_type == 'all' %}active{% endif %}">All</a>
+                    <a href="?type=midterm" class="btn btn-outline-primary {% if current_type == 'midterm' %}active{% endif %}">Midterm</a>
+                    <a href="?type=final" class="btn btn-outline-primary {% if current_type == 'final' %}active{% endif %}">Final</a>
+                    <a href="?type=quiz" class="btn btn-outline-primary {% if current_type == 'quiz' %}active{% endif %}">Quiz</a>
+                    <a href="?type=practical" class="btn btn-outline-primary {% if current_type == 'practical' %}active{% endif %}">Practical</a>
+                </div>
             </div>
         </div>
+
+        <!-- Exam Schedule by Date -->
+        {% for date, exams in exam_by_date.items %}
+        <div class="card mb-4">
+            <div class="card-header bg-gradient-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-calendar-day"></i> {{ date|date:"l, F j, Y" }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover table-center mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Time</th>
+                                <th>Subject</th>
+                                <th>Teacher</th>
+                                <th>Section</th>
+                                <th>Classroom</th>
+                                <th>Type</th>
+                                <th>Duration</th>
+                                <th>Marks</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for exam in exams %}
+                            <tr class="align-middle">
+                                <td><strong>{{ exam.start_time|time:"g:i A" }}</strong><br><small>{{ exam.end_time|time:"g:i A" }}</small></td>
+                                <td>
+                                    <strong>{{ exam.subject.code }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ exam.subject.name|truncatechars:25 }}</small>
+                                </td>
+                                <td>{{ exam.teacher.first_name }} {{ exam.teacher.last_name }}</td>
+                                <td><span class="badge badge-info">{{ exam.section.name }}</span></td>
+                                <td>{{ exam.classroom.room_number }}</div></td>
+                                <td>
+                                    {% if exam.exam_type == 'final' %}
+                                        <span class="badge badge-danger">Final</span>
+                                    {% elif exam.exam_type == 'midterm' %}
+                                        <span class="badge badge-warning">Midterm</span>
+                                    {% elif exam.exam_type == 'quiz' %}
+                                        <span class="badge badge-info">Quiz</span>
+                                    {% else %}
+                                        <span class="badge badge-secondary">Practical</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ exam.duration_minutes }} mins</div></td>
+                                <td>{{ exam.total_marks }}</div></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="card">
+            <div class="card-body">
+                <div class="empty-state text-center py-5">
+                    <i class="fas fa-calendar-alt fa-4x text-muted mb-3 d-block"></i>
+                    <h5>No exams scheduled</h5>
+                    <p class="text-muted">No exams found for the selected filter.</p>
+                    {% if user.is_superuser or user.role == 'admin' %}
+                    <a href="{% url 'timetables:create_exam_timetable' %}" class="btn btn-primary mt-2">
+                        <i class="fas fa-plus"></i> Add Exam
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
     </div>
-    {% empty %}
-    <div class="alert alert-info text-center">
-        <i class="fas fa-info-circle"></i> No exams scheduled.
-    </div>
-    {% endfor %}
 </div>
 
 <style>
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .filter-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+    .filter-card .card-header {
+        border-radius: 12px 12px 0 0;
+        padding: 12px 20px;
+    }
+    .card-header {
+        border-bottom: none;
+        border-radius: 10px 10px 0 0;
+        padding: 15px 20px;
+    }
+    .card-header .card-title {
+        color: white;
+        margin-bottom: 0;
+    }
+    .card {
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    .card-body {
+        padding: 20px;
+    }
+    .table td {
+        vertical-align: middle;
+        padding: 15px 12px;
+    }
+    .table th {
+        padding: 12px;
+        font-weight: 600;
+    }
+    .thead-light th {
+        background: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+        color: #495057;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .badge {
+        padding: 5px 12px;
+        font-weight: 500;
+        border-radius: 20px;
+    }
+    .btn-outline-primary {
+        border: 1px solid #667eea;
+        color: #667eea;
+    }
+    .btn-outline-primary:hover, .btn-outline-primary.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-color: transparent;
+    }
+    .empty-state {
+        padding: 40px 20px;
+        text-align: center;
+    }
+    @media (max-width: 768px) {
+        .table td, .table th {
+            padding: 10px 8px;
+            font-size: 12px;
+        }
+        .badge {
+            font-size: 10px;
+            padding: 3px 8px;
+        }
+    }
     @media print {
-        .btn, .btn-group {
+        .page-header, .btn, .filter-card {
             display: none;
         }
         .card {

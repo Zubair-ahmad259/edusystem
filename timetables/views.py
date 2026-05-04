@@ -1266,10 +1266,11 @@ def create_exam_timetable(request):
         'classrooms': classrooms,
     }
     
-    return render(request, 'timetables/create_exam_timetable.html', context)
+    return render(request, 'timetables/exam_timetable.html', context)
 
 
 # ==================== DASHBOARD ====================
+
 def timetable_dashboard(request):
     """Main dashboard for timetables"""
     today = date.today()
@@ -1280,6 +1281,10 @@ def timetable_dashboard(request):
     total_exams = ExamTimetable.objects.filter(is_active=True).count()
     active_teachers = Teacher.objects.filter(is_active=True).count()
     active_sections = Section.objects.all().count()
+    total_classrooms = Classroom.objects.filter(is_active=True).count()
+    
+    # Get ALL teachers for the table (add this line)
+    all_teachers = Teacher.objects.filter(is_active=True).select_related()
     
     # Today's schedule
     today_schedule = TimetableEntry.objects.filter(
@@ -1294,50 +1299,6 @@ def timetable_dashboard(request):
         exam_date__lte=today + timedelta(days=7)
     ).select_related('teacher', 'subject', 'section')[:10]
     
-    # Teacher availability for today
-    teacher_availability = []
-    teachers = Teacher.objects.filter(is_active=True)[:10]
-    for teacher in teachers:
-        availability = TeacherAvailability.objects.filter(
-            teacher=teacher,
-            day=today_name,
-            is_available=True
-        ).exists()
-        teacher.is_available_today = availability
-        teacher_availability.append(teacher)
-    
-    # Weekly statistics
-    days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
-    weekly_stats = {}
-    for day in days:
-        classes = TimetableEntry.objects.filter(
-            is_active=True,
-            time_slot__day=day
-        )
-        exams = ExamTimetable.objects.filter(
-            is_active=True,
-            exam_date__week_day=days.index(day) + 2
-        )
-        
-        # Calculate busy hours
-        busy_hours = 0
-        for entry in classes:
-            duration = (entry.time_slot.end_time.hour * 60 + entry.time_slot.end_time.minute) - \
-                      (entry.time_slot.start_time.hour * 60 + entry.time_slot.start_time.minute)
-            busy_hours += duration / 60
-        
-        # Find most active section
-        most_active = classes.values('section__name').annotate(
-            count=Count('id')
-        ).order_by('-count').first()
-        
-        weekly_stats[day] = {
-            'total_classes': classes.count(),
-            'total_exams': exams.count(),
-            'busy_hours': round(busy_hours, 1),
-            'most_active_section': most_active['section__name'] if most_active else None
-        }
-    
     # Classroom utilization
     classrooms = Classroom.objects.filter(is_active=True)
     classroom_utilization = []
@@ -1347,7 +1308,7 @@ def timetable_dashboard(request):
             is_active=True
         ).count()
         
-        utilization = min(100, (classes_count / 40) * 100)
+        utilization = min(100, (classes_count / 40) * 100) if classes_count > 0 else 0
         
         classroom_utilization.append({
             'room_number': classroom.room_number,
@@ -1355,6 +1316,35 @@ def timetable_dashboard(request):
             'class_count': classes_count,
             'utilization': round(utilization)
         })
+    
+    # Weekly statistics
+    days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+    weekly_stats = {}
+    for day in days:
+        classes = TimetableEntry.objects.filter(
+            is_active=True,
+            time_slot__day=day
+        )
+        
+        # Calculate busy hours
+        busy_hours = 0
+        for entry in classes:
+            if entry.time_slot:
+                duration = (entry.time_slot.end_time.hour * 60 + entry.time_slot.end_time.minute) - \
+                          (entry.time_slot.start_time.hour * 60 + entry.time_slot.start_time.minute)
+                busy_hours += duration / 60
+        
+        # Find most active section
+        most_active = classes.values('section__name').annotate(
+            count=Count('id')
+        ).order_by('-count').first()
+        
+        weekly_stats[day] = {
+            'total_classes': classes.count(),
+            'total_exams': 0,  # You can add exam count logic here
+            'busy_hours': round(busy_hours, 1),
+            'most_active_section': most_active['section__name'] if most_active else None
+        }
     
     # Recent generation requests
     recent_requests = TimetableGenerationRequest.objects.all().order_by('-created_at')[:5]
@@ -1385,12 +1375,13 @@ def timetable_dashboard(request):
         'total_exams': total_exams,
         'active_teachers': active_teachers,
         'active_sections': active_sections,
+        'total_classrooms': total_classrooms,  # Add this
+        'all_teachers': all_teachers,  # Add this - very important!
         'today': today,
         'today_schedule': today_schedule,
         'upcoming_exams': upcoming_exams,
-        'teacher_availability': teacher_availability,
-        'weekly_stats': weekly_stats,
         'classroom_utilization': classroom_utilization,
+        'weekly_stats': weekly_stats,
         'recent_requests': recent_requests,
         'teacher_conflicts_count': teacher_conflicts_count,
         'section_conflicts_count': section_conflicts_count,
@@ -1399,9 +1390,6 @@ def timetable_dashboard(request):
     }
     
     return render(request, 'timetables/dashboard.html', context)
-
-    # timetables/views.py - Add these views
-
 # ==================== CLASSROOM TIMETABLE VIEW ====================
 @login_required
 def classroom_timetable_view(request, classroom_id=None):
@@ -1783,3 +1771,4 @@ def section_timetable_view(request, section_id=None):
     }
     
     return render(request, 'timetables/section_timetable.html', context)
+

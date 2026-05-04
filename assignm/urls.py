@@ -20,4 +20,7 @@ urlpatterns = [
     
     # API
     path('api/sections-by-subject/', views.get_sections_by_subject, name='get_sections_by_subject'),
+
+
+    
 ]

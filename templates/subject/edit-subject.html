@@ -1,0 +1,80 @@
+{% extends 'Home/base.html' %}
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Edit Subject</h3>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Subject Code</label>
+                                <input type="text" name="code" class="form-control" value="{{ subject.code }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Subject Name</label>
+                                <input type="text" name="name" class="form-control" value="{{ subject.name }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Credit Hours</label>
+                                <input type="number" name="credit_hours" class="form-control" value="{{ subject.credit_hours }}" min="1" max="10">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Subject Type</label>
+                                <select name="subject_type" class="form-control">
+                                    {% for value, label in subject_type_choices %}
+                                    <option value="{{ value }}" {% if subject.subject_type == value %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label>Description</label>
+                                <textarea name="description" class="form-control" rows="3">{{ subject.description }}</textarea>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label>Prerequisites</label>
+                                <select name="prerequisites" multiple class="form-control">
+                                    {% for prereq in prerequisite_subjects %}
+                                    <option value="{{ prereq.id }}" {% if prereq in subject.prerequisites.all %}selected{% endif %}>
+                                        {{ prereq.code }} - {{ prereq.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">Hold Ctrl to select multiple</small>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="form-check">
+                                <input type="checkbox" name="is_active" class="form-check-input" id="isActive" {% if subject.is_active %}checked{% endif %}>
+                                <label class="form-check-label" for="isActive">Active</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-right mt-4">
+                        <a href="{% url 'subject:view_subject' %}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Update Subject</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

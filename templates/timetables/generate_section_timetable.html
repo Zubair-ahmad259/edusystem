@@ -1,60 +1,665 @@
-{% extends 'timetables/base.html' %}
+{% extends 'Home/base.html' %}
 {% load static %}
 
-{% block title %}Generate Timetable for Section {{ section.name }}{% endblock %}
+{% block title %}Generate Timetable for Section {{ section.name }} - EduSphere{% endblock %}
 
-{% block content %}
-<div class="container py-4">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">
-                        <i class="fas fa-sync-alt"></i> Generate Section Timetable
-                    </h4>
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Generate Timetable</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'index' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'timetables:dashboard' %}">Timetable</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'timetables:section_timetable' section.id %}">Section Timetable</a></li>
+                        <li class="breadcrumb-item active">Generate</li>
+                    </ul>
                 </div>
-                <div class="card-body">
-                    <h5>Section: {{ section.name }}</h5>
-                    <p class="text-muted">Discipline: {{ section.discipline.field }}</p>
-                    
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i> This will automatically generate a timetable for the selected batch and semester.
+                <div class="col-auto text-right">
+                    <a href="{% url 'timetables:section_timetable' section.id %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left"></i> Cancel
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h4 class="card-title mb-0">
+                            <i class="fas fa-sync-alt"></i> Generate Section Timetable
+                        </h4>
                     </div>
-                    
-                    <form method="post">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            <label for="batch" class="form-label">Batch</label>
-                            <select name="batch" id="batch" class="form-select" required>
-                                <option value="">Select Batch</option>
-                                {% for batch in batches %}
-                                <option value="{{ batch.id }}">{{ batch.name }}</option>
-                                {% endfor %}
-                            </select>
+                    <div class="card-body">
+                        <!-- Section Info Card -->
+                        <div class="info-card mb-4">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="info-item">
+                                        <label class="text-muted">Section</label>
+                                        <p class="mb-0 font-weight-bold">{{ section.name }}</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="info-item">
+                                        <label class="text-muted">Discipline</label>
+                                        <p class="mb-0 font-weight-bold">{{ section.discipline.field }}</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        
-                        <div class="mb-3">
-                            <label for="semester" class="form-label">Semester</label>
-                            <select name="semester" id="semester" class="form-select" required>
-                                <option value="">Select Semester</option>
-                                {% for semester in semesters %}
-                                <option value="{{ semester.id }}">Semester {{ semester.number }}</option>
-                                {% endfor %}
-                            </select>
+
+                        <!-- Alert Message -->
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> 
+                            <strong>Automatic Generation:</strong> This will automatically generate a timetable for the selected batch and semester based on available teachers, subjects, and time slots.
                         </div>
-                        
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-success">
-                                <i class="fas fa-play"></i> Generate Timetable
-                            </button>
-                            <a href="{% url 'timetables:section_timetable' section.id %}" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left"></i> Cancel
-                            </a>
+
+                        <!-- Generation Form -->
+                        <form method="post">
+                            {% csrf_token %}
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-group">
+                                        <label class="form-label fw-bold">Batch <span class="text-danger">*</span></label>
+                                        <select name="batch" id="batch" class="form-control" required>
+                                            <option value="">Select Batch</option>
+                                            {% for batch in batches %}
+                                            <option value="{{ batch.id }}">{{ batch.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <small class="text-muted">Select the batch for timetable generation</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-group">
+                                        <label class="form-label fw-bold">Semester <span class="text-danger">*</span></label>
+                                        <select name="semester" id="semester" class="form-control" required>
+                                            <option value="">Select Semester</option>
+                                            {% for semester in semesters %}
+                                            <option value="{{ semester.id }}">Semester {{ semester.number }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <small class="text-muted">Select the semester for timetable generation</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Generation Options -->
+                            <div class="card bg-light mb-4">
+                                <div class="card-body">
+                                    <h6 class="mb-3"><i class="fas fa-cogs"></i> Generation Options</h6>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="avoidConflicts" checked>
+                                                <label class="form-check-label" for="avoidConflicts">
+                                                    Avoid Teacher Conflicts
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="avoidRoomConflicts" checked>
+                                                <label class="form-check-label" for="avoidRoomConflicts">
+                                                    Avoid Classroom Conflicts
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="balanceLoad" checked>
+                                                <label class="form-check-label" for="balanceLoad">
+                                                    Balance Teacher Load
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="preferredRooms" checked>
+                                                <label class="form-check-label" for="preferredRooms">
+                                                    Use Preferred Classrooms
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="form-group text-center mt-4">
+                                <button type="submit" class="btn btn-primary btn-lg px-5">
+                                    <i class="fas fa-play"></i> Generate Timetable
+                                </button>
+                                <a href="{% url 'timetables:section_timetable' section.id %}" class="btn btn-secondary btn-lg ml-2">
+                                    <i class="fas fa-times"></i> Cancel
+                                </a>
+                            </div>
+                        </form>
+
+                        <!-- Note Section -->
+                        <div class="alert alert-warning mt-4">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Note:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Generation may take a few moments depending on the number of subjects and teachers</li>
+                                <li>Existing timetable entries will be replaced with the new generated timetable</li>
+                                <li>Make sure all required data (teachers, subjects, time slots) are properly configured</li>
+                            </ul>
                         </div>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+    
+    .card-header {
+        border-bottom: none;
+        border-radius: 12px 12px 0 0;
+        padding: 18px 25px;
+    }
+    
+    .card-header .card-title {
+        color: white;
+        font-weight: 600;
+        margin-bottom: 0;
+        font-size: 18px;
+    }
+    
+    .card-body {
+        padding: 25px;
+    }
+    
+    .info-card {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 15px 20px;
+        border: 1px solid #e9ecef;
+    }
+    
+    .info-item label {
+        font-size: 12px;
+        margin-bottom: 3px;
+        display: block;
+    }
+    
+    .info-item p {
+        font-size: 15px;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #2c3e50;
+    }
+    
+    .form-control {
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        padding: 10px 15px;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .form-check-label {
+        font-size: 14px;
+        color: #495057;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 12px 30px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-secondary {
+        background: #6c757d;
+        border: none;
+        border-radius: 10px;
+        padding: 12px 30px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-secondary:hover {
+        background: #5a6268;
+        transform: translateY(-2px);
+    }
+    
+    .btn-outline-primary {
+        border: 1px solid #667eea;
+        color: #667eea;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-outline-primary:hover {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        transform: translateY(-1px);
+    }
+    
+    .alert {
+        border: none;
+        border-radius: 10px;
+    }
+    
+    .alert-info {
+        background: #e7f3ff;
+        color: #004085;
+    }
+    
+    .alert-warning {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .alert-warning ul {
+        padding-left: 20px;
+    }
+    
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+        .card-header {
+            padding: 15px 20px;
+        }
+        
+        .card-body {
+            padding: 20px;
+        }
+        
+        .btn-primary, .btn-secondary {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        
+        .ml-2 {
+            margin-left: 0 !important;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add confirmation before form submission
+        const form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                const batch = document.getElementById('batch').value;
+                const semester = document.getElementById('semester').value;
+                
+                if (!batch || !semester) {
+                    e.preventDefault();
+                    alert('Please select both Batch and Semester');
+                    return false;
+                }
+                
+                const confirmed = confirm('This will generate a new timetable and replace any existing entries. Continue?');
+                if (!confirmed) {
+                    e.preventDefault();
+                }
+                return confirmed;
+            });
+        }
+    });
+</script>
+{% endblock %}{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}Generate Timetable for Section {{ section.name }} - EduSphere{% endblock %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Generate Timetable</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'index' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'timetables:dashboard' %}">Timetable</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'timetables:section_timetable' section.id %}">Section Timetable</a></li>
+                        <li class="breadcrumb-item active">Generate</li>
+                    </ul>
+                </div>
+                <div class="col-auto text-right">
+                    <a href="{% url 'timetables:section_timetable' section.id %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left"></i> Cancel
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h4 class="card-title mb-0">
+                            <i class="fas fa-sync-alt"></i> Generate Section Timetable
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <!-- Section Info Card -->
+                        <div class="info-card mb-4">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="info-item">
+                                        <label class="text-muted">Section</label>
+                                        <p class="mb-0 font-weight-bold">{{ section.name }}</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="info-item">
+                                        <label class="text-muted">Discipline</label>
+                                        <p class="mb-0 font-weight-bold">{{ section.discipline.field }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Alert Message -->
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> 
+                            <strong>Automatic Generation:</strong> This will automatically generate a timetable for the selected batch and semester based on available teachers, subjects, and time slots.
+                        </div>
+
+                        <!-- Generation Form -->
+                        <form method="post">
+                            {% csrf_token %}
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-group">
+                                        <label class="form-label fw-bold">Batch <span class="text-danger">*</span></label>
+                                        <select name="batch" id="batch" class="form-control" required>
+                                            <option value="">Select Batch</option>
+                                            {% for batch in batches %}
+                                            <option value="{{ batch.id }}">{{ batch.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <small class="text-muted">Select the batch for timetable generation</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-group">
+                                        <label class="form-label fw-bold">Semester <span class="text-danger">*</span></label>
+                                        <select name="semester" id="semester" class="form-control" required>
+                                            <option value="">Select Semester</option>
+                                            {% for semester in semesters %}
+                                            <option value="{{ semester.id }}">Semester {{ semester.number }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <small class="text-muted">Select the semester for timetable generation</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Generation Options -->
+                            <div class="card bg-light mb-4">
+                                <div class="card-body">
+                                    <h6 class="mb-3"><i class="fas fa-cogs"></i> Generation Options</h6>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="avoidConflicts" checked>
+                                                <label class="form-check-label" for="avoidConflicts">
+                                                    Avoid Teacher Conflicts
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="avoidRoomConflicts" checked>
+                                                <label class="form-check-label" for="avoidRoomConflicts">
+                                                    Avoid Classroom Conflicts
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="balanceLoad" checked>
+                                                <label class="form-check-label" for="balanceLoad">
+                                                    Balance Teacher Load
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="preferredRooms" checked>
+                                                <label class="form-check-label" for="preferredRooms">
+                                                    Use Preferred Classrooms
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="form-group text-center mt-4">
+                                <button type="submit" class="btn btn-primary btn-lg px-5">
+                                    <i class="fas fa-play"></i> Generate Timetable
+                                </button>
+                                <a href="{% url 'timetables:section_timetable' section.id %}" class="btn btn-secondary btn-lg ml-2">
+                                    <i class="fas fa-times"></i> Cancel
+                                </a>
+                            </div>
+                        </form>
+
+                        <!-- Note Section -->
+                        <div class="alert alert-warning mt-4">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Note:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Generation may take a few moments depending on the number of subjects and teachers</li>
+                                <li>Existing timetable entries will be replaced with the new generated timetable</li>
+                                <li>Make sure all required data (teachers, subjects, time slots) are properly configured</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+    
+    .card-header {
+        border-bottom: none;
+        border-radius: 12px 12px 0 0;
+        padding: 18px 25px;
+    }
+    
+    .card-header .card-title {
+        color: white;
+        font-weight: 600;
+        margin-bottom: 0;
+        font-size: 18px;
+    }
+    
+    .card-body {
+        padding: 25px;
+    }
+    
+    .info-card {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 15px 20px;
+        border: 1px solid #e9ecef;
+    }
+    
+    .info-item label {
+        font-size: 12px;
+        margin-bottom: 3px;
+        display: block;
+    }
+    
+    .info-item p {
+        font-size: 15px;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #2c3e50;
+    }
+    
+    .form-control {
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        padding: 10px 15px;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .form-check-label {
+        font-size: 14px;
+        color: #495057;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 12px 30px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-secondary {
+        background: #6c757d;
+        border: none;
+        border-radius: 10px;
+        padding: 12px 30px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-secondary:hover {
+        background: #5a6268;
+        transform: translateY(-2px);
+    }
+    
+    .btn-outline-primary {
+        border: 1px solid #667eea;
+        color: #667eea;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-outline-primary:hover {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        transform: translateY(-1px);
+    }
+    
+    .alert {
+        border: none;
+        border-radius: 10px;
+    }
+    
+    .alert-info {
+        background: #e7f3ff;
+        color: #004085;
+    }
+    
+    .alert-warning {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .alert-warning ul {
+        padding-left: 20px;
+    }
+    
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+        .card-header {
+            padding: 15px 20px;
+        }
+        
+        .card-body {
+            padding: 20px;
+        }
+        
+        .btn-primary, .btn-secondary {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        
+        .ml-2 {
+            margin-left: 0 !important;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add confirmation before form submission
+        const form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                const batch = document.getElementById('batch').value;
+                const semester = document.getElementById('semester').value;
+                
+                if (!batch || !semester) {
+                    e.preventDefault();
+                    alert('Please select both Batch and Semester');
+                    return false;
+                }
+                
+                const confirmed = confirm('This will generate a new timetable and replace any existing entries. Continue?');
+                if (!confirmed) {
+                    e.preventDefault();
+                }
+                return confirmed;
+            });
+        }
+    });
+</script>
 {% endblock %}

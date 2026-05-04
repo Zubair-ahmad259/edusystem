@@ -1,54 +1,312 @@
-<!-- timetables/templates/timetables/section_list_timetable.html -->
-
-{% extends 'timetables/base.html' %}
+{% extends 'Home/base.html' %}
 {% load static %}
 
-{% block title %}All Sections{% endblock %}
+{% block title %}All Sections - EduSphere{% endblock %}
 
-{% block content %}
-<div class="container-fluid py-4">
-    <div class="row mb-4">
-        <div class="col">
-            <h2 class="text-primary">
-                <i class="fas fa-layer-group"></i> Section Timetables
-            </h2>
-            <p class="text-muted">Select a section to view its timetable</p>
-        </div>
-        <div class="col text-end">
-            <a href="{% url 'timetables:dashboard' %}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> Back to Dashboard
-            </a>
-        </div>
-    </div>
-
-    <div class="row">
-        {% for section in sections %}
-        <div class="col-md-6 col-lg-4 mb-4">
-            <div class="card shadow h-100">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-layer-group"></i> Section {{ section.name }}
-                    </h5>
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Section Timetables</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'index' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'timetables:dashboard' %}">Timetable</a></li>
+                        <li class="breadcrumb-item active">Sections</li>
+                    </ul>
                 </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <p><i class="fas fa-users"></i> <strong>Batch:</strong> {{ section.batch.name }}</p>
-                        <p><i class="fas fa-graduation-cap"></i> <strong>Program:</strong> {{ section.discipline.program }} in {{ section.discipline.field }}</p>
-                        <p><i class="fas fa-calendar"></i> <strong>Session:</strong> {{ section.batch.start_session }} - {{ section.batch.end_session }}</p>
-                    </div>
-                    <a href="{% url 'timetables:section_timetable' section.id %}" class="btn btn-success w-100">
-                        <i class="fas fa-calendar-alt"></i> View Timetable
+                <div class="col-auto text-right">
+                    <a href="{% url 'timetables:dashboard' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
                     </a>
                 </div>
             </div>
         </div>
-        {% empty %}
-        <div class="col-12">
-            <div class="alert alert-info text-center">
-                <i class="fas fa-info-circle"></i> No sections found.
+
+        <!-- Statistics Cards -->
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card dash-widget">
+                    <div class="card-body">
+                        <span class="dash-widget-icon bg-primary"><i class="fas fa-layer-group"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ sections|length }}</h3>
+                            <span>Total Sections</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card dash-widget">
+                    <div class="card-body">
+                        <span class="dash-widget-icon bg-primary"><i class="fas fa-university"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ total_batches|default:0 }}</h3>
+                            <span>Total Batches</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card dash-widget">
+                    <div class="card-body">
+                        <span class="dash-widget-icon bg-primary"><i class="fas fa-graduation-cap"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ total_disciplines|default:0 }}</h3>
+                            <span>Disciplines</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-        {% endfor %}
+
+        <!-- Sections Grid -->
+        <div class="row">
+            {% for section in sections %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-layer-group"></i> Section {{ section.name }}
+                            </h5>
+                            <span class="badge bg-primary">Active</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Batch Info -->
+                        <div class="info-group mb-3">
+                            <div class="row">
+                                <div class="col-12">
+                                    <small class="text-muted">Batch</small>
+                                    <div class="font-weight-bold">{{ section.batch.name }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Program Info -->
+                        <div class="info-group mb-3">
+                            <small class="text-muted">Program</small>
+                            <div class="font-weight-bold">{{ section.discipline.program }} in {{ section.discipline.field }}</div>
+                        </div>
+
+                        <!-- Session Info -->
+                        <div class="info-group mb-3">
+                            <small class="text-muted">Session</small>
+                            <div class="d-flex justify-content-between">
+                                <span><i class="fas fa-calendar-alt text-primary"></i> {{ section.batch.start_session }}</span>
+                                <span><i class="fas fa-calendar-alt text-primary"></i> {{ section.batch.end_session }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Discipline Info -->
+                        <div class="info-group">
+                            <small class="text-muted">Discipline</small>
+                            <div class="mt-1">
+                                <span class="badge bg-primary">{{ section.discipline.field }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <a href="{% url 'timetables:section_timetable' section.id %}" class="btn btn-primary btn-block">
+                            <i class="fas fa-calendar-alt"></i> View Timetable
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <div class="empty-state text-center py-5">
+                    <i class="fas fa-layer-group fa-4x text-muted mb-3 d-block"></i>
+                    <h5>No sections found</h5>
+                    <p class="text-muted">No sections available in the system.</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
     </div>
 </div>
+
+<style>
+    /* Dashboard Widget Styles */
+    .dash-widget {
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    .dash-widget:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .dash-widget-icon {
+        font-size: 40px;
+        float: left;
+        width: 70px;
+        height: 70px;
+        line-height: 70px;
+        text-align: center;
+        background: rgba(0,0,0,0.05);
+        border-radius: 50%;
+        margin-right: 15px;
+        color: white;
+    }
+    .dash-widget-info {
+        overflow: hidden;
+    }
+    .dash-widget-info h3 {
+        font-size: 28px;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+    .dash-widget-info span {
+        font-size: 14px;
+        color: #6c757d;
+    }
+
+    /* Card Styles */
+    .bg-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        transition: transform 0.3s ease;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .card-header {
+        border-bottom: none;
+        border-radius: 12px 12px 0 0;
+        padding: 15px 20px;
+    }
+    
+    .card-header .card-title {
+        color: white;
+        font-weight: 600;
+        margin-bottom: 0;
+    }
+    
+    .card-body {
+        padding: 20px;
+    }
+    
+    .card-footer {
+        border-top: 1px solid #f0f0f0;
+        padding: 15px 20px;
+        background: transparent;
+    }
+    
+    /* Info Group */
+    .info-group {
+        margin-bottom: 12px;
+    }
+    
+    .info-group small {
+        font-size: 11px;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: block;
+        margin-bottom: 5px;
+    }
+    
+    .info-group .font-weight-bold {
+        font-size: 14px;
+        color: #2c3e50;
+    }
+    
+    /* Badge Styles */
+    .badge {
+        padding: 5px 12px;
+        font-weight: 500;
+        border-radius: 20px;
+        font-size: 11px;
+    }
+    
+    .bg-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    /* Button Styles */
+    .btn-outline-primary {
+        border: 1px solid #667eea;
+        color: #667eea;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-outline-primary:hover {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-color: transparent;
+        transform: translateY(-1px);
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-block {
+        width: 100%;
+    }
+    
+    /* Empty State */
+    .empty-state {
+        padding: 40px 20px;
+        text-align: center;
+    }
+    .empty-state i {
+        opacity: 0.5;
+    }
+    
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+        .dash-widget-icon {
+            width: 50px;
+            height: 50px;
+            line-height: 50px;
+            font-size: 25px;
+        }
+        .dash-widget-info h3 {
+            font-size: 20px;
+        }
+        .card-header {
+            padding: 12px 15px;
+        }
+        .card-body {
+            padding: 15px;
+        }
+        .info-group .font-weight-bold {
+            font-size: 13px;
+        }
+        .badge {
+            font-size: 10px;
+            padding: 3px 8px;
+        }
+    }
+</style>
 {% endblock %}

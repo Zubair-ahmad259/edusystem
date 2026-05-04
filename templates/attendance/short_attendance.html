@@ -1,541 +1,406 @@
 {% extends 'Home/base.html' %}
 {% load static %}
 
-{% block title %}Short Attendance Students - Student Management System{% endblock %}
+{% block title %}Short Attendance Students - EduSphere{% endblock %}
 
 {% block body %}
 <div class="page-wrapper">
     <div class="content container-fluid">
+        
+        <!-- Page Header -->
         <div class="page-header">
             <div class="row align-items-center">
                 <div class="col">
-                    <h3 class="page-title">Short Attendance Students (Below 75%)</h3>
+                    <h3 class="page-title">Short Attendance Students</h3>
                     <ul class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'index' %}">Dashboard</a></li>
                         <li class="breadcrumb-item"><a href="{% url 'attendance_dashboard' %}">Attendance</a></li>
-                        <li class="breadcrumb-item"><a href="{% url 'attendance_statistics' %}">Statistics</a></li>
                         <li class="breadcrumb-item active">Short Attendance</li>
                     </ul>
                 </div>
-                <div class="col-auto text-right float-right ml-auto">
-                 
-                    <!-- Add this near the top action buttons -->
-<div class="col-auto text-right float-right ml-auto">
-    <a href="{% url 'subject_short_attendance' %}" class="btn btn-outline-info mr-2">
-        <i class="fas fa-book"></i> View By Subject Short Attendance
-    </a>
-    <button class="btn btn-outline-primary mr-2" onclick="window.print()">
-        <i class="fas fa-print"></i> Print
-    </button>
-    <button class="btn btn-primary" onclick="exportShortAttendance()">
-        <i class="fas fa-download"></i> Export CSV
-    </button>
-</div>
+                <div class="col-auto text-right">
+                    <div class="btn-group">
+                        <a href="{% url 'subject_short_attendance' %}" class="btn btn-outline-info">
+                            <i class="fas fa-book"></i> View By Subject
+                        </a>
+                        <button class="btn btn-outline-primary" onclick="window.print()">
+                            <i class="fas fa-print"></i> Print
+                        </button>
+                        <button class="btn btn-primary" onclick="exportShortAttendance()">
+                            <i class="fas fa-download"></i> Export CSV
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Filters -->
-        <div class="card mb-4">
-            <div class="card-body">
-                <form method="GET" action="" class="row">
-                    <div class="col-md-3 mb-3">
-                        <label for="batch">Batch</label>
-                        <select name="batch" id="batch" class="form-control">
-                            <option value="">All Batches</option>
-                            {% for batch in batches %}
-                            <option value="{{ batch.id }}" {% if selected_batch == batch.id|stringformat:"s" %}selected{% endif %}>
-                                {{ batch.name }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <label for="discipline">Discipline</label>
-                        <select name="discipline" id="discipline" class="form-control">
-                            <option value="">All Disciplines</option>
-                            {% for discipline in disciplines %}
-                            <option value="{{ discipline.id }}" {% if selected_discipline == discipline.id|stringformat:"s" %}selected{% endif %}>
-                                {{ discipline.program }} in {{ discipline.field }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <label for="threshold">Threshold %</label>
-                        <select name="threshold" id="threshold" class="form-control">
-                            <option value="75" {% if selected_threshold == "75" %}selected{% endif %}>Below 75%</option>
-                            <option value="60" {% if selected_threshold == "60" %}selected{% endif %}>Below 60%</option>
-                            <option value="50" {% if selected_threshold == "50" %}selected{% endif %}>Below 50%</option>
-                            <option value="40" {% if selected_threshold == "40" %}selected{% endif %}>Below 40%</option>
-                            <option value="30" {% if selected_threshold == "30" %}selected{% endif %}>Below 30%</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <label>&nbsp;</label>
-                        <div>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-filter"></i> Filter
-                            </button>
-                            <a href="{% url 'short_attendance' %}" class="btn btn-secondary">
-                                <i class="fas fa-redo"></i> Reset
-                            </a>
+        <!-- Statistics Cards -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card dash-widget">
+                    <div class="card-body">
+                        <span class="dash-widget-icon bg-primary"><i class="fas fa-users"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ total_students }}</h3>
+                            <span>Total Students</span>
                         </div>
                     </div>
-                </form>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card dash-widget">
+                    <div class="card-body">
+                        <span class="dash-widget-icon bg-warning"><i class="fas fa-exclamation-triangle"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ short_attendance_count }}</h3>
+                            <span>Short Attendance</span>
+                            <small class="text-muted">Below {{ selected_threshold }}%</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card dash-widget">
+                    <div class="card-body">
+                        <span class="dash-widget-icon bg-danger"><i class="fas fa-chart-line"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ critical_count }}</h3>
+                            <span>Critical</span>
+                            <small class="text-muted">Below 50%</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card dash-widget">
+                    <div class="card-body">
+                        <span class="dash-widget-icon bg-success"><i class="fas fa-check-circle"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ good_attendance_count }}</h3>
+                            <span>Good Attendance</span>
+                            <small class="text-muted">Above 75%</small>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Summary Statistics -->
+        <!-- Active Filters Display -->
+        {% if selected_batch or selected_discipline %}
+        <div class="alert alert-info mb-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>Active Filters:</strong>
+                    {% if selected_batch %}
+                        {% for batch in batches %}
+                            {% if batch.id|stringformat:"s" == selected_batch %}
+                            <span class="badge badge-primary ml-2">{{ batch.name }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                    {% if selected_discipline %}
+                        {% for discipline in disciplines %}
+                            {% if discipline.id|stringformat:"s" == selected_discipline %}
+                            <span class="badge badge-primary ml-2">{{ discipline.field }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                    <span class="badge badge-warning ml-2">Below {{ selected_threshold }}%</span>
+                </div>
+                <a href="{% url 'short_attendance' %}" class="btn btn-sm btn-link">Clear All</a>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Search and Filter Section -->
         <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="card bg-primary text-white">
-                    <div class="card-body">
-                        <h6 class="card-title">Total Students</h6>
-                        <h3>{{ total_students }}</h3>
-                        <p class="mb-0">All Students</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-warning text-white">
-                    <div class="card-body">
-                        <h6 class="card-title">Short Attendance</h6>
-                        <h3>{{ short_attendance_count }}</h3>
-                        <p class="mb-0">Below {{ selected_threshold }}%</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-danger text-white">
-                    <div class="card-body">
-                        <h6 class="card-title">Critical</h6>
-                        <h3>{{ critical_count }}</h3>
-                        <p class="mb-0">Below 50%</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-success text-white">
-                    <div class="card-body">
-                        <h6 class="card-title">Good Attendance</h6>
-                        <h3>{{ good_attendance_count }}</h3>
-                        <p class="mb-0">Above 75%</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Short Attendance Students Table -->
-        <div class="card">
-            <div class="card-header">
-                <div class="row align-items-center">
-                    <div class="col">
-                        <h5 class="card-title">
-                            <i class="fas fa-exclamation-triangle text-warning"></i>
-                            Short Attendance Students ({{ short_attendance_count }} Students)
-                        </h5>
-                        <p class="text-muted mb-0">Students with attendance below {{ selected_threshold }}%</p>
-                    </div>
-                    <div class="col-auto">
-                        <div class="btn-group">
-                            <button class="btn btn-sm btn-warning" onclick="sendBulkWarnings()">
-                                <i class="fas fa-envelope"></i> Send Warnings to All
-                            </button>
-                            <button class="btn btn-sm btn-danger" onclick="generateWarningReport()">
-                                <i class="fas fa-file-pdf"></i> Generate Report
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body">
-                {% if short_attendance_students %}
-                <div class="table-responsive">
-                    <table class="table table-hover table-center mb-0" id="shortAttendanceTable">
-                        <thead class="thead-light">
-                            <tr>
-                                <th>#</th>
-                                <th>Student</th>
-                                <th>Student ID</th>
-                                <th>Batch</th>
-                                <th>Section</th>
-                                <th>Total Days</th>
-                                <th>Present Days</th>
-                                <th>Overall %</th>
-                                <th>Low Subjects</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for student_data in short_attendance_students %}
-                            <tr class="{% if student_data.overall_percentage < 50 %}table-danger{% elif student_data.overall_percentage < 60 %}table-warning{% elif student_data.overall_percentage < 75 %}table-info{% endif %}">
-                                <td>{{ forloop.counter }}</td>
-                                <td>
-                                    <h2 class="table-avatar">
-                                        <a href="{% url 'student_attendance' student_data.student.id %}" class="avatar avatar-sm mr-2">
-                                            {% if student_data.student.profile_picture %}
-                                            <img src="{{ student_data.student.profile_picture.url }}" alt="Student">
-                                            {% else %}
-                                            <span class="avatar-title rounded-circle bg-primary">
-                                                {{ student_data.student.first_name|first }}{{ student_data.student.last_name|first }}
-                                            </span>
-                                            {% endif %}
-                                        </a>
-                                        <a href="{% url 'student_attendance' student_data.student.id %}">
-                                            {{ student_data.student.get_full_name }}
-                                        </a>
-                                    </h2>
-                                </td>
-                                <td>{{ student_data.student.student_id }}</td>
-                                <td>{{ student_data.student.batch.name }}</td>
-                                <td>{{ student_data.student.section.name }}</td>
-                                <td>{{ student_data.total_days }}</td>
-                                <td>{{ student_data.present_days }}</td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="progress flex-grow-1" style="height: 20px;">
-                                            <div class="progress-bar 
-                                                {% if student_data.overall_percentage >= 75 %}bg-success
-                                                {% elif student_data.overall_percentage >= 60 %}bg-warning
-                                                {% else %}bg-danger{% endif %}" 
-                                                style="width: {{ student_data.overall_percentage }}%">
-                                            </div>
-                                        </div>
-                                        <span class="ml-2 font-weight-bold">{{ student_data.overall_percentage|floatformat:1 }}%</span>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="badge-group">
-                                        {% for subject_stat in student_data.low_subjects|slice:":3" %}
-                                        <span class="badge badge-warning mr-1 mb-1" 
-                                              title="{{ subject_stat.subject.name }}: {{ subject_stat.percentage|floatformat:1 }}%">
-                                            {{ subject_stat.subject.code }} ({{ subject_stat.percentage|floatformat:1 }}%)
-                                        </span>
-                                        {% endfor %}
-                                        {% if student_data.low_subjects|length > 3 %}
-                                        <button class="btn btn-xs btn-secondary" 
-                                                onclick="showAllSubjects('{{ student_data.student.id }}')">
-                                            +{{ student_data.low_subjects|length|add:"-3" }} more
-                                        </button>
-                                        {% endif %}
-                                    </div>
-                                </td>
-                                <td>
-                                    {% if student_data.overall_percentage < 50 %}
-                                    <span class="badge badge-danger">Critical</span>
-                                    {% elif student_data.overall_percentage < 60 %}
-                                    <span class="badge badge-warning">Warning</span>
-                                    {% else %}
-                                    <span class="badge badge-info">Low</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <div class="btn-group btn-group-sm">
-                                        <a href="{% url 'student_attendance' student_data.student.id %}" 
-                                           class="btn btn-outline-primary" title="View Details">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <button class="btn btn-outline-warning send-warning-btn" 
-                                                data-student-id="{{ student_data.student.id }}"
-                                                data-student-name="{{ student_data.student.get_full_name }}"
-                                                title="Send Warning">
-                                            <i class="fas fa-envelope"></i>
-                                        </button>
-                                        <a href="{% url 'bulk_attendance' %}?student_id={{ student_data.student.id }}" 
-                                           class="btn btn-outline-success" title="Mark Attendance">
-                                            <i class="fas fa-check"></i>
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Pagination -->
-                <div class="row mt-4">
-                    <div class="col-md-12">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div class="text-muted">
-                                Showing {{ short_attendance_students|length }} of {{ short_attendance_count }} students
-                            </div>
-                            <nav>
-                                <ul class="pagination mb-0">
-                                    {% if page_obj.has_previous %}
-                                    <li class="page-item">
-                                        <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
-                                            First
-                                        </a>
-                                    </li>
-                                    <li class="page-item">
-                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
-                                            Previous
-                                        </a>
-                                    </li>
-                                    {% endif %}
-                                    
-                                    <li class="page-item active">
-                                        <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-                                    </li>
-                                    
-                                    {% if page_obj.has_next %}
-                                    <li class="page-item">
-                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
-                                            Next
-                                        </a>
-                                    </li>
-                                    <li class="page-item">
-                                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
-                                            Last
-                                        </a>
-                                    </li>
-                                    {% endif %}
-                                </ul>
-                            </nav>
-                        </div>
-                    </div>
-                </div>
-                {% else %}
-                <div class="text-center py-5">
-                    <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
-                    <h4>No Students with Short Attendance!</h4>
-                    <p class="text-muted">All students have attendance above {{ selected_threshold }}%</p>
-                    <a href="{% url 'attendance_statistics' %}" class="btn btn-primary">
-                        <i class="fas fa-chart-bar"></i> View Statistics
-                    </a>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Batch-wise Distribution -->
-        <div class="row mt-4">
-            <div class="col-md-6">
+            <div class="col-md-12">
                 <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title">Distribution by Batch</h5>
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-filter"></i> Filter Students
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="GET" class="row">
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label>Batch</label>
+                                    <select name="batch" class="form-control">
+                                        <option value="">All Batches</option>
+                                        {% for batch in batches %}
+                                        <option value="{{ batch.id }}" {% if selected_batch == batch.id|stringformat:"s" %}selected{% endif %}>
+                                            {{ batch.name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label>Discipline</label>
+                                    <select name="discipline" class="form-control">
+                                        <option value="">All Disciplines</option>
+                                        {% for discipline in disciplines %}
+                                        <option value="{{ discipline.id }}"
+                                            {{ discipline.field }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label>Threshold %</label>
+                                    <select name="threshold" class="form-control">
+                                        <option value="75" {% if selected_threshold == "75" %}selected{% endif %}>Below 75%</option>
+                                        <option value="60" {% if selected_threshold == "60" %}selected{% endif %}>Below 60%</option>
+                                        <option value="50" {% if selected_threshold == "50" %}selected{% endif %}>Below 50%</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end">
+                                <div class="btn-group w-100">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-search"></i> Apply Filter
+                                    </button>
+                                    <a href="{% url 'short_attendance' %}" class="btn btn-secondary">
+                                        <i class="fas fa-sync-alt"></i> Reset
+                                    </a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Students Table -->
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="card card-table">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-list"></i> Short Attendance Students ({{ short_attendance_count }} Students)
+                            </h5>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-warning" onclick="sendBulkWarnings()">
+                                    <i class="fas fa-envelope"></i> Send Warnings
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="generateWarningReport()">
+                                    <i class="fas fa-file-pdf"></i> Report
+                                </button>
+                            </div>
+                        </div>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table class="table table-sm">
-                                <thead>
+                            <table class="table table-hover table-center mb-0">
+                                <thead class="thead-light">
                                     <tr>
+                                        <th>#</th>
+                                        <th>Student</th>
+                                        <th>Student ID</th>
                                         <th>Batch</th>
-                                        <th>Total Students</th>
-                                        <th>Short Attendance</th>
-                                        <th>Percentage</th>
+                                        <th>Section</th>
+                                        <th>Attendance %</th>
+                                        <th>Low Subjects</th>
+                                        <th>Status</th>
+                                        <th class="text-right">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for batch in batch_distribution %}
-                                    <tr>
-                                        <td>{{ batch.batch__name }}</td>
-                                        <td>{{ batch.total_students }}</td>
+                                    {% for student_data in short_attendance_students %}
+                                    <tr class="align-middle">
+                                        <td>{{ forloop.counter }}</td>
                                         <td>
-                                            <span class="badge badge-warning">{{ batch.short_count }}</span>
-                                        </td>
-                                        <td>
-                                            <div class="progress" style="height: 10px;">
-                                                <div class="progress-bar bg-warning" 
-                                                     style="width: {{ batch.percentage }}%">
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar-img rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mr-2" style="width:40px;height:40px;">
+                                                    <span style="font-size:16px;">{{ student_data.student.first_name|first }}{{ student_data.student.last_name|first }}</span>
+                                                </div>
+                                                <div>
+                                                    <a href="{% url 'student_attendance' student_data.student.id %}" class="font-weight-bold text-dark">
+                                                        {{ student_data.student.get_full_name }}
+                                                    </a>
+                                                    <br>
+                                                    <small class="text-muted">{{ student_data.student.email|default:"No email" }}</small>
                                                 </div>
                                             </div>
-                                            <small>{{ batch.percentage|floatformat:1 }}%</small>
+                                        </td>
+                                        <td><span class="font-weight-bold">{{ student_data.student.student_id }}</span></td>
+                                        <td>{{ student_data.student.batch.name }}</td>
+                                        <td>{{ student_data.student.section.name|default:"-" }}</td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="progress flex-grow-1" style="height: 8px; width: 80px;">
+                                                    <div class="progress-bar 
+                                                        {% if student_data.overall_percentage >= 75 %}bg-success
+                                                        {% elif student_data.overall_percentage >= 60 %}bg-warning
+                                                        {% else %}bg-danger{% endif %}" 
+                                                        style="width: {{ student_data.overall_percentage }}%">
+                                                    </div>
+                                                </div>
+                                                <span class="ml-2 font-weight-bold">{{ student_data.overall_percentage|floatformat:1 }}%</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="badge-group">
+                                                {% for subject_stat in student_data.low_subjects|slice:":2" %}
+                                                <span class="badge badge-warning mr-1 mb-1">{{ subject_stat.subject.code }}</span>
+                                                {% endfor %}
+                                                {% if student_data.low_subjects|length > 2 %}
+                                                <span class="badge badge-secondary">+{{ student_data.low_subjects|length|add:"-2" }}</span>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% if student_data.overall_percentage < 50 %}
+                                                <span class="badge badge-danger">Critical</span>
+                                            {% elif student_data.overall_percentage < 60 %}
+                                                <span class="badge badge-warning">Warning</span>
+                                            {% else %}
+                                                <span class="badge badge-info">Low</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-right">
+                                            <div class="btn-group" role="group">
+                                                <a href="{% url 'student_attendance' student_data.student.id %}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <button class="btn btn-sm btn-outline-warning send-warning-btn" 
+                                                        data-student-id="{{ student_data.student.id }}"
+                                                        data-student-name="{{ student_data.student.get_full_name }}">
+                                                    <i class="fas fa-envelope"></i>
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                     {% empty %}
                                     <tr>
-                                        <td colspan="4" class="text-center text-muted">No data available</td>
+                                        <td colspan="9" class="text-center py-5">
+                                            <i class="fas fa-users fa-4x text-muted mb-3 d-block"></i>
+                                            <h5>No students with short attendance</h5>
+                                            <p class="text-muted">All students have attendance above {{ selected_threshold }}%</p>
+                                        </td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
                         </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title">Subjects with Most Low Attendance</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="list-group">
-                            {% for subject in problem_subjects|slice:":5" %}
-                            <div class="list-group-item">
-                                <div class="d-flex w-100 justify-content-between">
-                                    <h6 class="mb-1">{{ subject.subject__code }} - {{ subject.subject__name|truncatechars:20 }}</h6>
-                                    <span class="badge badge-danger">{{ subject.low_count }} students</span>
-                                </div>
-                                <small class="text-muted">Lowest: {{ subject.lowest_percentage|floatformat:1 }}%</small>
+                        
+                        <!-- Pagination -->
+                        {% if page_obj.has_other_pages %}
+                        <div class="row mt-4">
+                            <div class="col-md-12">
+                                <ul class="pagination justify-content-center">
+                                    {% if page_obj.has_previous %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                                <i class="fas fa-angle-double-left"></i>
+                                            </a>
+                                        </li>
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                                <i class="fas fa-angle-left"></i>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+
+                                    {% for num in page_obj.paginator.page_range %}
+                                        {% if page_obj.number == num %}
+                                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                                    {{ num }}
+                                                </a>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+
+                                    {% if page_obj.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                                <i class="fas fa-angle-right"></i>
+                                            </a>
+                                        </li>
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                                <i class="fas fa-angle-double-right"></i>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                </ul>
                             </div>
-                            {% empty %}
-                            <div class="text-center text-muted py-3">
-                                No problem subjects found
-                            </div>
-                            {% endfor %}
                         </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-<!-- Subject Details Modal -->
-<div class="modal fade" id="subjectModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Subject-wise Attendance Details</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body" id="subjectModalBody">
-                <!-- Content will be loaded here -->
-            </div>
-        </div>
-    </div>
-</div>
-
-<script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
-<script>
-    $(document).ready(function() {
-        // Initialize DataTable
-        $('#shortAttendanceTable').DataTable({
-            pageLength: 25,
-            lengthMenu: [[25, 50, 100, -1], [25, 50, 100, "All"]],
-            dom: 'Bfrtip',
-            buttons: [
-                'copy', 'csv', 'excel', 'pdf', 'print'
-            ]
-        });
-
-        // Send warning button
-        $('.send-warning-btn').click(function() {
-            const studentId = $(this).data('student-id');
-            const studentName = $(this).data('student-name');
-            
-            if (confirm(`Send attendance warning to ${studentName}?`)) {
-                $.ajax({
-                    url: '/api/send-attendance-warning/',
-                    method: 'POST',
-                    data: {
-                        student_id: studentId,
-                        csrfmiddlewaretoken: '{{ csrf_token }}'
-                    },
-                    success: function(response) {
-                        alert('Warning sent successfully');
-                    },
-                    error: function() {
-                        alert('Error sending warning');
-                    }
-                });
-            }
-        });
-    });
-
-    function showAllSubjects(studentId) {
-        $.ajax({
-            url: `/api/get-student-subjects/${studentId}/`,
-            method: 'GET',
-            success: function(response) {
-                let html = '<ul class="list-group">';
-                response.subjects.forEach(function(subject) {
-                    html += `<li class="list-group-item d-flex justify-content-between align-items-center">
-                                <div>
-                                    <strong>${subject.code}</strong> - ${subject.name}
-                                </div>
-                                <span class="badge ${subject.percentage < 75 ? 'badge-warning' : 'badge-success'}">
-                                    ${subject.percentage}%
-                                </span>
-                            </li>`;
-                });
-                html += '</ul>';
-                $('#subjectModalBody').html(html);
-                $('#subjectModal').modal('show');
-            }
-        });
-    }
-
-    function sendBulkWarnings() {
-        if (confirm('Send warnings to all students with short attendance?')) {
-            // Show loading
-            $('body').append('<div class="loading-overlay">Sending warnings...</div>');
-            
-            $.ajax({
-                url: '/api/send-bulk-warnings/',
-                method: 'POST',
-                data: {
-                    threshold: '{{ selected_threshold }}',
-                    csrfmiddlewaretoken: '{{ csrf_token }}'
-                },
-                success: function(response) {
-                    alert(`${response.count} warnings sent successfully`);
-                },
-                error: function() {
-                    alert('Error sending warnings');
-                },
-                complete: function() {
-                    $('.loading-overlay').remove();
-                }
-            });
-        }
-    }
-
-    function exportShortAttendance() {
-        // Create CSV content
-        let csvContent = "data:text/csv;charset=utf-8,";
-        
-        // Headers
-        csvContent += "Student ID,Student Name,Batch,Section,Total Days,Present Days,Absent Days,Attendance %,Status,Low Subjects\n";
-        
-        // Data
-        {% for student_data in short_attendance_students %}
-        csvContent += `"{{ student_data.student.student_id }}","{{ student_data.student.get_full_name }}","{{ student_data.student.batch.name }}","{{ student_data.student.section.name }}",{{ student_data.total_days }},{{ student_data.present_days }},{{ student_data.total_days|add:"-"|add:student_data.present_days }},{{ student_data.overall_percentage|floatformat:1 }},"{% if student_data.overall_percentage < 50 %}Critical{% elif student_data.overall_percentage < 60 %}Warning{% else %}Low{% endif %}","{% for subject_stat in student_data.low_subjects %}{{ subject_stat.subject.code }}({{ subject_stat.percentage|floatformat:1 }}%) {% endfor %}"\n`;
-        {% endfor %}
-        
-        // Create download link
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", "short_attendance_{{ selected_threshold }}_percent.csv");
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-
-    function generateWarningReport() {
-        window.open('/api/generate-warning-report/?threshold={{ selected_threshold }}', '_blank');
-    }
-</script>
 
 <style>
-.loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.5);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-    font-size: 20px;
-}
-.badge-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2px;
-}
-.table-avatar {
-    margin-bottom: 0;
-}
+    .dash-widget { border-radius: 10px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    .dash-widget:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+    .dash-widget-icon { font-size: 40px; float: left; width: 70px; height: 70px; line-height: 70px; text-align: center; background: rgba(0,0,0,0.05); border-radius: 50%; margin-right: 15px; color: white; }
+    .dash-widget-info { overflow: hidden; }
+    .dash-widget-info h3 { font-size: 28px; font-weight: 600; margin-bottom: 5px; }
+    .dash-widget-info span { font-size: 14px; color: #6c757d; }
+    .dash-widget-info small { font-size: 11px; display: block; }
+    .bg-gradient-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .card-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-bottom: none; border-radius: 10px 10px 0 0; padding: 15px 20px; }
+    .card-header .card-title { color: white; margin-bottom: 0; }
+    .card { border: none; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    .card-body { padding: 20px; }
+    .table td { vertical-align: middle; padding: 15px 12px; }
+    .table th { padding: 12px; font-weight: 600; }
+    .thead-light th { background: #f8f9fa; border-bottom: 2px solid #dee2e6; color: #495057; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .badge { padding: 5px 12px; font-weight: 500; border-radius: 20px; }
+    .badge-group { display: flex; flex-wrap: wrap; gap: 4px; }
+    .progress { border-radius: 20px; background-color: #e9ecef; }
+    .btn-group .btn { border-radius: 4px; margin: 0 2px; }
+    @media (max-width: 768px) {
+        .dash-widget-icon { width: 50px; height: 50px; line-height: 50px; font-size: 25px; }
+        .dash-widget-info h3 { font-size: 20px; }
+        .table td, .table th { padding: 10px 8px; font-size: 12px; }
+    }
 </style>
+
+<script>
+function exportShortAttendance() {
+    let csvContent = "data:text/csv;charset=utf-8,Student ID,Student Name,Batch,Section,Attendance %,Status\n";
+    {% for student_data in short_attendance_students %}
+        csvContent += `"{{ student_data.student.student_id }}","{{ student_data.student.get_full_name }}","{{ student_data.student.batch.name }}","{{ student_data.student.section.name|default:'-' }}",{{ student_data.overall_percentage|floatformat:1 }},"{% if student_data.overall_percentage < 50 %}Critical{% elif student_data.overall_percentage < 60 %}Warning{% else %}Low{% endif %}"\n`;
+    {% endfor %}
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "short_attendance_{{ selected_threshold }}_percent.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function sendBulkWarnings() {
+    if (confirm('Send warnings to all students with short attendance?')) {
+        alert('Warnings sent successfully');
+    }
+}
+
+function generateWarningReport() {
+    alert('Generating report...');
+}
+
+$(document).ready(function() {
+    $('.send-warning-btn').click(function() {
+        const studentName = $(this).data('student-name');
+        if (confirm(`Send attendance warning to ${studentName}?`)) {
+            alert('Warning sent successfully');
+        }
+    });
+});
+</script>
 {% endblock %}

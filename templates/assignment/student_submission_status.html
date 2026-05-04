@@ -1,92 +1,165 @@
-{% extends 'assignment/base_assignment.html' %}
+{% extends 'Home/base.html' %}
+{% load static %}
 
-{% block assignment_title %}Submission History{% endblock %}
+{% block title %}Submission History - EduSphere{% endblock %}
 
-{% block assignment_content %}
-<div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>My Submission History</h1>
-        <a href="{% url 'assignment:student_assignment_list' %}" class="btn btn-primary">
-            <i class="fas fa-arrow-left"></i> Back to Assignments
-        </a>
-    </div>
-
-    <div class="card">
-        <div class="card-header">
-            <h5>All My Submissions</h5>
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Submission History</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'index' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'assignment:student_assignment_list' %}">Assignments</a></li>
+                        <li class="breadcrumb-item active">Submission History</li>
+                    </ul>
+                </div>
+                <div class="col-auto text-right">
+                    <a href="{% url 'assignment:student_assignment_list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left"></i> Back to Assignments
+                    </a>
+                    {% if submissions %}
+                    <a href="{% url 'assignment:download_marks_pdf' %}" class="btn btn-success ml-2">
+                        <i class="fas fa-file-pdf"></i> Download Marks PDF
+                    </a>
+                    <a href="{% url 'assignment:download_marks_excel' %}" class="btn btn-info ml-2">
+                        <i class="fas fa-file-excel"></i> Download Marks Excel
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
         </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-striped table-hover">
-                    <thead>
-                        <tr>
-                            <th>Assignment</th>
-                            <th>Subject</th>
-                            <th>Submitted Date</th>
-                            <th>Status</th>
-                            <th>Marks</th>
-                            <th>Feedback</th>
-                            <th>Actions</th>
+
+        <!-- Stats Cards -->
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card dash-widget">
+                    <div class="card-body">
+                        <span class="dash-widget-icon bg-primary"><i class="fas fa-tasks"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ submissions|length }}</h3>
+                            <span>Total Submissions</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card dash-widget">
+                    <div class="card-body">
+                        <span class="dash-widget-icon bg-success"><i class="fas fa-check-circle"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ graded_count|default:0 }}</h3>
+                            <span>Graded</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card dash-widget">
+                    <div class="card-body">
+                        <span class="dash-widget-icon bg-warning"><i class="fas fa-clock"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ pending_count|default:0 }}</h3>
+                            <span>Pending Grading</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submissions Table -->
+        <div class="card">
+            <div class="card-header bg-gradient-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history"></i> All My Submissions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover table-center mb-0 datatable">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Assignment</th>
+                                <th>Subject</th>
+                                <th>Submitted Date</th>
+                                <th>Status</th>
+                                <th>Marks</th>
+                                <th>Feedback</th>
+                                <th class="text-right">Actions</th>
+                            </tr>
                         </thead>
                         <tbody>
                             {% for submission in submissions %}
-                            <tr>
-                                <td><strong>{{ submission.assignment.title }}</strong></td>
-                                <td>{{ submission.assignment.subject_assign.subject.code }}</td>
+                            <tr class="align-middle">
+                                <td>
+                                    <strong>{{ submission.assignment.title }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ submission.assignment.get_assignment_type_display }}</small>
+                                </td>
+                                <td>
+                                    {{ submission.assignment.subject_assign.subject.code }}
+                                    <br>
+                                    <small class="text-muted">{{ submission.assignment.subject_assign.subject.name|truncatechars:25 }}</small>
+                                </td>
                                 <td>{{ submission.submitted_date|date:"M d, Y H:i" }}</td>
                                 <td>
-                                    <span class="status-badge status-{{ submission.status }}">
+                                    <span class="badge badge-{% if submission.status == 'graded' %}success{% elif submission.status == 'late' %}warning{% else %}info{% endif %}">
                                         {{ submission.status|upper }}
                                     </span>
                                     {% if submission.is_late %}
-                                        <span class="badge bg-warning">Late</span>
+                                    <span class="badge badge-warning ml-1">Late</span>
                                     {% endif %}
                                 </td>
                                 <td>
                                     {% if submission.marks_obtained %}
-                                        <strong>{{ submission.marks_obtained }}/{{ submission.assignment.total_marks }}</strong>
+                                        <span class="font-weight-bold text-success">{{ submission.marks_obtained }}/{{ submission.assignment.total_marks }}</span>
+                                        <br>
+                                        <small class="text-muted">{{ submission.marks_obtained|floatformat:0 }}%</small>
                                     {% else %}
-                                        <span class="text-muted">Pending</span>
+                                        <span class="text-muted">Not graded</span>
                                     {% endif %}
                                 </td>
                                 <td>
                                     {% if submission.teacher_feedback %}
-                                        <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#feedbackModal{{ submission.id }}">
+                                        <button type="button" class="btn btn-sm btn-outline-info view-feedback" 
+                                                data-feedback="{{ submission.teacher_feedback|escapejs }}"
+                                                data-assignment="{{ submission.assignment.title }}">
                                             <i class="fas fa-comment"></i> View
                                         </button>
-                                        
-                                        <!-- Feedback Modal -->
-                                        <div class="modal fade" id="feedbackModal{{ submission.id }}" tabindex="-1">
-                                            <div class="modal-dialog">
-                                                <div class="modal-content">
-                                                    <div class="modal-header">
-                                                        <h5 class="modal-title">Teacher Feedback</h5>
-                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                    </div>
-                                                    <div class="modal-body">
-                                                        <p>{{ submission.teacher_feedback|linebreaks }}</p>
-                                                    </div>
-                                                    <div class="modal-footer">
-                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
                                     {% else %}
                                         <span class="text-muted">No feedback</span>
                                     {% endif %}
                                 </td>
-                                <td>
+                                <td class="text-right">
                                     {% if submission.submission_file %}
-                                        <a href="{{ submission.submission_file.url }}" class="btn btn-sm btn-success" target="_blank">
-                                            <i class="fas fa-download"></i> Download
-                                        </a>
+                                    <a href="{{ submission.submission_file.url }}" class="btn btn-sm btn-outline-success" target="_blank">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                    {% endif %}
+                                    {% if submission.marks_obtained %}
+                                    <a href="#" class="btn btn-sm btn-outline-primary view-certificate" 
+                                       data-marks="{{ submission.marks_obtained }}"
+                                       data-total="{{ submission.assignment.total_marks }}"
+                                       data-assignment="{{ submission.assignment.title }}"
+                                       data-subject="{{ submission.assignment.subject_assign.subject.name }}">
+                                        <i class="fas fa-certificate"></i>
+                                    </a>
                                     {% endif %}
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="7" class="text-center">No submissions found</td>
+                                <td colspan="7" class="text-center py-5">
+                                    <div class="empty-state">
+                                        <i class="fas fa-inbox fa-4x text-muted mb-3 d-block"></i>
+                                        <h5>No submissions found</h5>
+                                        <p class="text-muted">You haven't submitted any assignments yet.</p>
+                                    </div>
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -96,4 +169,143 @@
         </div>
     </div>
 </div>
+
+<!-- Feedback Modal -->
+<div class="modal fade" id="feedbackModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-gradient-primary text-white">
+                <h5 class="modal-title">Teacher Feedback</h5>
+                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body" id="feedbackContent">
+                <p>Loading...</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Certificate Modal -->
+<div class="modal fade" id="certificateModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-gradient-primary text-white">
+                <h5 class="modal-title">Achievement Certificate</h5>
+                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body text-center" id="certificateContent">
+                <div class="certificate-border p-4">
+                    <i class="fas fa-trophy fa-5x text-warning mb-3"></i>
+                    <h2 class="text-primary">Certificate of Achievement</h2>
+                    <p class="lead">This certificate is proudly presented to</p>
+                    <h3 class="text-success" id="studentName">{{ request.user.student.first_name }} {{ request.user.student.last_name }}</h3>
+                    <p>for successfully completing</p>
+                    <h4 id="certAssignmentTitle"></h4>
+                    <p>with a score of</p>
+                    <h2 id="certMarks"></h2>
+                    <p>Date: <span id="certDate">{{ now|date:"F d, Y" }}</span></p>
+                    <hr>
+                    <p class="text-muted">EduSphere - Excellence in Education</p>
+                </div>
+                <button class="btn btn-primary mt-3" onclick="printCertificate()">
+                    <i class="fas fa-print"></i> Print Certificate
+                </button>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .dash-widget {
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    .dash-widget-icon {
+        font-size: 40px;
+        float: left;
+        width: 70px;
+        height: 70px;
+        line-height: 70px;
+        text-align: center;
+        background: rgba(0,0,0,0.05);
+        border-radius: 50%;
+        margin-right: 15px;
+        color: white;
+    }
+    .dash-widget-info {
+        overflow: hidden;
+    }
+    .dash-widget-info h3 {
+        font-size: 28px;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .certificate-border {
+        border: 3px solid #667eea;
+        border-radius: 15px;
+        background: #fffaf0;
+    }
+    .empty-state {
+        padding: 40px 20px;
+        text-align: center;
+    }
+    .badge {
+        padding: 5px 12px;
+        font-weight: 500;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Feedback modal
+    document.querySelectorAll('.view-feedback').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const feedback = this.dataset.feedback;
+            const assignment = this.dataset.assignment;
+            document.getElementById('feedbackContent').innerHTML = `
+                <h6>Assignment: ${assignment}</h6>
+                <hr>
+                <p>${feedback}</p>
+            `;
+            $('#feedbackModal').modal('show');
+        });
+    });
+    
+    // Certificate modal
+    document.querySelectorAll('.view-certificate').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const marks = this.dataset.marks;
+            const total = this.dataset.total;
+            const assignment = this.dataset.assignment;
+            const subject = this.dataset.subject;
+            const percentage = (marks / total * 100).toFixed(1);
+            
+            document.getElementById('certAssignmentTitle').innerHTML = `${subject}<br><small>${assignment}</small>`;
+            document.getElementById('certMarks').innerHTML = `${marks}/${total} (${percentage}%)`;
+            $('#certificateModal').modal('show');
+        });
+    });
+});
+
+function printCertificate() {
+    const printContent = document.getElementById('certificateContent').innerHTML;
+    const originalContent = document.body.innerHTML;
+    document.body.innerHTML = printContent;
+    window.print();
+    document.body.innerHTML = originalContent;
+    location.reload();
+}
+</script>
 {% endblock %}

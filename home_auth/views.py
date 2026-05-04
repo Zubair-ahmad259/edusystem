@@ -673,6 +673,7 @@ def reset_own_password(request):
         new_password = request.POST.get('new_password')
         confirm_password = request.POST.get('confirm_password')
         
+        
         user = request.user
         
         # Validate inputs

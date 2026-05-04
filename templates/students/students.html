@@ -119,69 +119,98 @@
             </div>
         </div>
 
-        <!-- Filters Card -->
-        <div class="row mb-4">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-filter"></i> Filter Students
-                        </h5>
+        <!-- Filters Card - Like Add Student Page -->
+        <div class="filter-card mb-4">
+            <div class="card-header bg-gradient-primary text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-filter me-2"></i>
+                        Filter Students
+                    </h5>
+                    <a href="{% url 'student_list' %}" class="btn btn-sm btn-light">
+                        <i class="fas fa-sync-alt me-1"></i> Reset Filters
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- Batch Selection (Primary) -->
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>Batch <span class="text-danger">*</span></label>
+                            <select class="form-control" name="batch" id="batchSelect" required>
+                                <option value="">Select Batch</option>
+                                {% for batch in batches %}
+                                <option value="{{ batch.id }}" data-discipline="{{ batch.discipline.id }}">
+                                    {{ batch.name }} ({{ batch.discipline.field }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <small class="form-text text-muted mt-1" id="batchHelpText">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Select batch first
+                            </small>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-3">
-                                <div class="form-group">
-                                    <label>Discipline</label>
-                                    <select class="form-control" id="discipline_filter">
-                                        <option value="">All Disciplines</option>
-                                        {% for discipline in disciplines %}
-                                        <option value="{{ discipline.id }}" {% if selected_discipline.id == discipline.id %}selected{% endif %}>{{ discipline.field }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="form-group">
-                                    <label>Batch</label>
-                                    <select class="form-control" id="batch_filter">
-                                        <option value="">All Batches</option>
-                                        {% for batch in batches %}
-                                        <option value="{{ batch.id }}" {% if selected_batch.id == batch.id %}selected{% endif %}>{{ batch.name }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="form-group">
-                                    <label>Section</label>
-                                    <select class="form-control" id="section_filter">
-                                        <option value="">All Sections</option>
-                                        {% for section in sections %}
-                                        <option value="{{ section.id }}" {% if selected_section.id == section.id %}selected{% endif %}>{{ section.name }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="form-group">
-                                    <label>Semester</label>
-                                    <select class="form-control" id="semester_filter">
-                                        <option value="">All Semesters</option>
-                                        {% for semester in semesters %}
-                                        <option value="{{ semester.id }}" {% if selected_semester.id == semester.id %}selected{% endif %}>Semester {{ semester.number }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                            </div>
+
+                    <!-- Discipline (Auto-filled from batch) -->
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>Discipline</label>
+                            <select class="form-control" id="disciplineSelect" disabled>
+                                <option value="">Select Batch First</option>
+                                {% for discipline in disciplines %}
+                                <option value="{{ discipline.id }}">{{ discipline.field }}</option>
+                                {% endfor %}
+                            </select>
+                            <small class="form-text text-muted">
+                                <i class="fas fa-sync-alt me-1"></i>
+                                Auto-filled from batch selection
+                            </small>
                         </div>
-                        <div class="row">
-                            <div class="col-md-12 text-right">
-                                <a href="{% url 'student_list' %}" class="btn btn-secondary">
-                                    <i class="fas fa-sync-alt"></i> Reset Filters
-                                </a>
-                            </div>
+                    </div>
+
+                    <!-- Section (Filtered by Batch) -->
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>Section</label>
+                            <select class="form-control" id="sectionSelect" disabled>
+                                <option value="">Select Batch First</option>
+                                {% for section in sections %}
+                                <option value="{{ section.id }}" data-batch="{{ section.batch.id }}">
+                                    Section {{ section.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <small class="form-text text-muted" id="sectionHelpText">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Select batch first
+                            </small>
                         </div>
+                    </div>
+
+                    <!-- Semester -->
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>Semester</label>
+                            <select class="form-control" id="semesterSelect">
+                                <option value="">All Semesters</option>
+                                {% for semester in semesters %}
+                                <option value="{{ semester.id }}">Semester {{ semester.number }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-md-12 text-right">
+                        <button type="button" class="btn btn-primary" id="applyFilterBtn">
+                            <i class="fas fa-search me-2"></i> Apply Filter
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="clearFilterBtn">
+                            <i class="fas fa-undo me-2"></i> Clear Filters
+                        </button>
                     </div>
                 </div>
             </div>
@@ -198,7 +227,7 @@
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table class="table table-hover table-center mb-0 datatable">
+                            <table class="table table-hover table-center mb-0 datatable" id="studentsTable">
                                 <thead class="thead-light">
                                     <tr>
                                         <th>#</th>
@@ -214,7 +243,7 @@
                                         <th class="text-right">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="studentsTableBody">
                                     {% if students %}
                                     {% for student in students %}
                                     <tr>
@@ -242,7 +271,7 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>{{ student.parent.father_name|default:"—" }}</td>
+                                        <td>{{ student.father_name|default:"—" }}</td>
                                         <td>
                                             <span class="badge badge-primary badge-pill">{{ student.discipline.field|truncatechars:25 }}</span>
                                         </td>
@@ -254,11 +283,11 @@
                                         </td>
                                         <td>
                                             {% if student.semester.number >= 8 %}
-                                                <span class="badge badge-success badge-lg">
-                                                    <i class="fas fa-check-circle"></i> final year
+                                                <span class="badge badge-success">
+                                                    <i class="fas fa-check-circle"></i> Final Year
                                                 </span>
                                             {% else %}
-                                                <span class="badge badge-warning badge-lg">
+                                                <span class="badge badge-warning">
                                                     Semester {{ student.semester.number }}
                                                 </span>
                                             {% endif %}
@@ -378,6 +407,38 @@
         object-fit: cover;
     }
     
+    .filter-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        background: white;
+    }
+    
+    .filter-card .card-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px 12px 0 0;
+        padding: 12px 20px;
+    }
+    
+    .filter-card .form-label {
+        font-size: 13px;
+        margin-bottom: 5px;
+        color: #495057;
+        font-weight: 600;
+    }
+    
+    .filter-card .form-select, .filter-card .form-control {
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
+    
+    .filter-card .form-select:focus, .filter-card .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
     .card-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
@@ -397,10 +458,6 @@
         border: none;
     }
     
-    .filter-row .form-group {
-        margin-bottom: 0;
-    }
-    
     @media (max-width: 768px) {
         .dash-widget-icon {
             width: 50px;
@@ -415,8 +472,109 @@
 </style>
 
 <script>
-$(document).ready(function() {
-    // Initialize DataTable for better sorting and searching
+document.addEventListener('DOMContentLoaded', function() {
+    const batchSelect = document.getElementById('batchSelect');
+    const disciplineSelect = document.getElementById('disciplineSelect');
+    const sectionSelect = document.getElementById('sectionSelect');
+    const semesterSelect = document.getElementById('semesterSelect');
+    const batchHelpText = document.getElementById('batchHelpText');
+    const sectionHelpText = document.getElementById('sectionHelpText');
+    const applyBtn = document.getElementById('applyFilterBtn');
+    const clearBtn = document.getElementById('clearFilterBtn');
+
+    function filterSections() {
+        const batchId = batchSelect.value;
+        const selectedBatchText = batchSelect.options[batchSelect.selectedIndex]?.text || '';
+        
+        // Filter sections based on batch
+        sectionSelect.querySelectorAll('option').forEach(option => {
+            if (!option.value) return;
+            
+            const optionBatch = option.getAttribute('data-batch');
+            if (!batchId || optionBatch === batchId) {
+                option.style.display = '';
+                option.disabled = false;
+            } else {
+                option.style.display = 'none';
+                option.disabled = true;
+            }
+        });
+
+        // Update section help text
+        if (batchId) {
+            sectionHelpText.innerHTML = `<i class="fas fa-info-circle me-1"></i>Sections for ${selectedBatchText.split(' (')[0]}`;
+            sectionHelpText.classList.remove('text-muted');
+            sectionHelpText.classList.add('text-primary');
+            sectionSelect.disabled = false;
+        } else {
+            sectionHelpText.innerHTML = `<i class="fas fa-info-circle me-1"></i>Select batch first`;
+            sectionHelpText.classList.remove('text-primary');
+            sectionHelpText.classList.add('text-muted');
+            sectionSelect.disabled = true;
+        }
+
+        // Clear section if it doesn't belong to selected batch
+        if (sectionSelect.value && sectionSelect.selectedOptions[0]?.style.display === 'none') {
+            sectionSelect.value = '';
+        }
+    }
+
+    function updateDiscipline() {
+        const selectedOption = batchSelect.options[batchSelect.selectedIndex];
+        const disciplineId = selectedOption ? selectedOption.getAttribute('data-discipline') : '';
+        
+        if (disciplineId) {
+            // Enable and set discipline
+            disciplineSelect.disabled = false;
+            disciplineSelect.value = disciplineId;
+            
+            // Update batch help text
+            const batchName = selectedOption.text.split(' (')[0];
+            batchHelpText.innerHTML = `<i class="fas fa-check-circle me-1 text-success"></i>Selected: ${batchName}`;
+            batchHelpText.classList.remove('text-muted');
+            batchHelpText.classList.add('text-success');
+        } else {
+            disciplineSelect.disabled = true;
+            disciplineSelect.value = '';
+            batchHelpText.innerHTML = `<i class="fas fa-info-circle me-1"></i>Select batch first`;
+            batchHelpText.classList.remove('text-success');
+            batchHelpText.classList.add('text-muted');
+        }
+    }
+
+    function applyFilters() {
+        const batchId = batchSelect.value;
+        const sectionId = sectionSelect.value;
+        const semesterId = semesterSelect.value;
+        
+        let url = "{% url 'student_list' %}?";
+        if (batchId) url += "batch=" + batchId + "&";
+        if (sectionId) url += "section=" + sectionId + "&";
+        if (semesterId) url += "semester=" + semesterId;
+        
+        window.location.href = url;
+    }
+    
+    function clearFilters() {
+        window.location.href = "{% url 'student_list' %}";
+    }
+
+    // Event listeners
+    batchSelect.addEventListener('change', function() {
+        updateDiscipline();
+        filterSections();
+    });
+    
+    applyBtn.addEventListener('click', applyFilters);
+    clearBtn.addEventListener('click', clearFilters);
+
+    // Initialize on page load
+    if (batchSelect.value) {
+        updateDiscipline();
+        filterSections();
+    }
+    
+    // Initialize DataTable
     if ($('.datatable').length) {
         $('.datatable').DataTable({
             pageLength: 25,
@@ -429,22 +587,6 @@ $(document).ready(function() {
             }
         });
     }
-    
-    // Filter functionality
-    $('#discipline_filter, #batch_filter, #section_filter, #semester_filter').change(function() {
-        var discipline = $('#discipline_filter').val();
-        var batch = $('#batch_filter').val();
-        var section = $('#section_filter').val();
-        var semester = $('#semester_filter').val();
-        
-        var url = "{% url 'student_list' %}?";
-        if (discipline) url += "discipline=" + discipline + "&";
-        if (batch) url += "batch=" + batch + "&";
-        if (section) url += "section=" + section + "&";
-        if (semester) url += "semester=" + semester;
-        
-        window.location.href = url;
-    });
     
     // Auto-dismiss alerts after 5 seconds
     setTimeout(function() {

@@ -1,163 +1,226 @@
-{% extends 'assignment/base_assignment.html' %}
+{% extends 'Home/base.html' %}
+{% load static %}
 
-{% block assignment_title %}{{ assignment.title }} - Details{% endblock %}
+{% block title %}{{ assignment.title }} - Assignment Details{% endblock %}
 
-{% block assignment_content %}
-<div class="container-fluid">
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1>{{ assignment.title }}</h1>
-            <p class="text-muted">
-                {{ assignment.subject_assign.subject.code }} - {{ assignment.subject_assign.subject.name }} |
-                Due: {{ assignment.due_date|date:"M d, Y H:i" }}
-            </p>
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">{{ assignment.title }}</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'index' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'assignment:teacher_assignment_list' %}">Assignments</a></li>
+                        <li class="breadcrumb-item active">Assignment Details</li>
+                    </ul>
+                </div>
+                <div class="col-auto text-right">
+                    <a href="{% url 'assignment:teacher_assignment_list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left"></i> Back to Assignments
+                    </a>
+                </div>
+            </div>
         </div>
-        <div>
-            <a href="{% url 'assignment:teacher_assignment_list' %}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> Back
-            </a>
-        </div>
-    </div>
 
-    <!-- Statistics Cards -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <h5>Total Submissions</h5>
-                    <h2>{{ total_submissions }}</h2>
+        <!-- Statistics Cards -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card dash-widget">
+                    <div class="card-body">
+                        <span class="dash-widget-icon bg-primary"><i class="fas fa-users"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ total_submissions }}</h3>
+                            <span>Total Submissions</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card dash-widget">
+                    <div class="card-body">
+                        <span class="dash-widget-icon bg-success"><i class="fas fa-check-circle"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ graded_count }}</h3>
+                            <span>Graded</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card dash-widget">
+                    <div class="card-body">
+                        <span class="dash-widget-icon bg-warning"><i class="fas fa-clock"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ pending_count }}</h3>
+                            <span>Pending</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card dash-widget">
+                    <div class="card-body">
+                        <span class="dash-widget-icon bg-danger"><i class="fas fa-exclamation-triangle"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ plagiarized_count }}</h3>
+                            <span>Plagiarized</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <h5>Graded</h5>
-                    <h2>{{ graded_count }}</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-warning text-white">
-                <div class="card-body">
-                    <h5>Pending</h5>
-                    <h2>{{ pending_count }}</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-danger text-white">
-                <div class="card-body">
-                    <h5>Plagiarized</h5>
-                    <h2>{{ plagiarized_count }}</h2>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Assignment Details -->
-    <div class="row mb-4">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h5>Assignment Description</h5>
-                </div>
-                <div class="card-body">
-                    <p>{{ assignment.description|linebreaks }}</p>
-                    {% if assignment.assignment_file %}
-                        <a href="{{ assignment.assignment_file.url }}" class="btn btn-info" target="_blank">
-                            <i class="fas fa-download"></i> Download Assignment File
-                        </a>
-                    {% endif %}
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- Assignment Details Card -->
+              
+                <!-- Submissions Table -->
+                <div class="card">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-list"></i> Student Submissions
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-center mb-0">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Student</th>
+                                        <th>Submitted Date</th>
+                                        <th>Status</th>
+                                        <th>Plagiarism</th>
+                                        <th>Marks</th>
+                                        <th class="text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for submission in submissions %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ submission.student.first_name }} {{ submission.student.last_name }}</strong>
+                                            <br>
+                                            <small class="text-muted">{{ submission.student.student_id }}</small>
+                                        </td>
+                                        <td>{{ submission.submitted_date|date:"M d, Y H:i" }}</td>
+                                        <td>
+                                            <span class="badge badge-{% if submission.status == 'graded' %}success{% elif submission.status == 'late' %}warning{% else %}info{% endif %}">
+                                                {{ submission.status|upper }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if submission.is_plagiarized %}
+                                                <span class="badge badge-danger">{{ submission.plagiarism_score }}%</span>
+                                            {% else %}
+                                                <span class="badge badge-success">Clean</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if submission.marks_obtained %}
+                                                {{ submission.marks_obtained }}/{{ assignment.total_marks }}
+                                            {% else %}
+                                                <span class="text-muted">Not graded</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-right">
+                                            <a href="{% url 'assignment:teacher_grade_submission' submission.id %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-edit"></i> Grade
+                                      
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4">No submissions yet</td>
+                                    </tr>
+                                    {% endfor %}
+                                    
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5>Assignment Info</h5>
-                </div>
-                <div class="card-body">
-                    <p><strong>Type:</strong> {{ assignment.get_assignment_type_display }}</p>
-                    <p><strong>Total Marks:</strong> {{ assignment.total_marks }}</p>
-                    <p><strong>Status:</strong> 
-                        <span class="status-badge status-{{ assignment.status }}">{{ assignment.status|upper }}</span>
-                    </p>
-                    <p><strong>Sections:</strong><br>
-                        {% for section in assignment.sections.all %}
-                            <span class="badge bg-secondary">{{ section.name }}</span>
-                        {% endfor %}
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Submissions Table -->
-    <div class="card">
-        <div class="card-header">
-            <h5>Student Submissions</h5>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-striped table-hover">
-                    <thead>
-                        <tr>
-                            <th>Student</th>
-                            <th>Roll Number</th>
-                            <th>Submitted Date</th>
-                            <th>Status</th>
-                            <th>Plagiarism</th>
-                            <th>Marks</th>
-                            <th>Actions</th>
-                        </thead>
-                        <tbody>
-                            {% for submission in submissions %}
-                            <tr>
-                                <td>{{ submission.student.user.get_full_name }}</td>
-                                <td>{{ submission.student.roll_number }}</td>
-                                <td>{{ submission.submitted_date|date:"M d, Y H:i" }}</td>
-                                <td>
-                                    <span class="status-badge status-{{ submission.status }}">
-                                        {{ submission.status|upper }}
-                                    </span>
-                                </td>
-                                <td>
-                                    {% if submission.is_plagiarized %}
-                                        <span class="text-danger">⚠️ {{ submission.plagiarism_score }}%</span>
-                                    {% else %}
-                                        <span class="text-success">✓ Clean</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if submission.marks_obtained %}
-                                        {{ submission.marks_obtained }}/{{ assignment.total_marks }}
-                                    {% else %}
-                                        -
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <a href="{% url 'assignment:teacher_grade_submission' submission.id %}" class="btn btn-sm btn-primary">
-                                        <i class="fas fa-edit"></i> Grade
-                                    </a>
-                                    {% if submission.submission_file %}
-                                        <a href="{{ submission.submission_file.url }}" class="btn btn-sm btn-info" target="_blank">
-                                            <i class="fas fa-download"></i>
-                                        </a>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="7" class="text-center">No submissions yet</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+            <div class="col-lg-4">
+                <!-- Assignment Info Card -->
+                <div class="card">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-info-circle"></i> Assignment Info
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="info-item mb-3">
+                            <label class="text-muted">Subject</label>
+                            <p>{{ assignment.subject_assign.subject.code }} - {{ assignment.subject_assign.subject.name }}</p>
+                        </div>
+                        <div class="info-item mb-3">
+                            <label class="text-muted">Due Date</label>
+                            <p class="{% if assignment.due_date < now %}text-danger{% else %}text-success{% endif %}">
+                                {{ assignment.due_date|date:"M d, Y H:i" }}
+                            </p>
+                        </div>
+                        <div class="info-item mb-3">
+                            <label class="text-muted">Total Marks</label>
+                            <p><strong>{{ assignment.total_marks }}</strong></p>
+                        </div>
+                        <div class="info-item mb-3">
+                            <label class="text-muted">Assignment Type</label>
+                            <p><span class="badge badge-primary">{{ assignment.get_assignment_type_display }}</span></p>
+                        </div>
+                        <div class="info-item">
+                            <label class="text-muted">Sections</label>
+                            <div>
+                                {% for section in assignment.sections.all %}
+                                    <span class="badge badge-secondary">{{ section.name }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .dash-widget {
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    .dash-widget-icon {
+        font-size: 40px;
+        float: left;
+        width: 70px;
+        height: 70px;
+        line-height: 70px;
+        text-align: center;
+        background: rgba(0,0,0,0.05);
+        border-radius: 50%;
+        margin-right: 15px;
+    }
+    .dash-widget-info {
+        overflow: hidden;
+    }
+    .dash-widget-info h3 {
+        font-size: 28px;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .info-item label {
+        font-size: 12px;
+        margin-bottom: 3px;
+        color: #6c757d;
+    }
+</style>
 {% endblock %}

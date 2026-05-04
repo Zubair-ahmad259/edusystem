@@ -1,73 +1,128 @@
-{% extends 'assignment/base_assignment.html' %}
+{% extends 'Home/base.html' %}
+{% load static %}
 
-{% block assignment_title %}Grade Submission{% endblock %}
+{% block title %}Grade Submission - EduSphere{% endblock %}
 
-{% block assignment_content %}
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h3>Grade Submission</h3>
-                    <p class="mb-0">{{ submission.assignment.title }} - {{ submission.student.user.get_full_name }}</p>
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Grade Submission</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'index' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'assignment:teacher_assignment_list' %}">Assignments</a></li>
+                        <li class="breadcrumb-item active">Grade</li>
+                    </ul>
                 </div>
-                <div class="card-body">
-                    <!-- Submission Info -->
-                    <div class="alert alert-info">
-                        <strong>Submitted:</strong> {{ submission.submitted_date|date:"M d, Y H:i" }}<br>
-                        <strong>Status:</strong> 
-                        <span class="status-badge status-{{ submission.status }}">{{ submission.status|upper }}</span><br>
-                        {% if submission.is_late %}
-                            <strong class="text-warning">⚠️ Late Submission</strong>
-                        {% endif %}
-                    </div>
+                <div class="col-auto text-right">
+                    <a href="{% url 'assignment:teacher_assignment_detail' submission.assignment.id %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left"></i> Back to Assignment
+                    </a>
+                </div>
+            </div>
+        </div>
 
-                    <!-- Download Submission -->
-                    {% if submission.submission_file %}
-                        <div class="mb-3">
-                            <a href="{{ submission.submission_file.url }}" class="btn btn-info" target="_blank">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-edit"></i> Grade Submission
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Student Info -->
+                        <div class="alert alert-info mb-4">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>Student:</strong> {{ submission.student.first_name }} {{ submission.student.last_name }}<br>
+                                    <strong>Student ID:</strong> {{ submission.student.student_id }}
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Assignment:</strong> {{ submission.assignment.title }}<br>
+                                    <strong>Submitted:</strong> {{ submission.submitted_date|date:"M d, Y H:i" }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submission Status -->
+                        <div class="alert alert-{% if submission.status == 'late' %}warning{% elif submission.status == 'graded' %}success{% else %}info{% endif %} mb-4">
+                            <strong>Status:</strong> {{ submission.status|upper }}
+                            {% if submission.is_late %}
+                            <span class="badge badge-warning ml-2">Late Submission</span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Download Submission -->
+                        {% if submission.submission_file %}
+                        <div class="mb-4">
+                            <a href="{{ submission.submission_file.url }}" class="btn btn-outline-info" target="_blank">
                                 <i class="fas fa-download"></i> Download Student Submission
                             </a>
                         </div>
-                    {% endif %}
+                        {% endif %}
 
-                    <!-- Plagiarism Warning -->
-                    {% if submission.is_plagiarized %}
-                        <div class="alert alert-danger">
+                        <!-- Plagiarism Warning -->
+                        {% if submission.is_plagiarized %}
+                        <div class="alert alert-danger mb-4">
                             <i class="fas fa-exclamation-triangle"></i>
                             <strong>Plagiarism Detected!</strong> Similarity score: {{ submission.plagiarism_score }}%
                         </div>
-                    {% endif %}
+                        {% endif %}
 
-                    <!-- Grading Form -->
-                    <form method="post">
-                        {% csrf_token %}
-                        
-                        <div class="mb-3">
-                            <label for="marks_obtained" class="form-label">Marks Obtained (out of {{ submission.assignment.total_marks }})</label>
-                            <input type="number" class="form-control" id="marks_obtained" name="marks_obtained" 
-                                   value="{{ submission.marks_obtained|default:'' }}" 
-                                   min="0" max="{{ submission.assignment.total_marks }}" step="0.5" required>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="teacher_feedback" class="form-label">Feedback to Student</label>
-                            <textarea class="form-control" id="teacher_feedback" name="teacher_feedback" rows="5">{{ submission.teacher_feedback }}</textarea>
-                            <small class="text-muted">Provide constructive feedback to help the student improve</small>
-                        </div>
-                        
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            <a href="{% url 'assignment:teacher_assignment_detail' submission.assignment.id %}" class="btn btn-secondary">
-                                Cancel
-                            </a>
-                            <button type="submit" class="btn btn-success">
-                                <i class="fas fa-save"></i> Save Grade
-                            </button>
-                        </div>
-                    </form>
+                        <!-- Grading Form -->
+                        <form method="post">
+                            {% csrf_token %}
+                            
+                            <div class="form-group mb-3">
+                                <label>Marks Obtained <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" name="marks_obtained" 
+                                           value="{{ submission.marks_obtained|default:'' }}" 
+                                           min="0" max="{{ submission.assignment.total_marks }}" step="0.5" required>
+                                    <div class="input-group-append">
+                                        <span class="input-group-text">/ {{ submission.assignment.total_marks }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group mb-4">
+                                <label>Feedback to Student</label>
+                                <textarea class="form-control" name="teacher_feedback" rows="5" 
+                                          placeholder="Provide constructive feedback to help the student improve...">{{ submission.teacher_feedback }}</textarea>
+                                <small class="text-muted">This feedback will be visible to the student</small>
+                            </div>
+                            
+                            <div class="form-group text-right">
+                                <a href="{% url 'assignment:teacher_assignment_detail' submission.assignment.id %}" class="btn btn-secondary">
+                                    Cancel
+                                </a>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-save"></i> Save Grade
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .alert {
+        border: none;
+        border-radius: 10px;
+    }
+    .input-group-text {
+        background-color: #f8f9fa;
+    }
+</style>
 {% endblock %}

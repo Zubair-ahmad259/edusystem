@@ -73,7 +73,7 @@ def upload_fee(request):
     # Get all necessary data
     batches = Batch.objects.all().select_related('discipline')
     semesters = Semester.objects.all()
-    sections = Section.objects.all()  # Removed select_related that was causing error
+    sections = Section.objects.all()
     disciplines = Discipline.objects.all()
 
     students = None

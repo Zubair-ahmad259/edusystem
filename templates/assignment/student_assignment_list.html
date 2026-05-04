@@ -1,84 +1,222 @@
-{% extends 'assignment/base_assignment.html' %}
+{% extends 'Home/base.html' %}
+{% load static %}
 
-{% block assignment_title %}My Assignments{% endblock %}
+{% block title %}My Assignments - EduSphere{% endblock %}
 
-{% block assignment_content %}
-<div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>My Assignments</h1>
-        <a href="{% url 'assignment:student_submission_status' %}" class="btn btn-info">
-            <i class="fas fa-history"></i> View Submission History
-        </a>
-    </div>
-
-    <!-- Filters -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <div class="btn-group" role="group">
-                <a href="?filter=all" class="btn btn-outline-primary {% if filter_type == 'all' %}active{% endif %}">All</a>
-                <a href="?filter=active" class="btn btn-outline-success {% if filter_type == 'active' %}active{% endif %}">Active</a>
-                <a href="?filter=past" class="btn btn-outline-secondary {% if filter_type == 'past' %}active{% endif %}">Past</a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Assignments List -->
-    <div class="row">
-        {% for assignment in assignments %}
-        <div class="col-md-6 col-lg-4">
-            <div class="card assignment-card">
-                <div class="card-header">
-                    <h5 class="mb-0">{{ assignment.title }}</h5>
-                    <span class="status-badge status-{{ assignment.status }}">{{ assignment.status|upper }}</span>
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">My Assignments</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'index' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Assignments</li>
+                    </ul>
                 </div>
-                <div class="card-body">
-                    <p><strong>Subject:</strong> {{ assignment.subject_assign.subject.code }} - {{ assignment.subject_assign.subject.name }}</p>
-                    <p><strong>Due Date:</strong> 
-                        {% if assignment.due_date > now %}
-                            <span class="text-success">{{ assignment.due_date|date:"M d, Y H:i" }}</span>
-                        {% else %}
-                            <span class="text-danger">{{ assignment.due_date|date:"M d, Y H:i" }}</span>
-                        {% endif %}
-                    </p>
-                    <p><strong>Total Marks:</strong> {{ assignment.total_marks }}</p>
-                    
-                    {% if assignment.id in submitted_ids %}
-                        <span class="badge bg-success">✓ Submitted</span>
-                    {% else %}
-                        <span class="badge bg-warning">Pending</span>
-                    {% endif %}
-                </div>
-                <div class="card-footer">
-                    <a href="{% url 'assignment:student_assignment_detail' assignment.id %}" class="btn btn-primary btn-sm w-100">
-                        <i class="fas fa-eye"></i> View Details
+                <div class="col-auto text-right">
+                    <a href="{% url 'assignment:student_submission_status' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-history"></i> Submission History
                     </a>
                 </div>
             </div>
         </div>
-        {% empty %}
-        <div class="col-12">
-            <div class="alert alert-info">No assignments found for your enrolled sections.</div>
-        </div>
-        {% endfor %}
-    </div>
 
-    <!-- Pagination -->
-    {% if assignments.has_other_pages %}
-    <nav>
-        <ul class="pagination justify-content-center">
-            {% if assignments.has_previous %}
-                <li class="page-item"><a class="page-link" href="?page={{ assignments.previous_page_number }}&filter={{ filter_type }}">Previous</a></li>
-            {% endif %}
-            {% for num in assignments.paginator.page_range %}
-                <li class="page-item {% if assignments.number == num %}active{% endif %}">
-                    <a class="page-link" href="?page={{ num }}&filter={{ filter_type }}">{{ num }}</a>
-                </li>
+        <!-- Stats Cards -->
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card dash-widget">
+                    <div class="card-body">
+                        <span class="dash-widget-icon bg-primary"><i class="fas fa-tasks"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ assignments.paginator.count }}</h3>
+                            <span>Total Assignments</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card dash-widget">
+                    <div class="card-body">
+                        <span class="dash-widget-icon bg-success"><i class="fas fa-check-circle"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ submitted_ids|length }}</h3>
+                            <span>Submitted</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card dash-widget">
+                    <div class="card-body">
+                        <span class="dash-widget-icon bg-warning"><i class="fas fa-clock"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ assignments.paginator.count|add:submitted_ids|length }}</h3>
+                            <span>Pending</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Card -->
+        <div class="filter-card mb-4">
+            <div class="card-header bg-gradient-primary text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-filter me-2"></i> Filter Assignments</h5>
+                    <a href="{% url 'assignment:student_assignment_list' %}" class="btn btn-sm btn-light">Reset</a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="btn-group" role="group">
+                    <a href="?filter=all" class="btn btn-outline-primary {% if filter_type == 'all' %}active{% endif %}">All</a>
+                    <a href="?filter=active" class="btn btn-outline-success {% if filter_type == 'active' %}active{% endif %}">Active</a>
+                    <a href="?filter=past" class="btn btn-outline-secondary {% if filter_type == 'past' %}active{% endif %}">Past</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assignments Grid -->
+        <div class="row">
+            {% for assignment in assignments %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card assignment-card h-100">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h5 class="card-title mb-0">{{ assignment.title|truncatechars:40 }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-2">
+                            <label class="text-muted">Subject</label>
+                            <p class="mb-1"><strong>{{ assignment.subject_assign.subject.code }}</strong> - {{ assignment.subject_assign.subject.name|truncatechars:30 }}</p>
+                        </div>
+                        <div class="mb-2">
+                            <label class="text-muted">Due Date</label>
+                            <p class="mb-1 {% if assignment.due_date < now %}text-danger{% else %}text-success{% endif %}">
+                                {{ assignment.due_date|date:"M d, Y H:i" }}
+                            </p>
+                        </div>
+                        <div class="mb-2">
+                            <label class="text-muted">Total Marks</label>
+                            <p><strong>{{ assignment.total_marks }}</strong></p>
+                        </div>
+                        <div class="mt-2">
+                            {% if assignment.id in submitted_ids %}
+                                <span class="badge badge-success"><i class="fas fa-check-circle"></i> Submitted</span>
+                            {% else %}
+                                <span class="badge badge-warning"><i class="fas fa-clock"></i> Pending</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <a href="{% url 'assignment:student_assignment_detail' assignment.id %}" class="btn btn-primary btn-block">
+                            <i class="fas fa-eye"></i> View Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <div class="alert alert-info text-center py-5">
+                    <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                    <h5>No assignments found</h5>
+                    <p class="mb-0">No assignments available for your enrolled sections.</p>
+                </div>
+            </div>
             {% endfor %}
-            {% if assignments.has_next %}
-                <li class="page-item"><a class="page-link" href="?page={{ assignments.next_page_number }}&filter={{ filter_type }}">Next</a></li>
-            {% endif %}
-        </ul>
-    </nav>
-    {% endif %}
+        </div>
+
+        <!-- Pagination -->
+        {% if assignments.has_other_pages %}
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        {% if assignments.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ assignments.previous_page_number }}&filter={{ filter_type }}">Previous</a>
+                        </li>
+                        {% endif %}
+                        {% for num in assignments.paginator.page_range %}
+                        <li class="page-item {% if assignments.number == num %}active{% endif %}">
+                            <a class="page-link" href="?page={{ num }}&filter={{ filter_type }}">{{ num }}</a>
+                        </li>
+                        {% endfor %}
+                        {% if assignments.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ assignments.next_page_number }}&filter={{ filter_type }}">Next</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+        {% endif %}
+    </div>
 </div>
+
+<style>
+    .dash-widget {
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    .dash-widget-icon {
+        font-size: 40px;
+        float: left;
+        width: 70px;
+        height: 70px;
+        line-height: 70px;
+        text-align: center;
+        background: rgba(0,0,0,0.05);
+        border-radius: 50%;
+        margin-right: 15px;
+        color: white;
+    }
+    .dash-widget-info {
+        overflow: hidden;
+    }
+    .dash-widget-info h3 {
+        font-size: 28px;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .filter-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+    .filter-card .card-header {
+        border-radius: 12px 12px 0 0;
+        padding: 12px 20px;
+    }
+    .assignment-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        transition: transform 0.3s ease;
+    }
+    .assignment-card:hover {
+        transform: translateY(-5px);
+    }
+    .badge {
+        padding: 5px 12px;
+        font-weight: 500;
+    }
+    .btn-block {
+        border-radius: 8px;
+    }
+    label.text-muted {
+        font-size: 11px;
+        margin-bottom: 2px;
+        display: block;
+    }
+</style>
 {% endblock %}

@@ -1,6 +1,8 @@
 {% extends 'Home/base.html' %}
 {% load static %}
 
+{% block title %}Subject Management Dashboard - EduSphere{% endblock %}
+
 {% block body %}
 <div class="page-wrapper">
     <div class="content container-fluid">
@@ -9,454 +11,125 @@
         <div class="page-header">
             <div class="row align-items-center">
                 <div class="col">
-                    <h3 class="page-title">
-                        <i class="fas fa-tachometer-alt"></i> Subject Management Dashboard
-                    </h3>
+                    <h3 class="page-title">Subject Management</h3>
                     <ul class="breadcrumb">
-                        {% comment %} <li class="breadcrumb-item"><a href="{% url 'Home:dashboard' %}">Home</a></li> {% endcomment %}
+                        <li class="breadcrumb-item"><a href="{% url 'index' %}">Dashboard</a></li>
                         <li class="breadcrumb-item active">Subject Dashboard</li>
                     </ul>
                 </div>
-                <div class="col-auto text-right float-right ml-auto">
-                    <button class="btn btn-primary mr-2" id="refreshDashboard">
+                <div class="col-auto text-right">
+                    <button class="btn btn-primary" id="refreshDashboard">
                         <i class="fas fa-sync-alt"></i> Refresh
                     </button>
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown">
-                            <i class="fas fa-chart-line"></i> Reports
-                        </button>
-                        <div class="dropdown-menu dropdown-menu-right">
-                            <a class="dropdown-item" href="{% url 'subject:subject_analytics' %}">
-                                <i class="fas fa-chart-bar"></i> Analytics
-                            </a>
-                            <a class="dropdown-item" href="{% url 'subject:subject_health_check' %}">
-                                <i class="fas fa-heartbeat"></i> Health Check
-                            </a>
-                            <div class="dropdown-divider"></div>
-                            <a class="dropdown-item" href="{% url 'subject:show_all_subjects' %}">
-                                <i class="fas fa-database"></i> View All Data
-                            </a>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
-        
 
-        <!-- Quick Stats Row -->
+        <!-- Stats Cards -->
         <div class="row">
-            <!-- Total Subjects -->
-            <div class="col-xl-3 col-sm-6 col-12">
-                <div class="card">
+            <div class="col-md-3">
+                <div class="card dash-widget">
                     <div class="card-body">
-                        <div class="dash-widget-header">
-                            <span class="dash-widget-icon bg-primary">
-                                <i class="fas fa-book"></i>
-                            </span>
-                            <div class="dash-widget-info text-right">
-                                <h3>{{ total_subjects }}</h3>
-                                <span class="widget-title">Total Subjects</span>
-                            </div>
+                        <span class="dash-widget-icon bg-primary">
+                            <i class="fas fa-book"></i>
+                        </span>
+                        <div class="dash-widget-info">
+                            <h3>{{ total_subjects }}</h3>
+                            <span>Total Subjects</span>
                         </div>
                         <div class="mt-3">
-                            <div class="progress progress-sm">
-                                <div class="progress-bar bg-primary" style="width: 100%"></div>
-                            </div>
                             <small class="text-muted">Active: {{ active_subjects }} | Inactive: {{ inactive_subjects }}</small>
                         </div>
                     </div>
                 </div>
             </div>
             
-            
-            <!-- Active Subjects -->
-            <div class="col-xl-3 col-sm-6 col-12">
-                <div class="card">
+            <div class="col-md-3">
+                <div class="card dash-widget">
                     <div class="card-body">
-                        <div class="dash-widget-header">
-                            <span class="dash-widget-icon bg-success">
-                                <i class="fas fa-check-circle"></i>
-                            </span>
-                            <div class="dash-widget-info text-right">
-                                <h3>{{ active_subjects }}</h3>
-                                <span class="widget-title">Active Subjects</span>
-                            </div>
+                        <span class="dash-widget-icon bg-success">
+                            <i class="fas fa-check-circle"></i>
+                        </span>
+                        <div class="dash-widget-info">
+                            <h3>{{ active_subjects }}</h3>
+                            <span>Active Subjects</span>
                         </div>
                         <div class="mt-3">
-                            <div class="progress progress-sm">
-                                <div class="progress-bar bg-success" 
-                                     style="width: {% widthratio active_subjects total_subjects 100 %}%"></div>
-                            </div>
                             <small class="text-muted">{{ core_subjects }} Core | {{ elective_subjects }} Elective</small>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <!-- Subject Assignments -->
-            <div class="col-xl-3 col-sm-6 col-12">
-                <div class="card">
+            <div class="col-md-3">
+                <div class="card dash-widget">
                     <div class="card-body">
-                        <div class="dash-widget-header">
-                            <span class="dash-widget-icon bg-info">
-                                <i class="fas fa-user-check"></i>
-                            </span>
-                            <div class="dash-widget-info text-right">
-                                <h3>{{ total_assignments }}</h3>
-                                <span class="widget-title">Assignments</span>
-                            </div>
+                        <span class="dash-widget-icon bg-info">
+                            <i class="fas fa-user-check"></i>
+                        </span>
+                        <div class="dash-widget-info">
+                            <h3>{{ total_assignments }}</h3>
+                            <span>Total Assignments</span>
                         </div>
                         <div class="mt-3">
-                            <div class="progress progress-sm">
-                                <div class="progress-bar bg-info" style="width: 100%"></div>
-                            </div>
                             <small class="text-muted">Active: {{ active_assignments }}</small>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <!-- Prerequisites -->
-            <div class="col-xl-3 col-sm-6 col-12">
-                <div class="card">
+            <div class="col-md-3">
+                <div class="card dash-widget">
                     <div class="card-body">
-                        <div class="dash-widget-header">
-                            <span class="dash-widget-icon bg-warning">
-                                <i class="fas fa-link"></i>
-                            </span>
-                            <div class="dash-widget-info text-right">
-                                <h3>{{ with_prereqs }}</h3>
-                                <span class="widget-title">With Prerequisites</span>
-                            </div>
+                        <span class="dash-widget-icon bg-warning">
+                            <i class="fas fa-link"></i>
+                        </span>
+                        <div class="dash-widget-info">
+                            <h3>{{ with_prereqs }}</h3>
+                            <span>With Prerequisites</span>
                         </div>
                         <div class="mt-3">
-                            <div class="progress progress-sm">
-                                <div class="progress-bar bg-warning" 
-                                     style="width: {% widthratio with_prereqs total_subjects 100 %}%"></div>
-                            </div>
                             <small class="text-muted">{{ without_prereqs }} without prerequisites</small>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <!-- Quick Actions Row -->
+
+        <!-- Quick Actions -->
         <div class="row">
-            <div class="col-xl-12">
+            <div class="col-md-12">
                 <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h5 class="card-title mb-0">
                             <i class="fas fa-bolt"></i> Quick Actions
                         </h5>
                     </div>
                     <div class="card-body">
-                        <div class="row text-center">
-                            <div class="col-md-3 col-sm-6">
-                                <a href="{% url 'subject:add_subject' %}" class="btn btn-primary btn-block mb-3">
-                                    <i class="fas fa-plus-circle fa-2x mb-2"></i><br>
+                        <div class="row">
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <a href="{% url 'subject:add_subject' %}" class="btn btn-outline-primary btn-block py-3">
+                                    <i class="fas fa-plus-circle fa-2x mb-2 d-block"></i>
                                     Add Subject
                                 </a>
                             </div>
-                            <div class="col-md-3 col-sm-6">
-                                <a href="{% url 'subject:import_subjects' %}" class="btn btn-info btn-block mb-3">
-                                    <i class="fas fa-file-import fa-2x mb-2"></i><br>
-                                    Import Subjects
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <a href="{% url 'subject:view_subject' %}" class="btn btn-outline-info btn-block py-3">
+                                    <i class="fas fa-list fa-2x mb-2 d-block"></i>
+                                    View Subjects
                                 </a>
                             </div>
-                            <div class="col-md-3 col-sm-6">
-                                <a href="{% url 'subject:add_subject_assign' %}" class="btn btn-success btn-block mb-3">
-                                    <i class="fas fa-user-check fa-2x mb-2"></i><br>
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <a href="{% url 'subject:add_subject_assign' %}" class="btn btn-outline-success btn-block py-3">
+                                    <i class="fas fa-user-check fa-2x mb-2 d-block"></i>
                                     Assign Subject
                                 </a>
                             </div>
-                            <div class="col-md-3 col-sm-6">
-                                <a href="{% url 'subject:debug_prerequisites' %}" class="btn btn-warning btn-block mb-3">
-                                    <i class="fas fa-bug fa-2x mb-2"></i><br>
-                                    Debug Prerequisites
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <a href="{% url 'subject:show_subject_assign' %}" class="btn btn-outline-secondary btn-block py-3">
+                                    <i class="fas fa-tasks fa-2x mb-2 d-block"></i>
+                                    View Assignments
                                 </a>
-                            </div>
-                        </div>
-                        <div class="row text-center">
-                            <div class="col-md-3 col-sm-6">
-                                <a href="{% url 'subject:export_subjects_template' %}" class="btn btn-secondary btn-block mb-3">
-                                    <i class="fas fa-download fa-2x mb-2"></i><br>
-                                    Export Template
-                                </a>
-                            </div>
-                            <div class="col-md-3 col-sm-6">
-                                <a href="{% url 'subject:show_all_subjects' %}" class="btn btn-dark btn-block mb-3">
-                                    <i class="fas fa-database fa-2x mb-2"></i><br>
-                                    View All Data
-                                </a>
-                            </div>
-                            <div class="col-md-3 col-sm-6">
-                                <a href="{% url 'subject:subject_analytics' %}" class="btn btn-purple btn-block mb-3">
-                                    <i class="fas fa-chart-line fa-2x mb-2"></i><br>
-                                    Analytics
-                                </a>
-                            </div>
-                            <div class="col-md-3 col-sm-6">
-                                <a href="{% url 'subject:subject_health_check' %}" class="btn btn-danger btn-block mb-3">
-                                    <i class="fas fa-heartbeat fa-2x mb-2"></i><br>
-                                    Health Check
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-
-        <!-- Charts and Detailed Stats Row -->
-        <div class="row">
-            <!-- Semester Distribution -->
-            <div class="col-xl-6 d-flex">
-                <div class="card flex-fill">
-                    <div class="card-header">
-                        <h5 class="card-title">
-                            <i class="fas fa-layer-group"></i> Semester Distribution
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover table-center mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>Semester</th>
-                                        <th>Subjects Count</th>
-                                        <th>Percentage</th>
-                                        <th class="text-right">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for stat in semester_stats %}
-                                    <tr>
-                                        <td>{{ stat.semester__number|default:"N/A" }}</td>
-                                        <td>{{ stat.count }}</td>
-                                        <td>
-                                            <div class="progress progress-sm">
-                                                <div class="progress-bar bg-primary" 
-                                                     style="width: {% widthratio stat.count total_subjects 100 %}%"></div>
-                                            </div>
-                                        </td>
-                                        <td class="text-right">
-                                            <a href="{% url 'subject:view_subject' %}?semester={{ stat.semester__number }}" 
-                                               class="btn btn-sm btn-outline-primary">
-                                                View
-                                            </a>
-                                        </td>
-                                    </tr>
-                                    {% empty %}
-                                    <tr>
-                                        <td colspan="4" class="text-center text-muted">No data available</td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Discipline Distribution -->
-            <div class="col-xl-6 d-flex">
-                <div class="card flex-fill">
-                    <div class="card-header">
-                        <h5 class="card-title">
-                            <i class="fas fa-university"></i> Discipline Distribution
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover table-center mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>Discipline</th>
-                                        <th>Subjects Count</th>
-                                        <th>Percentage</th>
-                                        <th class="text-right">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for stat in discipline_stats %}
-                                    <tr>
-                                        <td>{{ stat.desciplain__field|default:"N/A" }}</td>
-                                        <td>{{ stat.count }}</td>
-                                        <td>
-                                            <div class="progress progress-sm">
-                                                <div class="progress-bar bg-success" 
-                                                     style="width: {% widthratio stat.count total_subjects 100 %}%"></div>
-                                            </div>
-                                        </td>
-                                        <td class="text-right">
-                                            <a href="{% url 'subject:view_subject' %}?discipline={{ stat.discipline_id }}" 
-                                               class="btn btn-sm btn-outline-success">
-                                                View
-                                            </a>
-                                        </td>
-                                    </tr>
-                                    {% empty %}
-                                    <tr>
-                                        <td colspan="4" class="text-center text-muted">No data available</td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Recent Activity Row -->
-        <div class="row">
-            <!-- Recent Subjects -->
-            <div class="col-xl-6 d-flex">
-                <div class="card flex-fill">
-                    <div class="card-header">
-                        <h5 class="card-title">
-                            <i class="fas fa-history"></i> Recent Subjects (Last 10)
-                        </h5>
-                        <div class="card-action">
-                            <span class="badge badge-info">Last 7 days: {{ recent_subjects }} new</span>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover table-center mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>Code</th>
-                                        <th>Name</th>
-                                        <th>Semester</th>
-                                        <th>Discipline</th>
-                                        <th class="text-right">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for subject in latest_subjects %}
-                                    <tr>
-                                        <td><strong>{{ subject.code }}</strong></td>
-                                        <td>{{ subject.name|truncatechars:20 }}</td>
-                                        <td>Sem {{ subject.semester.number }}</td>
-                                        <td>{{ subject.desciplain.field|truncatechars:15 }}</td>
-                                        <td class="text-right">
-                                            {% if subject.is_active %}
-                                            <span class="badge badge-success">Active</span>
-                                            {% else %}
-                                            <span class="badge badge-danger">Inactive</span>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                    {% empty %}
-                                    <tr>
-                                        <td colspan="5" class="text-center text-muted">No recent subjects</td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="card-footer text-center">
-                        <a href="{% url 'subject:add_subject' %}" class="btn btn-primary btn-sm">
-                            <i class="fas fa-plus"></i> Add New Subject
-                        </a>
-                        <a href="{% url 'subject:view_subject' %}" class="btn btn-outline-primary btn-sm">
-                            <i class="fas fa-list"></i> View All
-                        </a>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Recent Assignments -->
-            <div class="col-xl-6 d-flex">
-                <div class="card flex-fill">
-                    <div class="card-header">
-                        <h5 class="card-title">
-                            <i class="fas fa-tasks"></i> Recent Assignments (Last 10)
-                        </h5>
-                        <div class="card-action">
-                            <span class="badge badge-info">Last 7 days: {{ recent_assignments }} new</span>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover table-center mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>Subject</th>
-                                        <th>Teacher</th>
-                                        <th>Batch</th>
-                                        <th>Date</th>
-                                        <th class="text-right">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% comment %} {% for assignment in latest_assignments %} {% endcomment %}
-                                    <tr>
-                                        <td><strong>{{ assignment.subject.code }}</strong></td>
-                                        <td>{{ assignment.teacher.first_name }} {{ assignment.teacher.last_name }}</td>
-                                        <td>{{ assignment.batch.name|default:"-" }}</td>
-                                        <td>{{ assignment.assigned_date|date:"d/m/Y" }}</td>
-                                        <td class="text-right">
-                                            {% if assignment.is_active %}
-                                            <span class="badge badge-success">Active</span>
-                                            {% else %}
-                                            <span class="badge badge-danger">Inactive</span>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                    {% comment %} {% empty %} {% endcomment %}
-                                    <tr>
-                                        <td colspan="5" class="text-center text-muted">No recent assignments</td>
-                                    </tr>
-                                    {% comment %} {% endfor %} {% endcomment %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="card-footer text-center">
-                        <a href="{% url 'subject:add_subject_assign' %}" class="btn btn-primary btn-sm">
-                            <i class="fas fa-user-plus"></i> New Assignment
-                        </a>
-                        <a href="{% url 'subject:show_subject_assign' %}" class="btn btn-outline-primary btn-sm">
-                            <i class="fas fa-list"></i> View All
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        
-        <!-- System Status -->
-        <div class="row">
-            <div class="col-xl-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title">
-                            <i class="fas fa-info-circle"></i> System Status & Alerts
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="alert {% if attention_needed > 0 %}alert-warning{% else %}alert-success{% endif %}">
-                                    <h6><i class="fas fa-exclamation-triangle"></i> Subjects Needing Attention</h6>
-                                    <p class="mb-0">{{ attention_needed }} subjects require review</p>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="alert alert-info">
-                                    <h6><i class="fas fa-clock"></i> Recent Activity</h6>
-                                    <p class="mb-0">{{ recent_subjects }} new subjects, {{ recent_assignments }} new assignments in last 7 days</p>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="alert alert-secondary">
-                                    <h6><i class="fas fa-cogs"></i> System Performance</h6>
-                                    <p class="mb-0">Database: Healthy | API: Active | Response: Fast</p>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -466,111 +139,113 @@
     </div>
 </div>
 
-<script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
+<style>
+    .dash-widget {
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    .dash-widget:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .dash-widget-icon {
+        font-size: 40px;
+        float: left;
+        width: 70px;
+        height: 70px;
+        line-height: 70px;
+        text-align: center;
+        background: rgba(0,0,0,0.05);
+        border-radius: 50%;
+        margin-right: 15px;
+        color: white;
+    }
+    .bg-primary { background: linear-gradient(135deg, #667eea, #764ba2); }
+    .bg-success { background: linear-gradient(135deg, #28a745, #20c997); }
+    .bg-info { background: linear-gradient(135deg, #17a2b8, #138496); }
+    .bg-warning { background: linear-gradient(135deg, #ffc107, #fd7e14); }
+    .dash-widget-info {
+        overflow: hidden;
+    }
+    .dash-widget-info h3 {
+        font-size: 28px;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+    .dash-widget-info span {
+        font-size: 14px;
+        color: #6c757d;
+    }
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .btn-outline-primary, .btn-outline-info, .btn-outline-success, .btn-outline-secondary {
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        font-weight: 600;
+    }
+    .btn-outline-primary {
+        border: 2px solid #667eea;
+        color: #667eea;
+    }
+    .btn-outline-primary:hover {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border-color: transparent;
+        transform: translateY(-2px);
+    }
+    .btn-outline-info {
+        border: 2px solid #17a2b8;
+        color: #17a2b8;
+    }
+    .btn-outline-info:hover {
+        background: #17a2b8;
+        color: white;
+        border-color: transparent;
+        transform: translateY(-2px);
+    }
+    .btn-outline-success {
+        border: 2px solid #28a745;
+        color: #28a745;
+    }
+    .btn-outline-success:hover {
+        background: #28a745;
+        color: white;
+        border-color: transparent;
+        transform: translateY(-2px);
+    }
+    .btn-outline-secondary {
+        border: 2px solid #6c757d;
+        color: #6c757d;
+    }
+    .btn-outline-secondary:hover {
+        background: #6c757d;
+        color: white;
+        border-color: transparent;
+        transform: translateY(-2px);
+    }
+    @media (max-width: 768px) {
+        .dash-widget-icon {
+            width: 50px;
+            height: 50px;
+            line-height: 50px;
+            font-size: 25px;
+        }
+        .dash-widget-info h3 {
+            font-size: 20px;
+        }
+    }
+</style>
+
 <script>
-$(document).ready(function() {
-    // Auto-refresh stats every 30 seconds
-    let refreshInterval = setInterval(refreshStats, 30000);
-    
-    // Manual refresh button
-    $('#refreshDashboard').click(function() {
-        refreshStats();
-        showToast('Dashboard refreshed successfully', 'success');
-    });
-    
-    function refreshStats() {
-        $.ajax({
-            url: '{% url "subject:quick_stats_api" %}',
-            method: 'GET',
-            success: function(response) {
-                // Update stats if needed
-                console.log('Stats refreshed:', response);
-            },
-            error: function() {
-                console.error('Failed to refresh stats');
-            }
-        });
-    }
-    
-    function showToast(message, type) {
-        // Simple toast notification
-        const toast = $(`
-            <div class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-delay="3000">
-                <div class="toast-header">
-                    <strong class="mr-auto">Subject Dashboard</strong>
-                    <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="toast-body">
-                    ${message}
-                </div>
-            </div>
-        `);
-        
-        // Add to container and show
-        $('#toastContainer').append(toast);
-        toast.toast('show');
-        
-        // Remove after hide
-        toast.on('hidden.bs.toast', function() {
-            $(this).remove();
-        });
-    }
-    
-    // Create toast container if it doesn't exist
-    if (!$('#toastContainer').length) {
-        $('body').append('<div id="toastContainer" style="position: fixed; top: 20px; right: 20px; z-index: 9999;"></div>');
-    }
-    
-    // Cleanup on page unload
-    $(window).on('beforeunload', function() {
-        clearInterval(refreshInterval);
+document.addEventListener('DOMContentLoaded', function() {
+    const refreshBtn = document.getElementById('refreshDashboard');
+    refreshBtn.addEventListener('click', function() {
+        location.reload();
     });
 });
 </script>
-
-<style>
-.dash-widget-icon {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    color: white;
-}
-.dash-widget-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-.dash-widget-info h3 {
-    margin-bottom: 0;
-    font-size: 1.5rem;
-}
-.dash-widget-info span {
-    font-size: 0.875rem;
-    color: #6c757d;
-}
-.btn-purple {
-    background-color: #6f42c1;
-    border-color: #6f42c1;
-    color: white;
-}
-.btn-purple:hover {
-    background-color: #5a32a3;
-    border-color: #5a32a3;
-    color: white;
-}
-.card-action {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-}
-.progress-sm {
-    height: 5px;
-}
-</style>
 {% endblock %}

@@ -1,12 +1,11 @@
-<!-- timetables/templates/timetables/teacher_list_for_generate.html -->
-
-{% extends 'timetables/base.html' %}
+{% extends 'Home/base.html' %}
 {% load static %}
 
-{% block title %}Select Teacher to Generate Timetable{% endblock %}
+{% block title %}Select Teacher to Generate Timetable - EduSphere{% endblock %}
 
-{% block content %}
+{% block body %}
 <div class="container-fluid py-4">
+    <!-- Header Section -->
     <div class="row mb-4">
         <div class="col">
             <h2 class="text-primary">
@@ -15,17 +14,18 @@
             <p class="text-muted">Select a teacher to generate their timetable</p>
         </div>
         <div class="col text-end">
-            <a href="{% url 'timetables:dashboard' %}" class="btn btn-secondary">
+            <a href="{% url 'timetables:dashboard' %}" class="btn btn-outline-primary">
                 <i class="fas fa-arrow-left"></i> Back to Dashboard
             </a>
         </div>
     </div>
 
+    <!-- Teachers Grid -->
     <div class="row">
         {% for teacher_data in teachers_with_subjects %}
         <div class="col-md-6 col-lg-4 mb-4">
             <div class="card shadow h-100">
-                <div class="card-header bg-primary text-white">
+                <div class="card-header bg-gradient-primary text-white">
                     <h5 class="mb-0">
                         <i class="fas fa-user"></i> {{ teacher_data.teacher.first_name }} {{ teacher_data.teacher.last_name }}
                     </h5>
@@ -75,4 +75,30 @@
         {% endfor %}
     </div>
 </div>
+
+<style>
+    /* Only color changes - structure unchanged */
+    .btn-outline-primary {
+        border-color: #667eea;
+        color: #667eea;
+    }
+    .btn-outline-primary:hover {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-color: transparent;
+        color: white;
+    }
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+    }
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #5a6fd8 0%, #65418f 100%);
+    }
+    .card-header.bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .text-primary {
+        color: #667eea !important;
+    }
+</style>
 {% endblock %}

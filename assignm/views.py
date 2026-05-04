@@ -10,75 +10,52 @@ from teachers.models import Teacher
 from student.models import Student
 from Academic.models import Section
 from django.utils import timezone
-
-# @login_required
-def assignment_dashboard(request):
-    """Main Assignment Dashboard - Shows ALL assignments"""
-    from django.utils import timezone
-    from django.core.paginator import Paginator
+from django.utils import timezone
+from django.core.paginator import Paginator
     
+@login_required
+def assignment_dashboard(request):
     now = timezone.now()
     
     context = {
         'total_assignments': 0,
         'total_submitted': 0,
-        'total_pending': 0,
-        'total_overdue': 0,
+        'total_teachers': 0,
+        'total_subjects': 0,
         'all_assignments': [],
         'now': now,
     }
     
-    if hasattr(request.user, 'teacher'):
-        # Teacher Dashboard - Show ALL teacher assignments
-        teacher = request.user.teacher
-        assignments = Assignment.objects.filter(teacher=teacher, is_active=True)
-        
-        context['total_assignments'] = assignments.count()
-        context['total_submitted'] = AssignmentSubmission.objects.filter(
-            assignment__in=assignments, 
-            student=request.user
-        ).count()
-        context['total_pending'] = assignments.filter(status='active', due_date__gte=now).count() - context['total_submitted']
-        context['total_overdue'] = assignments.filter(due_date__lt=now, status='active').count()
-        
-        # Pagination
-        paginator = Paginator(assignments.order_by('-created_date'), 10)
-        page_number = request.GET.get('page')
-        context['all_assignments'] = paginator.get_page(page_number)
-        
-    elif hasattr(request.user, 'student'):
-        # Student Dashboard
-        student = request.user.student
-        
-        # Get student's sections
-        student_sections = []
-        if hasattr(student, 'section') and student.section:
-            student_sections = [student.section]
-        elif hasattr(student, 'sections'):
-            student_sections = list(student.sections.all())
-        elif hasattr(student, 'section_set'):
-            student_sections = list(student.section_set.all())
-        
-        if student_sections:
-            assignments = Assignment.objects.filter(
-                sections__in=student_sections,
-                is_active=True
-            ).distinct().order_by('-created_date')
-            
-            context['total_assignments'] = assignments.count()
-            context['total_submitted'] = AssignmentSubmission.objects.filter(
-                assignment__in=assignments, student=student
-            ).count()
-            context['total_pending'] = context['total_assignments'] - context['total_submitted']
-            context['total_overdue'] = assignments.filter(due_date__lt=now).count()
-            
-            # Pagination
-            paginator = Paginator(assignments, 10)
-            page_number = request.GET.get('page')
-            context['all_assignments'] = paginator.get_page(page_number)
+    # ADMIN Dashboard - Show ALL assignments from ALL teachers
+    # Get all assignments (no teacher filter)
+    assignments = Assignment.objects.filter(is_active=True).order_by('-created_date')
+    
+    context['total_assignments'] = assignments.count()
+    
+    # Total submissions across all assignments
+    total_submissions = AssignmentSubmission.objects.filter(
+        assignment__in=assignments
+    ).count()
+    context['total_submitted'] = total_submissions
+    
+    # Total teachers who created assignments
+    total_teachers = Teacher.objects.filter(
+        assignments__is_active=True
+    ).distinct().count()
+    context['total_teachers'] = total_teachers
+    
+    # Total unique subjects with assignments
+    total_subjects = SubjectAssign.objects.filter(
+        assignments__is_active=True
+    ).distinct().count()
+    context['total_subjects'] = total_subjects
+    
+    # Pagination
+    paginator = Paginator(assignments, 10)
+    page_number = request.GET.get('page')
+    context['all_assignments'] = paginator.get_page(page_number)
     
     return render(request, 'assignment/dashboard.html', context)
-
 @login_required
 def teacher_submit_assignment(request):
     """Allow teachers to submit assignments"""
@@ -199,17 +176,25 @@ def teacher_assignment_create(request):
         'assignment_types': Assignment.ASSIGNMENT_TYPES,
     }
     return render(request, 'assignment/teacher_assignment_create.html', context)
-
 @login_required
 def teacher_assignment_detail(request, assignment_id):
     """View assignment details and student submissions"""
-    try:
-        teacher = request.user.teacher
-    except:
-        messages.error(request, "You are not registered as a teacher")
-        return redirect('home')
+    assignment = get_object_or_404(Assignment, id=assignment_id, is_active=True)
     
-    assignment = get_object_or_404(Assignment, id=assignment_id, teacher=teacher)
+    # Check if user is admin or the teacher who owns this assignment
+    is_admin = request.user.is_superuser or request.user.is_staff
+    
+    if not is_admin:
+        # If not admin, check if user is the teacher who owns this assignment
+        try:
+            teacher = request.user.teacher
+            if assignment.teacher != teacher:
+                messages.error(request, "You don't have permission to view this assignment")
+                return redirect('assignment:assignment_dashboard')
+        except:
+            messages.error(request, "You don't have permission to view this assignment")
+            return redirect('assignment:assignment_dashboard')
+    
     submissions = assignment.submissions.all().select_related('student')
     
     # Statistics
@@ -225,10 +210,9 @@ def teacher_assignment_detail(request, assignment_id):
         'graded_count': graded_count,
         'pending_count': pending_count,
         'plagiarized_count': plagiarized_count,
+        'is_admin': is_admin,
     }
     return render(request, 'assignment/teacher_assignment_detail.html', context)
-
-
 @login_required
 def teacher_grade_submission(request, submission_id):
     """Grade a student's submission"""
@@ -454,3 +438,6 @@ def get_sections_by_subject(request):
                 return JsonResponse({'sections': [], 'error': str(e)})
     
     return JsonResponse({'sections': [], 'error': 'Invalid request method'})
+
+
+    

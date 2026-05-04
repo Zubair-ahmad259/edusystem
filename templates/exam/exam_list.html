@@ -1,46 +1,92 @@
 {% extends 'Home/base.html' %}
 {% load static %}
 
-{% block title %}Exams List - Student Management System{% endblock %}
+{% block title %}Exams List - EduSphere{% endblock %}
 
 {% block body %}
-<style>
-    .table-actions {
-        white-space: nowrap;
-    }
-    .badge-status {
-        padding: 5px 10px;
-        border-radius: 20px;
-        font-size: 12px;
-    }
-    .filter-card {
-        margin-bottom: 20px;
-    }
-</style>
-
 <div class="page-wrapper">
     <div class="content container-fluid">
+        
+        <!-- Page Header -->
         <div class="page-header">
-            <div class="row">
-                <div class="col-sm-12">
+            <div class="row align-items-center">
+                <div class="col">
                     <h3 class="page-title">Exams Management</h3>
                     <ul class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'index' %}">Dashboard</a></li>
                         <li class="breadcrumb-item active">Exams List</li>
                     </ul>
+                </div>
+                <div class="col-auto text-right">
+                    <a href="{% url 'create_exam' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create Exam
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card dash-widget">
+                    <div class="card-body">
+                        <span class="dash-widget-icon bg-primary"><i class="fas fa-file-alt"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ exams|length }}</h3>
+                            <span>Total Exams</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card dash-widget">
+                    <div class="card-body">
+                        <span class="dash-widget-icon bg-success"><i class="fas fa-check-circle"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ published_count|default:0 }}</h3>
+                            <span>Published</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card dash-widget">
+                    <div class="card-body">
+                        <span class="dash-widget-icon bg-info"><i class="fas fa-chart-bar"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ with_results|default:0 }}</h3>
+                            <span>With Results</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card dash-widget">
+                    <div class="card-body">
+                        <span class="dash-widget-icon bg-warning"><i class="fas fa-calendar-alt"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ this_month|default:0 }}</h3>
+                            <span>This Month</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Filter Card -->
-        <div class="card filter-card">
+        <div class="filter-card mb-4">
+            <div class="card-header bg-gradient-primary text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-filter me-2"></i> Filter Exams</h5>
+                    <a href="{% url 'exam_list' %}" class="btn btn-sm btn-light">Reset</a>
+                </div>
+            </div>
             <div class="card-body">
                 <form method="get" class="row">
                     <div class="col-md-3">
                         <div class="form-group">
                             <label>Search</label>
-                            <input type="text" class="form-control" name="search" 
-                                   placeholder="Subject code or name" value="{{ request.GET.search }}">
+                            <input type="text" class="form-control" name="search" placeholder="Subject code or name" value="{{ request.GET.search }}">
                         </div>
                     </div>
                     <div class="col-md-2">
@@ -49,9 +95,7 @@
                             <select class="form-control" name="exam_type">
                                 <option value="">All Types</option>
                                 {% for type_code, type_name in exam_types %}
-                                <option value="{{ type_code }}" {% if request.GET.exam_type == type_code %}selected{% endif %}>
-                                    {{ type_name }}
-                                </option>
+                                <option value="{{ type_code }}" {% if request.GET.exam_type == type_code %}selected{% endif %}>{{ type_name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -60,7 +104,7 @@
                         <div class="form-group">
                             <label>Status</label>
                             <select class="form-control" name="status">
-                                <option value="">All Status</option>
+                                <option value="">All</option>
                                 <option value="published" {% if request.GET.status == 'published' %}selected{% endif %}>Published</option>
                                 <option value="draft" {% if request.GET.status == 'draft' %}selected{% endif %}>Draft</option>
                             </select>
@@ -78,36 +122,24 @@
                             <input type="date" class="form-control" name="date_to" value="{{ request.GET.date_to }}">
                         </div>
                     </div>
-                    <div class="col-md-1">
-                        <div class="form-group">
-                            <label>&nbsp;</label>
-                            <button type="submit" class="btn btn-primary btn-block">
-                                <i class="fas fa-search"></i>
-                            </button>
-                        </div>
+                    <div class="col-md-1 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search"></i>
+                        </button>
                     </div>
                 </form>
             </div>
         </div>
 
-        <!-- Main Card -->
+        <!-- Exams Table -->
         <div class="card">
-            <div class="card-header">
-                <div class="row align-items-center">
-                    <div class="col">
-                        <h5 class="card-title">All Exams</h5>
-                    </div>
-                    <div class="col-auto">
-                        <a href="{% url 'create_exam' %}" class="btn btn-primary">
-                            <i class="fas fa-plus"></i> Create New Exam
-                        </a>
-                    </div>
-                </div>
+            <div class="card-header bg-gradient-primary text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-list"></i> All Exams</h5>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-hover table-center mb-0">
-                        <thead>
+                        <thead class="thead-light">
                             <tr>
                                 <th>#</th>
                                 <th>Subject</th>
@@ -117,82 +149,54 @@
                                 <th>Date</th>
                                 <th>Total Marks</th>
                                 <th>Status</th>
-                                <th>Results</th>
-                                <th>Actions</th>
+                                <th class="text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for exam in exams %}
-                            <tr>
+                            <tr class="align-middle">
                                 <td>{{ forloop.counter }}</td>
                                 <td>
-                                    <h2 class="table-avatar">
-                                        <a href="#">{{ exam.subject_mark_component.subject.code }}</a>
-                                        <small>{{ exam.subject_mark_component.subject.name|truncatechars:20 }}</small>
-                                    </h2>
+                                    <strong>{{ exam.subject_mark_component.subject.code }}</strong>
+                                    <br>
+                                    <small>{{ exam.subject_mark_component.subject.name|truncatechars:25 }}</small>
                                 </td>
                                 <td>
                                     {% if exam.exam_type == 'final' %}
-                                    <span class="badge badge-danger">{{ exam.get_exam_type_display }}</span>
+                                    <span class="badge badge-danger">Final</span>
                                     {% elif exam.exam_type == 'mid_term' %}
-                                    <span class="badge badge-primary">{{ exam.get_exam_type_display }}</span>
-                                    {% elif exam.exam_type == 'lab' %}
-                                    <span class="badge badge-success">{{ exam.get_exam_type_display }}</span>
+                                    <span class="badge badge-primary">Mid Term</span>
                                     {% else %}
                                     <span class="badge badge-info">{{ exam.get_exam_type_display }}</span>
                                     {% endif %}
                                 </td>
                                 <td>{{ exam.subject_mark_component.semester }}</td>
-                                <td>{{ exam.subject_mark_component.batch }}</td>
-                                <td>{{ exam.exam_date|date:"d M Y" }}</td>
-                                <td>{{ exam.total_marks }}</td>
+                                <td>{{ exam.subject_mark_component.batch }}</div></td>
+                                <td>{{ exam.exam_date|date:"M d, Y" }}</div></td>
+                                <td>{{ exam.total_marks }}</div></td>
                                 <td>
                                     {% if exam.is_published %}
                                     <span class="badge badge-success">Published</span>
                                     {% else %}
                                     <span class="badge badge-warning">Draft</span>
                                     {% endif %}
-                                </td>
-                                <td>
-                                    {% if exam.results.exists %}
-                                    <span class="badge badge-info">{{ exam.results.count }}</span>
-                                    {% else %}
-                                    <span class="badge badge-secondary">0</span>
-                                    {% endif %}
-                                </td>
-                                <td class="table-actions">
-                                    <div class="btn-group">
-                                        <a href="{% url 'exam_dashboard' exam.id %}" class="btn btn-sm btn-outline-primary" 
-                                           title="View Dashboard">
+                                 </div></td>
+                                <td class="text-right">
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'exam_dashboard' exam.id %}" class="btn btn-sm btn-outline-primary" title="View">
                                             <i class="fas fa-eye"></i>
                                         </a>
                                         {% if not exam.is_published %}
-                                        <a href="{% url 'publish_exam' exam.id %}" class="btn btn-sm btn-outline-success"
-                                           title="Publish Exam" onclick="return confirm('Publish this exam?')">
-                                            <i class="fas fa-paper-plane"></i>
-                                        </a>
-                                        {% endif %}
-                                        {% if exam.is_published and not exam.results.exists %}
-                                        <a href="{% url 'upload_results' exam.id %}" class="btn btn-sm btn-outline-warning"
-                                           title="Upload Results">
-                                            <i class="fas fa-upload"></i>
+                                        <a href="{% url 'publish_exam' exam.id %}" class="btn btn-sm btn-outline-success" title="Publish">
+                                            <i class="fas fa-check"></i>
                                         </a>
                                         {% endif %}
                                     </div>
-                                </td>
+                                 </div></td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="10" class="text-center">
-                                    <div class="empty-state">
-                                        <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
-                                        <h5>No exams found</h5>
-                                        <p class="text-muted">Create your first exam to get started</p>
-                                        <a href="{% url 'create_exam' %}" class="btn btn-primary">
-                                            <i class="fas fa-plus"></i> Create Exam
-                                        </a>
-                                    </div>
-                                </td>
+                                <td colspan="9" class="text-center py-4">No exams found</div></td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -200,104 +204,17 @@
                 </div>
             </div>
         </div>
-
-        <!-- Stats Cards -->
-        <div class="row mt-4">
-            <div class="col-md-3">
-                <div class="card bg-primary-light">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h6 class="text-primary">Total Exams</h6>
-                                <h3>{{ exams|length }}</h3>
-                            </div>
-                            <div class="icon">
-                                <i class="fas fa-file-alt text-primary"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-success-light">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h6 class="text-success">Published</h6>
-                                <h3>{{ exams|filter_by:'is_published'|length }}</h3>
-                            </div>
-                            <div class="icon">
-                                <i class="fas fa-check-circle text-success"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-info-light">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h6 class="text-info">With Results</h6>
-                                <h3>{{ exams|filter_by:'results__exists'|length }}</h3>
-                            </div>
-                            <div class="icon">
-                                <i class="fas fa-chart-bar text-info"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-warning-light">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h6 class="text-warning">This Month</h6>
-                                <h3>{{ exams|filter_by_month|length }}</h3>
-                            </div>
-                            <div class="icon">
-                                <i class="fas fa-calendar-alt text-warning"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 
-<script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
-<script>
-    $(document).ready(function() {
-        // Confirm before publishing
-        $('a[href*="publish_exam"]').click(function(e) {
-            if (!confirm('Are you sure you want to publish this exam? Published exams cannot be edited.')) {
-                e.preventDefault();
-            }
-        });
-        
-        // Add hover effect to table rows
-        $('table tbody tr').hover(
-            function() {
-                $(this).addClass('table-hover-row');
-            },
-            function() {
-                $(this).removeClass('table-hover-row');
-            }
-        );
-    });
-</script>
-
 <style>
-    .table-hover-row {
-        background-color: #f8f9fa;
-    }
-    .empty-state {
-        padding: 40px 0;
-    }
-    .empty-state i {
-        opacity: 0.5;
-    }
+    .dash-widget { border-radius: 10px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    .dash-widget-icon { font-size: 40px; float: left; width: 70px; height: 70px; line-height: 70px; text-align: center; background: rgba(0,0,0,0.05); border-radius: 50%; margin-right: 15px; color: white; }
+    .dash-widget-info { overflow: hidden; }
+    .dash-widget-info h3 { font-size: 28px; font-weight: 600; margin-bottom: 5px; }
+    .bg-gradient-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .filter-card { border: none; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+    .filter-card .card-header { border-radius: 12px 12px 0 0; padding: 12px 20px; }
+    .badge { padding: 5px 12px; font-weight: 500; border-radius: 20px; }
 </style>
 {% endblock %}
