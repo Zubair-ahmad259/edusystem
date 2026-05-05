@@ -1,9 +1,14 @@
+<<<<<<< HEAD
 {% extends 'Home/base.html' %}
 {% load static %}
+=======
+{% extends 'teacher/teacher_dashboard.html' %}
+>>>>>>> ba208ee5347772c7a2262ecb36565c4b7735e7ed
 
 {% block title %}{{ assignment.title }} - Assignment Details{% endblock %}
 
 {% block body %}
+<<<<<<< HEAD
 <div class="page-wrapper">
     <div class="content container-fluid">
         
@@ -24,6 +29,17 @@
                     </a>
                 </div>
             </div>
+=======
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1>{{ assignment.title }}</h1>
+            <p class="text-muted">
+                {{ assignment.subject_assign.subject.code }} - {{ assignment.subject_assign.subject.name }} |
+                Due: {{ assignment.due_date|date:"M d, Y H:i" }}
+            </p>
+>>>>>>> ba208ee5347772c7a2262ecb36565c4b7735e7ed
         </div>
 
         <!-- Statistics Cards -->

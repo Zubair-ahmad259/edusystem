@@ -4,6 +4,21 @@
 {% block title %}Exam Management Dashboard - EduSphere{% endblock %}
 
 {% block body %}
+<style>
+    .page-wrapper {
+        /* Scale everything down to 80% */
+        transform: scale(0.8); 
+        
+        /* Keep it anchored to the top left so it doesn't float to the middle */
+        transform-origin: top left; 
+        
+        /* Because we shrunk it by 20%, we need to tell it to take up 125% width 
+           to ensure it still stretches across your entire screen (100 / 0.8 = 125) */
+        width: 125%; 
+        height: 125%; 
+    }
+</style>
+
 <div class="page-wrapper">
     <div class="content container-fluid">
         

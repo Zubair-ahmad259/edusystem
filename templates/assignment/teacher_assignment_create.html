@@ -1,9 +1,14 @@
+<<<<<<< HEAD
 {% extends 'Home/base.html' %}
 {% load static %}
+=======
+{% extends 'teacher/teacher_dashboard.html' %}
+>>>>>>> ba208ee5347772c7a2262ecb36565c4b7735e7ed
 
 {% block title %}Create Assignment - EduSphere{% endblock %}
 
 {% block body %}
+<<<<<<< HEAD
 <div class="page-wrapper">
     <div class="content container-fluid">
         
@@ -17,6 +22,18 @@
                         <li class="breadcrumb-item"><a href="{% url 'assignment:teacher_assignment_list' %}">Assignments</a></li>
                         <li class="breadcrumb-item active">Create</li>
                     </ul>
+=======
+{% block assignment_content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">
+                        <i class="fas fa-plus-circle"></i> Create New Assignment
+                    </h3>
+                    <p class="text-muted mb-0 mt-2">Create assignments for your subjects</p>
+>>>>>>> ba208ee5347772c7a2262ecb36565c4b7735e7ed
                 </div>
                 <div class="col-auto text-right">
                     <a href="{% url 'assignment:teacher_assignment_list' %}" class="btn btn-outline-primary">
@@ -207,6 +224,7 @@
         return true;
     });
 </script>
+<<<<<<< HEAD
 
 <style>
     .bg-gradient-primary {
@@ -226,4 +244,8 @@
         color: white;
     }
 </style>
+=======
+{% endblock %}
+{% endblock %}
+>>>>>>> ba208ee5347772c7a2262ecb36565c4b7735e7ed
 {% endblock %}

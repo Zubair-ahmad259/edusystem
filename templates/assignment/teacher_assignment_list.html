@@ -1,9 +1,14 @@
+<<<<<<< HEAD
 {% extends 'Home/base.html' %}
 {% load static %}
+=======
+{% extends 'teacher/teacher_dashboard.html' %}
+>>>>>>> ba208ee5347772c7a2262ecb36565c4b7735e7ed
 
 {% block title %}My Assignments - EduSphere{% endblock %}
 
 {% block body %}
+<<<<<<< HEAD
 <div class="page-wrapper">
     <div class="content container-fluid">
         
@@ -24,6 +29,15 @@
                 </div>
             </div>
         </div>
+=======
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>My Assignments</h1>
+    <a href="{% url 'assignment:teacher_assignment_create' %}" class="btn btn-primary">
+        
+        <i class="fas fa-plus"></i> Create New Assignment
+    </a>
+</div>
+>>>>>>> ba208ee5347772c7a2262ecb36565c4b7735e7ed
 
         <!-- Stats Cards -->
         <div class="row">
