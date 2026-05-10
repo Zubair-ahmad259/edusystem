@@ -1,0 +1,359 @@
+{% extends 'teacher/teacher_dashboard.html' %}
+{% load static %}
+
+{% block title %}Mark Attendance - {{ subject.code }}{% endblock %}
+
+{% block body %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'teacher_attendance_subjects' %}">My Subjects</a></li>
+                    <li class="breadcrumb-item active">Mark Attendance</li>
+                </ol>
+            </nav>
+            <h2 class="text-primary">
+                <i class="fas fa-calendar-check"></i> Mark Attendance
+            </h2>
+            <p class="text-muted">
+                <strong>{{ subject.code }} - {{ subject.name }}</strong> | 
+                Section: {{ section.name }} | 
+                Date: {{ today|date:"l, F d, Y" }}
+            </p>
+        </div>
+        <div class="col text-end">
+            <button onclick="window.location.href='{% url 'teacher_attendance_subjects' %}'" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Subjects
+            </button>
+        </div>
+    </div>
+
+    <!-- Attendance Form -->
+    <div class="card shadow">
+        <div class="card-header bg-white">
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <h5 class="mb-2 mb-md-0">Students List ({{ total_students }} students)</h5>
+                <div>
+                    <button type="button" id="markAllPresent" class="btn btn-sm btn-success me-2">
+                        <i class="fas fa-check"></i> Mark All Present
+                    </button>
+                    <button type="button" id="markAllAbsent" class="btn btn-sm btn-danger">
+                        <i class="fas fa-times"></i> Mark All Absent
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <form method="POST" id="attendanceForm">
+                {% csrf_token %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered">
+                        <thead class="thead-light">
+                            <tr>
+                                <th style="width: 50px;">#</th>
+                                <th>Student ID</th>
+                                <th>Student Name</th>
+                                <th style="width: 220px;">Status</th>
+                                <th>Remarks</th>
+                            </td>
+                        </thead>
+                        <tbody>
+                            {% for student in students %}
+                            <tr data-student-id="{{ student.id }}">
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ student.student_id }}</td>
+                                <td>{{ student.first_name }} {{ student.last_name }}</td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button type="button" 
+                                                class="btn btn-sm status-btn status-present {% if student.status == 'P' %}btn-success active{% else %}btn-outline-success{% endif %}"
+                                                data-student-id="{{ student.id }}"
+                                                data-status="P">
+                                            <i class="fas fa-check-circle"></i> Present
+                                        </button>
+                                        <button type="button" 
+                                                class="btn btn-sm status-btn status-absent {% if student.status == 'A' %}btn-danger active{% else %}btn-outline-danger{% endif %}"
+                                                data-student-id="{{ student.id }}"
+                                                data-status="A">
+                                            <i class="fas fa-times-circle"></i> Absent
+                                        </button>
+                                    </div>
+                                    <input type="hidden" name="status_{{ student.id }}" id="status_{{ student.id }}" value="{{ student.status }}">
+                                </td>
+                                <td>
+                                    <input type="text" name="remarks_{{ student.id }}" 
+                                           class="form-control form-control-sm remarks-input" 
+                                           placeholder="Optional remarks"
+                                           value="{{ student.remarks }}">
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    <i class="fas fa-chart-pie"></i> Summary
+                                </h6>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Total Students:</span>
+                                    <strong id="totalStudents">{{ total_students }}</strong>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>
+                                        <i class="fas fa-check-circle text-success"></i> Present:
+                                    </span>
+                                    <strong id="presentCount" class="text-success">0</strong>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>
+                                        <i class="fas fa-times-circle text-danger"></i> Absent:
+                                    </span>
+                                    <strong id="absentCount" class="text-danger">0</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 text-right">
+                        <button type="submit" class="btn btn-primary btn-lg px-4">
+                            <i class="fas fa-save"></i> Save Attendance
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        
+        // Function to update summary counts
+        function updateSummary() {
+            let present = 0;
+            let absent = 0;
+            
+            // Count based on hidden input values
+            $('input[id^="status_"]').each(function() {
+                if ($(this).val() === 'P') {
+                    present++;
+                } else if ($(this).val() === 'A') {
+                    absent++;
+                }
+            });
+            
+            $('#presentCount').text(present);
+            $('#absentCount').text(absent);
+        }
+        
+        // Function to update button styles
+        function updateButtonStyles(studentId, status) {
+            const presentBtn = $(`.status-present[data-student-id="${studentId}"]`);
+            const absentBtn = $(`.status-absent[data-student-id="${studentId}"]`);
+            
+            if (status === 'P') {
+                presentBtn.removeClass('btn-outline-success').addClass('btn-success active');
+                absentBtn.removeClass('btn-danger active').addClass('btn-outline-danger');
+            } else {
+                absentBtn.removeClass('btn-outline-danger').addClass('btn-danger active');
+                presentBtn.removeClass('btn-success active').addClass('btn-outline-success');
+            }
+        }
+        
+        // Handle status button clicks
+        $('.status-btn').click(function() {
+            const studentId = $(this).data('student-id');
+            const newStatus = $(this).data('status');
+            
+            // Update hidden input
+            $(`#status_${studentId}`).val(newStatus);
+            
+            // Update button styles
+            updateButtonStyles(studentId, newStatus);
+            
+            // Update summary
+            updateSummary();
+        });
+        
+        // Mark all present
+        $('#markAllPresent').click(function() {
+            $('input[id^="status_"]').each(function() {
+                const studentId = $(this).attr('id').replace('status_', '');
+                $(this).val('P');
+                updateButtonStyles(studentId, 'P');
+            });
+            updateSummary();
+        });
+        
+        // Mark all absent
+        $('#markAllAbsent').click(function() {
+            $('input[id^="status_"]').each(function() {
+                const studentId = $(this).attr('id').replace('status_', '');
+                $(this).val('A');
+                updateButtonStyles(studentId, 'A');
+            });
+            updateSummary();
+        });
+        
+        // Initial summary calculation
+        updateSummary();
+        
+        // Form submission
+        $('#attendanceForm').submit(function(e) {
+            e.preventDefault();
+            
+            // Get counts for confirmation message
+            const present = $('#presentCount').text();
+            const absent = $('#absentCount').text();
+            const total = $('#totalStudents').text();
+            
+            if (confirm(`Are you sure you want to save attendance?\n\nPresent: ${present}\nAbsent: ${absent}\nTotal: ${total}\n\nClick OK to save.`)) {
+                // Show loading state
+                const submitBtn = $(this).find('button[type="submit"]');
+                const originalHtml = submitBtn.html();
+                submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Saving...').prop('disabled', true);
+                
+                // Submit the form
+                this.submit();
+            }
+        });
+        
+        // Add visual feedback on row hover
+        $('tbody tr').hover(
+            function() { $(this).addClass('table-active'); },
+            function() { $(this).removeClass('table-active'); }
+        );
+    });
+</script>
+
+<style>
+    .status-btn {
+        cursor: pointer;
+        padding: 6px 16px;
+        transition: all 0.3s ease;
+        min-width: 90px;
+    }
+    
+    .status-btn i {
+        margin-right: 5px;
+    }
+    
+    .status-btn.btn-success {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        border: none;
+        color: white;
+    }
+    
+    .status-btn.btn-danger {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+        border: none;
+        color: white;
+    }
+    
+    .status-btn.btn-outline-success:hover {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+        border-color: transparent;
+    }
+    
+    .status-btn.btn-outline-danger:hover {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+        color: white;
+        border-color: transparent;
+    }
+    
+    .btn-group {
+        display: flex;
+        gap: 5px;
+    }
+    
+    .btn-group .status-btn:first-child {
+        border-radius: 8px 0 0 8px;
+    }
+    
+    .btn-group .status-btn:last-child {
+        border-radius: 0 8px 8px 0;
+    }
+    
+    .remarks-input {
+        min-width: 180px;
+    }
+    
+    table th, table td {
+        vertical-align: middle;
+    }
+    
+    .card {
+        border-radius: 15px;
+        border: none;
+    }
+    
+    .card-header {
+        border-bottom: 1px solid #e2e8f0;
+        background: #f8fafc;
+        border-radius: 15px 15px 0 0 !important;
+    }
+    
+    .table th {
+        background-color: #f1f5f9;
+        font-weight: 600;
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: #f8fafc;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border: none;
+        border-radius: 10px;
+        padding: 10px 25px;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102,126,234,0.4);
+    }
+    
+    .btn-secondary {
+        border-radius: 10px;
+    }
+    
+    .bg-light {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border-radius: 12px;
+    }
+    
+    @media (max-width: 768px) {
+        .btn-group {
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .btn-group .status-btn:first-child,
+        .btn-group .status-btn:last-child {
+            border-radius: 8px;
+        }
+        
+        .remarks-input {
+            min-width: 120px;
+        }
+        
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 11px;
+        }
+        
+        .status-btn i {
+            margin-right: 3px;
+        }
+    }
+</style>
+{% endblock %}

@@ -804,15 +804,20 @@ def defaulter_student(request):
     batches = Batch.objects.all()
     semesters = Semester.objects.all()
     sections = Section.objects.all()
-    disciplines = Discipline.objects.all()  # Add this
+    disciplines = Discipline.objects.all()
 
-    fees = UploadFee.objects.select_related("student", "batch", "semester", "section", "discipline")  # Add discipline
-
+    # Get filter parameters
     batch_filter = request.GET.get("batch")
     semester_filter = request.GET.get("semester")
     section_filter = request.GET.get("section")
-    discipline_filter = request.GET.get("discipline")  # Add this
+    discipline_filter = request.GET.get("discipline")
 
+    # Get all fees
+    fees = UploadFee.objects.select_related(
+        "student", "batch", "semester", "section", "discipline"
+    )
+
+    # Apply filters
     if batch_filter:
         fees = fees.filter(batch_id=batch_filter)
     if semester_filter:
@@ -820,23 +825,68 @@ def defaulter_student(request):
     if section_filter:
         fees = fees.filter(section_id=section_filter)
     if discipline_filter:
-        fees = fees.filter(discipline_id=discipline_filter)  # Add this
+        fees = fees.filter(discipline_id=discipline_filter)
 
-    pending_fees = []
+    # Group by student and calculate pending amounts
+    student_defaulter_list = []
     today = date.today()
-    
+
     for fee in fees:
-        # Apply 5000 fine if overdue
+        # Apply fine if overdue
         if fee.due_date and today > fee.due_date and not fee.is_fully_paid:
             if fee.fine != Decimal('5000.00'):
                 fee.fine = Decimal('5000.00')
                 fee.is_overdue = True
                 fee.save()
-        
-        if not fee.is_fully_paid:
-            pending_fees.append(fee)
+        elif fee.is_fully_paid and fee.fine > Decimal('0'):
+            fee.fine = Decimal('0.00')
+            fee.is_overdue = False
+            fee.save()
 
-    # For selected values display
+    # Group by student
+    students_dict = {}
+    for fee in fees:
+        student_id = fee.student.id
+        if student_id not in students_dict:
+            students_dict[student_id] = {
+                'student': fee.student,
+                'batch': fee.batch,
+                'semester': fee.semester,
+                'section': fee.section,
+                'discipline': fee.discipline,
+                'fees': [],
+                'total_fee': Decimal('0'),
+                'total_paid': Decimal('0'),
+                'total_fine': Decimal('0'),
+                'balance': Decimal('0'),
+            }
+        
+        fee_total = fee.total_fee()
+        paid_amount = fee.paid_amount
+        balance = fee_total - paid_amount
+        
+        students_dict[student_id]['fees'].append(fee)
+        students_dict[student_id]['total_fee'] += fee.amount
+        students_dict[student_id]['total_fine'] += fee.fine
+        students_dict[student_id]['total_paid'] += paid_amount
+        students_dict[student_id]['balance'] += balance
+
+    # Filter only defaulters (balance > 0)
+    for student_id, student_data in students_dict.items():
+        if student_data['balance'] > 0:
+            student_defaulter_list.append({
+                'student': student_data['student'],
+                'batch': student_data['batch'],
+                'semester': student_data['semester'],
+                'section': student_data['section'],
+                'discipline': student_data['discipline'],
+                'total_fee': student_data['total_fee'],
+                'total_fine': student_data['total_fine'],
+                'total_paid': student_data['total_paid'],
+                'balance': student_data['balance'],
+            })
+
+    # Get selected names for display
     selected_batch_name = ""
     selected_section_name = ""
     selected_discipline_name = ""
@@ -845,35 +895,31 @@ def defaulter_student(request):
     if batch_filter:
         batch = Batch.objects.filter(id=batch_filter).first()
         selected_batch_name = batch.name if batch else ""
-    
     if section_filter:
         section = Section.objects.filter(id=section_filter).first()
         selected_section_name = section.name if section else ""
-    
     if discipline_filter:
         discipline = Discipline.objects.filter(id=discipline_filter).first()
         selected_discipline_name = f"{discipline.field} ({discipline.program})" if discipline else ""
-    
     if semester_filter:
         semester = Semester.objects.filter(id=semester_filter).first()
         selected_semester_name = f"Semester {semester.number}" if semester else ""
 
     return render(request, "fees/defaulter_student.html", {
-        "fees": pending_fees,
+        "student_defaulter_list": student_defaulter_list,
         "batches": batches,
         "semesters": semesters,
         "sections": sections,
-        "disciplines": disciplines,  # Add this
+        "disciplines": disciplines,
         "selected_batch": batch_filter,
         "selected_semester": semester_filter,
         "selected_section": section_filter,
-        "selected_discipline": discipline_filter,  # Add this
+        "selected_discipline": discipline_filter,
         "selected_batch_name": selected_batch_name,
         "selected_section_name": selected_section_name,
         "selected_discipline_name": selected_discipline_name,
         "selected_semester_name": selected_semester_name,
     })
-
 def export_defaulter_excel(request):
     """Export defaulter students to Excel"""
     

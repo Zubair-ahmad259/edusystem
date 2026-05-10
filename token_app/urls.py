@@ -5,7 +5,6 @@ app_name = 'token_app'
 
 urlpatterns = [
     # Home
-    path('', views.index, name='index'),
     
     # Dashboard & Statistics
     path('dashboard/', views.dashboard, name='dashboard'),
@@ -38,4 +37,5 @@ urlpatterns = [
     path('token-generated-students/', views.token_generated_students, name='token_generated_students'),
     path('student/<int:student_id>/token-history/', views.student_token_history, name='student_token_history'),
     path('student/<int:student_id>/token/<int:token_id>/', views.student_token_detail, name='student_token_detail'),
+path('api/get-student-subjects/<int:student_id>/', views.get_student_subjects, name='get_student_subjects'),
 ]

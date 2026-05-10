@@ -10,10 +10,14 @@ urlpatterns = [
     path('list/', views.attendance_list, name='attendance_list'),
     path('mark/', views.mark_attendance, name='mark_attendance'),
     path('bulk/', views.bulk_attendance, name='bulk_attendance'),
-    
+        # Teacher Bulk Attendance - New simplified flow
+    path('teacher-subjects/', views.teacher_attendance_subjects, name='teacher_attendance_subjects'),
+    path('mark-attendance/<int:subject_id>/<int:section_id>/', views.mark_attendance_for_section, name='mark_attendance_for_section'),
+# Add this line to your urlpatterns
+path('view-attendance/<int:subject_id>/<int:section_id>/', views.view_section_attendance, name='view_section_attendance'),
     # Student Attendance
     path('student/<int:student_id>/', views.student_attendance, name='student_attendance'),
-    
+    path('api/student-attendance/<int:student_id>/', views.student_attendance_api, name='student_attendance_api'),
     # Subject Attendance
     path('subject/<int:subject_id>/', views.subject_attendance, name='subject_attendance'),
     

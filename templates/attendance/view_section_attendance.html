@@ -1,0 +1,483 @@
+{% extends 'teacher/teacher_dashboard.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Attendance Records - {{ subject.code }} - {{ section.name }}{% endblock %}
+
+{% block body %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'teacher_attendance_subjects' %}">My Subjects</a></li>
+                    <li class="breadcrumb-item active">Attendance Records</li>
+                </ol>
+            </nav>
+            <h2 class="text-primary">
+                <i class="fas fa-chart-line"></i> Attendance Records
+            </h2>
+            <p class="text-muted">
+                <strong>{{ subject.code }} - {{ subject.name }}</strong> | 
+                Section: {{ section.name }} | 
+                Batch: {{ section.batch.name }}
+            </p>
+        </div>
+        <div class="col text-end">
+            <a href="{% url 'mark_attendance_for_section' subject.id section.id %}" class="btn btn-success">
+                <i class="fas fa-calendar-check"></i> Mark New Attendance
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Cards - Compact -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-6">
+            <div class="stats-card stats-card-primary">
+                <div class="stats-icon">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div class="stats-number">{{ total_records }}</div>
+                <div class="stats-label">Total Classes</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stats-card stats-card-success">
+                <div class="stats-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stats-number">{{ present_count }}</div>
+                <div class="stats-label">Present</div>
+                <div class="stats-percentage">{{ present_percentage }}%</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stats-card stats-card-danger">
+                <div class="stats-icon">
+                    <i class="fas fa-times-circle"></i>
+                </div>
+                <div class="stats-number">{{ absent_count }}</div>
+                <div class="stats-label">Absent</div>
+                <div class="stats-percentage">{{ absent_percentage }}%</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stats-card stats-card-info">
+                <div class="stats-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stats-number">{{ students.count }}</div>
+                <div class="stats-label">Total Students</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Info -->
+    <div class="alert alert-info mb-4">
+        <i class="fas fa-info-circle me-2"></i>
+        Showing overall attendance across <strong>{{ total_records }}</strong> total class sessions. 
+        Each student's percentage is calculated based on total classes held.
+    </div>
+
+    <!-- Student-wise Attendance Percentage Table -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">
+                <i class="fas fa-users text-primary me-2"></i> Student-wise Attendance Summary
+                <span class="badge bg-secondary ms-2">Overall Percentage</span>
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 50px;">#</th>
+                            <th>Student ID</th>
+                            <th>Student Name</th>
+                            <th class="text-center">Total Classes</th>
+                            <th class="text-center">Present</th>
+                            <th class="text-center">Absent</th>
+                            <th class="text-center">Attendance %</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stat in student_attendance_stats %}
+                        <tr>
+                            <td class="text-center">{{ forloop.counter }}</td>
+                            <td><strong>{{ stat.student.student_id }}</strong></td>
+                            <td>{{ stat.student.first_name }} {{ stat.student.last_name }}</td>
+                            <td class="text-center">{{ stat.total }}</td>
+                            <td class="text-center text-success">{{ stat.present }}</td>
+                            <td class="text-center text-danger">{{ stat.absent }}</td>
+                            <td style="width: 120px;">
+                                <div class="progress" style="height: 8px; margin-bottom: 5px;">
+                                    <div class="progress-bar {% if stat.percentage >= 75 %}bg-success{% elif stat.percentage >= 50 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                         role="progressbar" 
+                                         style="width: {{ stat.percentage }}%;">
+                                    </div>
+                                </div>
+                                <span class="attendance-percentage {% if stat.percentage >= 75 %}text-success{% elif stat.percentage >= 50 %}text-warning{% else %}text-danger{% endif %}">
+                                    <strong>{{ stat.percentage }}%</strong>
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                {% if stat.percentage >= 75 %}
+                                    <span class="status-badge status-good">Good</span>
+                                {% elif stat.percentage >= 50 %}
+                                    <span class="status-badge status-warning">Warning</span>
+                                {% else %}
+                                    <span class="status-badge status-critical">Critical</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-outline-info" 
+                                        onclick="showStudentDetails({{ stat.student.id }}, '{{ stat.student.first_name }} {{ stat.student.last_name }}', {{ stat.percentage }})">
+                                    <i class="fas fa-chart-line"></i> Details
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center py-5">
+                                <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                                <p>No attendance records found</p>
+                                <a href="{% url 'mark_attendance_for_section' subject.id section.id %}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-plus"></i> Mark First Attendance
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Footer -->
+    {% if student_attendance_stats %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="summary-footer">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <div class="legend">
+                            <span class="legend-item"><i class="fas fa-circle text-success"></i> Good (≥75%)</span>
+                            <span class="legend-item"><i class="fas fa-circle text-warning"></i> Warning (50-74%)</span>
+                            <span class="legend-item"><i class="fas fa-circle text-danger"></i> Critical (&lt;50%)</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <small class="text-muted">
+                            <i class="fas fa-clock me-1"></i> Last updated: {% now "Y-m-d H:i:s" %}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal for Student Details -->
+<div class="modal fade" id="studentDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-gradient-primary text-white">
+                <h5 class="modal-title" id="modalTitle">Student Attendance Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading attendance details...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Stats Cards */
+    .stats-card {
+        background: white;
+        border-radius: 16px;
+        padding: 16px;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        transition: transform 0.2s ease;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .stats-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+    }
+    
+    .stats-card-primary::before { background: linear-gradient(90deg, #667eea, #764ba2); }
+    .stats-card-success::before { background: linear-gradient(90deg, #28a745, #20c997); }
+    .stats-card-danger::before { background: linear-gradient(90deg, #dc3545, #c82333); }
+    .stats-card-info::before { background: linear-gradient(90deg, #17a2b8, #138496); }
+    
+    .stats-icon {
+        font-size: 28px;
+        margin-bottom: 8px;
+    }
+    
+    .stats-card-primary .stats-icon { color: #667eea; }
+    .stats-card-success .stats-icon { color: #28a745; }
+    .stats-card-danger .stats-icon { color: #dc3545; }
+    .stats-card-info .stats-icon { color: #17a2b8; }
+    
+    .stats-number {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1e293b;
+        line-height: 1.2;
+    }
+    
+    .stats-label {
+        font-size: 12px;
+        color: #64748b;
+        margin-top: 4px;
+    }
+    
+    .stats-percentage {
+        font-size: 11px;
+        margin-top: 4px;
+        color: #94a3b8;
+    }
+    
+    /* Table Styles */
+    .table th {
+        font-weight: 600;
+        font-size: 13px;
+        background-color: #f8fafc;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    
+    .table td {
+        font-size: 13px;
+        vertical-align: middle;
+    }
+    
+    /* Progress Bar */
+    .progress {
+        border-radius: 10px;
+        background-color: #e2e8f0;
+    }
+    
+    .attendance-percentage {
+        font-size: 13px;
+    }
+    
+    /* Status Badges */
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        display: inline-block;
+    }
+    
+    .status-good {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .status-warning {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .status-critical {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    /* Alert */
+    .alert-info {
+        background: #e0f2fe;
+        border: none;
+        border-radius: 12px;
+        color: #0369a1;
+    }
+    
+    /* Card */
+    .card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .card-header {
+        border-bottom: 1px solid #e2e8f0;
+        background: white;
+        border-radius: 16px 16px 0 0 !important;
+    }
+    
+    /* Legend */
+    .legend {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    
+    .legend-item {
+        font-size: 12px;
+        color: #64748b;
+    }
+    
+    .legend-item i {
+        margin-right: 4px;
+    }
+    
+    /* Summary Footer */
+    .summary-footer {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 12px 20px;
+    }
+    
+    /* Gradient for modal header */
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .stats-number {
+            font-size: 20px;
+        }
+        
+        .stats-icon {
+            font-size: 22px;
+        }
+        
+        .stats-card {
+            padding: 12px;
+        }
+        
+        .legend {
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+        
+        .summary-footer {
+            text-align: center;
+        }
+        
+        .table td, .table th {
+            font-size: 11px;
+            padding: 8px 4px;
+        }
+        
+        .status-badge {
+            padding: 2px 8px;
+            font-size: 10px;
+        }
+        
+        .btn-sm {
+            padding: 2px 6px;
+            font-size: 10px;
+        }
+    }
+</style>
+
+<script>
+    function showStudentDetails(studentId, studentName, percentage) {
+        $('#modalTitle').text('Attendance Details - ' + studentName);
+        $('#modalBody').html(`
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Loading attendance details...</p>
+            </div>
+        `);
+        
+        $.ajax({
+            url: "{% url 'student_attendance_api' 0 %}".replace('0', studentId),
+            method: 'GET',
+            success: function(response) {
+                let html = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6>Overall Statistics</h6>
+                                    <p><strong>Student:</strong> ${response.student_name}</p>
+                                    <p><strong>Student ID:</strong> ${response.student_id}</p>
+                                    <p><strong>Attendance Percentage:</strong> ${percentage}%</p>
+                                    <div class="progress mb-3" style="height: 10px;">
+                                        <div class="progress-bar ${percentage >= 75 ? 'bg-success' : (percentage >= 50 ? 'bg-warning' : 'bg-danger')}" 
+                                             style="width: ${percentage}%">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6>Subject-wise Statistics</h6>
+                                    <div id="subjectStats">
+                `;
+                
+                if (response.subject_stats && response.subject_stats.length > 0) {
+                    response.subject_stats.forEach(stat => {
+                        html += `
+                            <p><strong>${stat.subject_code}:</strong> ${stat.percentage}%</p>
+                            <div class="progress mb-2" style="height: 6px;">
+                                <div class="progress-bar ${stat.percentage >= 75 ? 'bg-success' : (stat.percentage >= 50 ? 'bg-warning' : 'bg-danger')}" 
+                                     style="width: ${stat.percentage}%">
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    html += '<p>No subject-specific data available</p>';
+                }
+                
+                html += `
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                $('#modalBody').html(html);
+            },
+            error: function() {
+                $('#modalBody').html(`
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i> Error loading student details. Please try again.
+                    </div>
+                `);
+            }
+        });
+        
+        $('#studentDetailsModal').modal('show');
+    }
+</script>
+{% endblock %}

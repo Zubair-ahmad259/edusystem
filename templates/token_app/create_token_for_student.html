@@ -1,105 +1,329 @@
 {% extends 'Home/base.html' %}
 {% load static %}
 
-{% block title %}Create Token for {{ student.first_name }} {{ student.last_name }}{% endblock %}
+{% block title %}Create New Exam Token - EduSphere{% endblock %}
 
 {% block body %}
-<div class="container-fluid">
-    <!-- Page Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0">
-            <i class="fas fa-plus-circle text-primary"></i> Create Token for Student
-        </h1>
-        <a href="{% url 'token_app:student_tokens' student.id %}" class="btn btn-outline-secondary">
-            <i class="fas fa-arrow-left"></i> Back to Student Tokens
-        </a>
-    </div>
-
-    <div class="row">
-        <div class="col-lg-8 mx-auto">
-            <!-- Student Info Card -->
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Student Information</h6>
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Create New Exam Token</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'index' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'token_app:dashboard' %}">Token Dashboard</a></li>
+                        <li class="breadcrumb-item active">Create Token</li>
+                    </ul>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3">
-                            <strong>Name:</strong> {{ student.first_name }} {{ student.last_name }}
-                        </div>
-                        <div class="col-md-2">
-                            <strong>ID:</strong> {{ student.student_id }}
-                        </div>
-                        <div class="col-md-2">
-                            <strong>Batch:</strong> {{ student.batch.name }}
-                        </div>
-                        <div class="col-md-2">
-                            <strong>Semester:</strong> {{ student.semester.number }}
-                        </div>
-                        <div class="col-md-3">
-                            <strong>Discipline:</strong> {{ student.discipline.name }}
-                        </div>
-                    </div>
+                <div class="col-auto text-right">
+                    <a href="{% url 'token_app:dashboard' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
                 </div>
             </div>
+        </div>
 
-            <!-- Create Token Form -->
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Token Details</h6>
-                </div>
-                <div class="card-body">
-                    <form method="POST">
-                        {% csrf_token %}
-                        
-                        <div class="mb-3">
-                            <label class="form-label">Valid Until <span class="text-danger">*</span></label>
-                            <input type="date" name="valid_until" class="form-control" 
-                                   value="{{ default_valid_until|date:'Y-m-d' }}" 
-                                   min="{{ today|date:'Y-m-d' }}" required>
-                            <small class="text-muted">Token will be valid until this date</small>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label">Eligible Subjects</label>
-                            <div class="border p-3" style="max-height: 300px; overflow-y: auto;">
-                                <div class="row">
-                                    {% for subject in subjects %}
-                                    <div class="col-md-6 mb-2">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" 
-                                                   name="subjects" value="{{ subject.id }}" 
-                                                   id="subject_{{ subject.id }}">
-                                            <label class="form-check-label" for="subject_{{ subject.id }}">
-                                                <strong>{{ subject.code }}</strong> - {{ subject.name }}
-                                                <small class="text-muted">({{ subject.credit_hours }} CH)</small>
-                                            </label>
-                                        </div>
-                                    </div>
-                                    {% empty %}
-                                    <div class="col-12 text-center text-muted py-4">
-                                        No subjects found for this student's semester
-                                    </div>
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="card">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-plus-circle"></i> Create New Exam Token
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" id="createTokenForm">
+                            {% csrf_token %}
+                            
+                            <!-- Select Student -->
+                            <div class="form-group mb-4">
+                                <label class="form-label fw-bold">Select Student <span class="text-danger">*</span></label>
+                                <select class="form-control" name="student" id="studentSelect" required>
+                                    <option value="">-- Select Student --</option>
+                                    {% for student in students %}
+                                    <option value="{{ student.id }}" data-batch="{{ student.batch.id }}" data-semester="{{ student.semester.id }}" data-section="{{ student.section.id }}" data-discipline="{{ student.discipline.id }}">
+                                        {{ student.student_id }} - {{ student.first_name }} {{ student.last_name }} (Sem {{ student.semester.number }} | Batch: {{ student.batch.name }})
+                                    </option>
                                     {% endfor %}
-                                </div>
+                                </select>
+                                <small class="form-text text-muted">Select the student for whom to create the token</small>
                             </div>
-                            <small class="text-muted">Select subjects the student is eligible for</small>
-                        </div>
-                        
-                        <hr>
-                        
-                        <div class="d-flex justify-content-between">
-                            <a href="{% url 'token_app:student_tokens' student.id %}" class="btn btn-secondary">
-                                <i class="fas fa-times"></i> Cancel
-                            </a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> Create Token
-                            </button>
-                        </div>
-                    </form>
+
+                            <!-- Valid Until Date -->
+                            <div class="form-group mb-4">
+                                <label class="form-label fw-bold">Valid Until <span class="text-danger">*</span></label>
+                                <input type="date" name="valid_until" class="form-control" 
+                                       value="{{ default_valid_until|date:'Y-m-d' }}" 
+                                       min="{{ today|date:'Y-m-d' }}" required>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle"></i> Token will be valid until this date
+                                </small>
+                            </div>
+
+                            <!-- Eligible Subjects -->
+                            <div class="form-group mb-4">
+                                <label class="form-label fw-bold">Eligible Subjects <span class="text-danger">*</span></label>
+                                <select class="form-control" name="subjects" id="subjectsSelect" multiple size="8" required>
+                                    <option value="" disabled>Select a student first to load subjects</option>
+                                </select>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle"></i> Hold Ctrl (Windows) or Cmd (Mac) to select multiple subjects
+                                </small>
+                                <div id="subjectsLoader" class="text-center mt-2" style="display: none;">
+                                    <i class="fas fa-spinner fa-spin"></i> Loading subjects...
+                                </div>
+                                <div id="subjectsError" class="alert alert-danger mt-2" style="display: none;"></div>
+                            </div>
+
+                            <hr>
+
+                            <!-- Action Buttons -->
+                            <div class="form-group text-right mt-4">
+                                <a href="{% url 'token_app:dashboard' %}" class="btn btn-secondary mr-2">
+                                    <i class="fas fa-times"></i> Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary" id="submitBtn">
+                                    <i class="fas fa-save"></i> Create Token
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        margin-bottom: 20px;
+    }
+    
+    .card-header {
+        border-bottom: none;
+        border-radius: 12px 12px 0 0;
+        padding: 15px 20px;
+    }
+    
+    .card-header .card-title {
+        color: white;
+        margin-bottom: 0;
+        font-weight: 600;
+    }
+    
+    .card-body {
+        padding: 25px;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #2c3e50;
+    }
+    
+    .form-control {
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        padding: 10px 15px;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    select[multiple] {
+        min-height: 200px;
+    }
+    
+    select[multiple] option {
+        padding: 8px;
+        margin: 2px 0;
+        border-radius: 4px;
+    }
+    
+    select[multiple] option:hover {
+        background-color: #f0f0f0;
+    }
+    
+    select[multiple] option:checked {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 10px 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-secondary {
+        background: #6c757d;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 25px;
+        font-weight: 600;
+    }
+    
+    .btn-outline-primary {
+        border: 1px solid #667eea;
+        color: #667eea;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-outline-primary:hover {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-color: transparent;
+    }
+    
+    hr {
+        border-top: 1px solid #e9ecef;
+        margin: 20px 0;
+    }
+    
+    @media (max-width: 768px) {
+        .card-body {
+            padding: 20px;
+        }
+        
+        .btn-primary, .btn-secondary {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        
+        .text-right {
+            text-align: center !important;
+        }
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const studentSelect = document.getElementById('studentSelect');
+    const subjectsSelect = document.getElementById('subjectsSelect');
+    const subjectsLoader = document.getElementById('subjectsLoader');
+    const subjectsError = document.getElementById('subjectsError');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    // Load subjects when student is selected
+    studentSelect.addEventListener('change', function() {
+        const studentId = this.value;
+        
+        if (!studentId) {
+            subjectsSelect.innerHTML = '<option value="" disabled>Select a student first to load subjects</option>';
+            subjectsSelect.disabled = true;
+            return;
+        }
+        
+        // Show loading
+        subjectsLoader.style.display = 'block';
+        subjectsSelect.style.display = 'none';
+        subjectsError.style.display = 'none';
+        submitBtn.disabled = true;
+        
+        // Get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        // Fetch subjects for this student
+        fetch(`/token-app/api/get-student-subjects/${studentId}/`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            subjectsLoader.style.display = 'none';
+            subjectsSelect.style.display = 'block';
+            
+            if (data.error) {
+                subjectsError.innerHTML = data.error;
+                subjectsError.style.display = 'block';
+                subjectsSelect.innerHTML = '<option value="" disabled>Error loading subjects</option>';
+                subjectsSelect.disabled = true;
+                submitBtn.disabled = true;
+                return;
+            }
+            
+            if (data.length === 0) {
+                subjectsSelect.innerHTML = '<option value="" disabled>No subjects found for this student</option>';
+                subjectsSelect.disabled = true;
+                submitBtn.disabled = true;
+            } else {
+                let options = '';
+                data.forEach(subject => {
+                    options += `<option value="${subject.id}">${subject.code} - ${subject.name} (${subject.credit_hours} CH)</option>`;
+                });
+                subjectsSelect.innerHTML = options;
+                subjectsSelect.disabled = false;
+                submitBtn.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            subjectsLoader.style.display = 'none';
+            subjectsError.innerHTML = 'Error loading subjects. Please try again.';
+            subjectsError.style.display = 'block';
+            subjectsSelect.innerHTML = '<option value="" disabled>Error loading subjects</option>';
+            subjectsSelect.disabled = true;
+            submitBtn.disabled = true;
+        });
+    });
+    
+    // Form validation
+    document.getElementById('createTokenForm').addEventListener('submit', function(e) {
+        const studentId = studentSelect.value;
+        const selectedSubjects = Array.from(subjectsSelect.selectedOptions).length;
+        
+        if (!studentId) {
+            e.preventDefault();
+            alert('Please select a student');
+            return false;
+        }
+        
+        if (selectedSubjects === 0) {
+            e.preventDefault();
+            alert('Please select at least one subject');
+            return false;
+        }
+        
+        return true;
+    });
+});
+</script>
 {% endblock %}

@@ -846,44 +846,22 @@ from django.contrib import messages
 from django.http import JsonResponse
 from datetime import datetime
 from decimal import Decimal
-from exam_mang.models import SubjectMarkComponents, Subject, Teacher, Semester, Batch, Section, Discipline
 
 def subject_mark_components(request):
-    """Configure mark distribution for subjects"""
+    """Configure mark distribution for subjects - Simplified version (only subject)"""
+    
     if request.method == 'POST':
         try:
-            # Get form data
+            # Get form data - ONLY subject now
             subject_id = request.POST.get('subject')
-            teacher_id = request.POST.get('teacher')
-            semester_id = request.POST.get('semester')
-            batch_id = request.POST.get('batch')
-            section_id = request.POST.get('section')
-            discipline_id = request.POST.get('discipline')
-            academic_year = request.POST.get('academic_year')
             
             # Validate required fields
-            if not all([subject_id, teacher_id, semester_id, batch_id, discipline_id, academic_year]):
-                messages.error(request, 'Please fill all required fields!')
+            if not subject_id:
+                messages.error(request, 'Please select a subject!')
                 return redirect('subject_mark_components')
             
-            # Handle section - convert empty string to None
-            section_val = section_id if section_id and section_id != '' else None
-            
-            # Create filter dictionary
-            filter_kwargs = {
-                'subject_id': subject_id,
-                'teacher_id': teacher_id,
-                'semester_id': semester_id,
-                'batch_id': batch_id,
-                'discipline_id': discipline_id,
-                'academic_year': academic_year,
-            }
-            
-            # Add section condition
-            if section_val:
-                filter_kwargs['section_id'] = section_val
-            else:
-                filter_kwargs['section__isnull'] = True
+            # Get the subject
+            subject = get_object_or_404(Subject, id=subject_id)
             
             # Parse percentage values with safe defaults
             mid_term = Decimal(request.POST.get('mid_term', '20.00'))
@@ -903,9 +881,9 @@ def subject_mark_components(request):
             if abs(total - Decimal('100.00')) > Decimal('0.01'):
                 messages.warning(request, f'Total percentage is {total}%, not 100%.')
             
-            # Create or update the component
+            # Check if configuration already exists for this subject
             component, created = SubjectMarkComponents.objects.update_or_create(
-                **filter_kwargs,
+                subject=subject,
                 defaults={
                     'mid_term_percentage': mid_term,
                     'final_term_percentage': final_term,
@@ -915,54 +893,107 @@ def subject_mark_components(request):
                     'lab_percentage': lab,
                     'viva_percentage': viva,
                     'attendance_percentage': attendance,
-                    'notes': request.POST.get('notes', ''),
+                    # Set default values for required fields (to satisfy model constraints)
+                    'teacher_id': get_default_teacher(),
+                    'semester_id': get_default_semester(),
+                    'batch_id': get_default_batch(),
+                    'discipline_id': get_default_discipline(),
+                    'academic_year': get_current_academic_year(),
                 }
             )
             
             if created:
-                messages.success(request, 'Mark distribution configuration created successfully!')
+                messages.success(request, f'Mark distribution for {subject.code} created successfully!')
             else:
-                messages.success(request, 'Mark distribution configuration updated successfully!')
+                messages.success(request, f'Mark distribution for {subject.code} updated successfully!')
                 
-        except Subject.DoesNotExist:
-            messages.error(request, 'Selected subject does not exist!')
-        except Teacher.DoesNotExist:
-            messages.error(request, 'Selected teacher does not exist!')
-        except Semester.DoesNotExist:
-            messages.error(request, 'Selected semester does not exist!')
-        except Batch.DoesNotExist:
-            messages.error(request, 'Selected batch does not exist!')
-        except Discipline.DoesNotExist:
-            messages.error(request, 'Selected discipline does not exist!')
         except Exception as e:
             messages.error(request, f'Error saving configuration: {str(e)}')
         
         return redirect('subject_mark_components')
     
     # GET request - show the form
-    # Get current date for academic year
-    current_year = datetime.now().year
-    next_year = current_year + 1
+    # Get all subjects with their configurations
+    components = SubjectMarkComponents.objects.all().select_related('subject').order_by('-id')
+    subjects = Subject.objects.all().order_by('code')
     
-    # Get all necessary data
-    components = SubjectMarkComponents.objects.all().select_related(
-        'subject', 'teacher', 'semester', 'batch', 'section', 'discipline'
-    ).order_by('-id')
+    # Calculate statistics
+    total_configs = components.count()
+    valid_configs = components.filter(total_percentage=100).count()
+    invalid_configs = total_configs - valid_configs
     
     context = {
         'components': components,
-        'subjects': Subject.objects.all(),
-        'teachers': Teacher.objects.all(),
-        'semesters': Semester.objects.all(),
-        'batches': Batch.objects.all(),
-        'sections': Section.objects.all(),
-        'disciplines': Discipline.objects.all(),
-        'current_year': current_year,
-        'next_year': next_year,
+        'subjects': subjects,
+        'total_configs': total_configs,
+        'valid_configs': valid_configs,
+        'invalid_configs': invalid_configs,
     }
     
-    return render(request, 'exam/subject_mark_components.html', context)  # MAKE SURE THIS LINE RETURNS!
+    return render(request, 'exam/subject_mark_components.html', context)
 
+
+def get_default_teacher():
+    """Get or create a default teacher"""
+    from teachers.models import Teacher
+    default_teacher, created = Teacher.objects.get_or_create(
+        teacher_id='DEFAULT_TEACHER',
+        defaults={
+            'first_name': 'Default',
+            'last_name': 'Teacher',
+            'father_name': 'N/A',
+            'mobile_number': '0000000000',
+            'email': 'default@system.com'
+        }
+    )
+    return default_teacher.id
+
+
+def get_default_semester():
+    """Get the first semester or create default"""
+    from Academic.models import Semester
+    semester = Semester.objects.first()
+    if not semester:
+        semester = Semester.objects.create(number=1)
+    return semester.id
+
+
+def get_default_batch():
+    """Get the first batch or create default"""
+    from Academic.models import Batch
+    from Academic.models import Discipline
+    batch = Batch.objects.first()
+    if not batch:
+        # Create a default discipline first
+        discipline, _ = Discipline.objects.get_or_create(
+            program='BS',
+            field='Computer Science'
+        )
+        batch = Batch.objects.create(
+            name='Default Batch',
+            start_session='2020',
+            end_session='2024',
+            discipline=discipline
+        )
+    return batch.id
+
+
+def get_default_discipline():
+    """Get the first discipline or create default"""
+    from Academic.models import Discipline
+    discipline = Discipline.objects.first()
+    if not discipline:
+        discipline = Discipline.objects.create(
+            program='BS',
+            field='Computer Science'
+        )
+    return discipline.id
+
+
+def get_current_academic_year():
+    """Get current academic year"""
+    current_year = datetime.now().year
+    return f"{current_year}-{current_year + 1}"
 def load_mark_component(request, id):
     """Load configuration data for editing"""
     try:

@@ -43,7 +43,250 @@ def attendance_dashboard(request):
     }
     
     return render(request, 'attendance/dashboard.html', context)
-
+def teacher_attendance_subjects(request):
+    """Show all subjects assigned to the teacher for attendance marking"""
+    from teachers.models import Teacher
+    from subject.models import SubjectAssign
+    from .utils import can_mark_attendance, get_upcoming_classes
+    
+    try:
+        # Get the logged-in teacher
+        teacher = Teacher.objects.get(user=request.user)
+        
+        # Get all subject assignments for this teacher
+        subject_assignments = SubjectAssign.objects.filter(
+            teacher=teacher,
+            is_active=True
+        ).select_related('subject', 'batch', 'semester', 'discipline').prefetch_related('sections')
+        
+        # Organize data for display
+        subjects_data = []
+        for assignment in subject_assignments:
+            sections_list = assignment.sections.all()
+            for section in sections_list:
+                # Check if attendance can be marked now
+                can_mark, mark_message = can_mark_attendance(teacher, assignment.subject, section)
+                
+                # Get upcoming classes
+                upcoming = get_upcoming_classes(teacher, assignment.subject, section)
+                
+                subjects_data.append({
+                    'assignment_id': assignment.id,
+                    'subject': assignment.subject,
+                    'section': section,
+                    'batch': assignment.batch,
+                    'semester': assignment.semester,
+                    'discipline': assignment.discipline,
+                    'assigned_date': assignment.assigned_date,
+                    'can_mark_attendance': can_mark,
+                    'mark_message': mark_message,
+                    'upcoming_classes': upcoming,
+                })
+        
+        context = {
+            'teacher': teacher,
+            'subjects_data': subjects_data,
+            'total_subjects': len(set([s['subject'].id for s in subjects_data])),
+            'total_sections': len(set([s['section'].id for s in subjects_data])),
+            'total_batches': len(set([s['batch'].id for s in subjects_data])),
+            'current_time': datetime.now().strftime('%I:%M %p'),
+            'current_day': datetime.now().strftime('%A'),
+        }
+        
+        return render(request, 'attendance/teacher_attendance_subjects.html', context)
+        
+    except Teacher.DoesNotExist:
+        messages.error(request, "Teacher profile not found")
+        return redirect('attendance_dashboard')
+def view_section_attendance(request, subject_id, section_id):
+    """View attendance records for a specific subject and section"""
+    from django.core.paginator import Paginator
+    from datetime import datetime, timedelta
+    
+    subject = get_object_or_404(Subject, id=subject_id)
+    section = get_object_or_404(Section, id=section_id)
+    
+    # Base queryset for ALL records (unfiltered for statistics)
+    all_attendance_records = Attendance.objects.filter(
+        subject=subject,
+        section=section
+    ).select_related('student').order_by('-date', '-created_at')
+    
+    # Calculate statistics from ALL records (not filtered)
+    total_records_all = all_attendance_records.count()
+    present_count_all = all_attendance_records.filter(status='P').count()
+    absent_count_all = all_attendance_records.filter(status='A').count()
+    
+    # Get filter parameters for detailed view only
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    status_filter = request.GET.get('status')
+    student_filter = request.GET.get('student')
+    
+    # Apply filters to detailed records only
+    filtered_records = all_attendance_records
+    
+    if start_date:
+        filtered_records = filtered_records.filter(date__gte=start_date)
+    if end_date:
+        filtered_records = filtered_records.filter(date__lte=end_date)
+    if status_filter:
+        filtered_records = filtered_records.filter(status=status_filter)
+    if student_filter:
+        filtered_records = filtered_records.filter(student_id=student_filter)
+    
+    # Get all students in this section
+    students = Student.objects.filter(section=section).order_by('student_id')
+    
+    # Calculate student-wise attendance percentage from ALL records (not filtered)
+    student_attendance_stats = []
+    for student in students:
+        # Get all records for this student and subject/section (unfiltered)
+        student_records = all_attendance_records.filter(student=student)
+        total = student_records.count()
+        if total > 0:
+            present = student_records.filter(status='P').count()
+            percentage = (present / total) * 100
+            
+            # Calculate required present days to reach 75%
+            required_to_reach_75 = 0
+            if percentage < 75:
+                # Formula: (present + x) / (total + x) = 0.75
+                # Solve for x: present + x = 0.75(total + x)
+                # x = (0.75*total - present) / 0.25
+                required_to_reach_75 = int(((0.75 * total) - present) / 0.25)
+                if required_to_reach_75 < 0:
+                    required_to_reach_75 = 0
+            
+            student_attendance_stats.append({
+                'student': student,
+                'total': total,
+                'present': present,
+                'absent': total - present,
+                'percentage': round(percentage, 2),
+                'required_to_reach_75': required_to_reach_75
+            })
+        else:
+            # Student has no attendance records yet
+            student_attendance_stats.append({
+                'student': student,
+                'total': 0,
+                'present': 0,
+                'absent': 0,
+                'percentage': 0,
+                'required_to_reach_75': 0
+            })
+    
+    # Sort by percentage (lowest first)
+    student_attendance_stats.sort(key=lambda x: x['percentage'])
+    
+    # Pagination for filtered records
+    paginator = Paginator(filtered_records, 50)  # 50 records per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # Calculate percentages for statistics cards
+    present_percentage = round((present_count_all / total_records_all * 100), 2) if total_records_all > 0 else 0
+    absent_percentage = round((absent_count_all / total_records_all * 100), 2) if total_records_all > 0 else 0
+    
+    context = {
+        'subject': subject,
+        'section': section,
+        'attendance_records': page_obj,
+        'page_obj': page_obj,
+        'total_records': total_records_all,
+        'present_count': present_count_all,
+        'absent_count': absent_count_all,
+        'present_percentage': present_percentage,
+        'absent_percentage': absent_percentage,
+        'students': students,
+        'student_attendance_stats': student_attendance_stats,
+        'start_date': start_date,
+        'end_date': end_date,
+        'status_filter': status_filter,
+        'student_filter': student_filter,
+        'today': date.today(),
+    }
+    
+    return render(request, 'attendance/view_section_attendance.html', context)
+def mark_attendance_for_section(request, subject_id, section_id):
+    """Mark attendance for a specific subject and section"""
+    from teachers.models import Teacher
+    
+    subject = get_object_or_404(Subject, id=subject_id)
+    section = get_object_or_404(Section, id=section_id)
+    
+    # Get students in this section
+    students = Student.objects.filter(section=section).order_by('student_id')
+    
+    # Get today's date
+    today = date.today()
+    
+    # Get existing attendance for today
+    existing_attendance = {}
+    attendance_records = Attendance.objects.filter(
+        subject=subject,
+        section=section,
+        date=today
+    )
+    for record in attendance_records:
+        existing_attendance[record.student.id] = {
+            'status': record.status,
+            'remarks': record.remarks if hasattr(record, 'remarks') else ''
+        }
+    
+    if request.method == 'POST':
+        # Save attendance
+        success_count = 0
+        updated_count = 0
+        
+        for student in students:
+            status = request.POST.get(f'status_{student.id}', 'P')
+            remarks = request.POST.get(f'remarks_{student.id}', '')
+            
+            # Check if attendance already exists
+            attendance, created = Attendance.objects.update_or_create(
+                student=student,
+                subject=subject,
+                section=section,
+                date=today,
+                defaults={
+                    'status': status,
+                    'remarks': remarks,
+                    'batch': student.batch,
+                    'semester': student.semester,
+                    'discipline': student.discipline,
+                }
+            )
+            if created:
+                success_count += 1
+            else:
+                updated_count += 1
+        
+        messages.success(request, f'Attendance saved! {success_count} new records, {updated_count} updated.')
+        return redirect('teacher_attendance_subjects')
+    
+    # Prepare data for template
+    students_data = []
+    for student in students:
+        students_data.append({
+            'id': student.id,
+            'student_id': student.student_id,
+            'first_name': student.first_name,
+            'last_name': student.last_name,
+            'status': existing_attendance.get(student.id, {}).get('status', 'P'),
+            'remarks': existing_attendance.get(student.id, {}).get('remarks', '')
+        })
+    
+    context = {
+        'subject': subject,
+        'section': section,
+        'students': students_data,
+        'today': today,
+        'total_students': len(students_data),
+    }
+    
+    return render(request, 'attendance/mark_attendance_section.html', context)
 def attendance_list(request):
     """List all attendance records"""
     attendances = Attendance.objects.all().order_by('-date', '-created_at')
@@ -1402,3 +1645,113 @@ def subject_short_attendance_report(request, subject_id):
     }
     
     return render(request, 'attendance/subject_short_attendance_report.html', context)
+
+
+
+
+
+
+
+
+
+
+def student_attendance_api(request, student_id):
+    """API endpoint for student attendance details"""
+    from datetime import datetime
+    
+    student = get_object_or_404(Student, id=student_id)
+    
+    # Get all attendance for this student
+    attendances = Attendance.objects.filter(student=student).order_by('-date')
+    
+    # Calculate overall statistics
+    total_days = attendances.count()
+    present_days = attendances.filter(status='P').count()
+    absent_days = attendances.filter(status='A').count()
+    percentage = (present_days / total_days * 100) if total_days > 0 else 0
+    
+    # Get subject-wise statistics
+    subject_stats = []
+    subjects = Subject.objects.filter(attendances__student=student).distinct()
+    for subj in subjects:
+        subject_attendance = attendances.filter(subject=subj)
+        subject_total = subject_attendance.count()
+        if subject_total > 0:
+            subject_present = subject_attendance.filter(status='P').count()
+            subject_percentage = (subject_present / subject_total * 100)
+            subject_stats.append({
+                'subject_code': subj.code,
+                'subject_name': subj.name,
+                'percentage': round(subject_percentage, 2)
+            })
+    
+    # Get recent attendance (last 10 records)
+    recent_attendance = []
+    for att in attendances[:10]:
+        recent_attendance.append({
+            'date': att.date.strftime('%Y-%m-%d'),
+            'subject_code': att.subject.code,
+            'subject_name': att.subject.name,
+            'status': att.status,
+            'remarks': att.remarks if hasattr(att, 'remarks') else ''
+        })
+    
+    return JsonResponse({
+        'student_id': student.student_id,
+        'student_name': f"{student.first_name} {student.last_name}",
+        'total_days': total_days,
+        'present_days': present_days,
+        'absent_days': absent_days,
+        'percentage': round(percentage, 2),
+        'subject_stats': subject_stats,
+        'recent_attendance': recent_attendance
+    })
+    from datetime import datetime
+    
+    student = get_object_or_404(Student, id=student_id)
+    
+    # Get all attendance for this student
+    attendances = Attendance.objects.filter(student=student).order_by('-date')
+    
+    # Calculate overall statistics
+    total_days = attendances.count()
+    present_days = attendances.filter(status='P').count()
+    absent_days = attendances.filter(status='A').count()
+    percentage = (present_days / total_days * 100) if total_days > 0 else 0
+    
+    # Get subject-wise statistics
+    subject_stats = []
+    subjects = Subject.objects.filter(attendances__student=student).distinct()
+    for subject in subjects:
+        subject_attendance = attendances.filter(subject=subject)
+        subject_total = subject_attendance.count()
+        if subject_total > 0:
+            subject_present = subject_attendance.filter(status='P').count()
+            subject_percentage = (subject_present / subject_total * 100)
+            subject_stats.append({
+                'subject_code': subject.code,
+                'subject_name': subject.name,
+                'percentage': round(subject_percentage, 2)
+            })
+    
+    # Get recent attendance (last 10 records)
+    recent_attendance = []
+    for att in attendances[:10]:
+        recent_attendance.append({
+            'date': att.date.strftime('%Y-%m-%d'),
+            'subject_code': att.subject.code,
+            'subject_name': att.subject.name,
+            'status': att.status,
+            'remarks': att.remarks if hasattr(att, 'remarks') else ''
+        })
+    
+    return JsonResponse({
+        'student_id': student.student_id,
+        'student_name': f"{student.first_name} {student.last_name}",
+        'total_days': total_days,
+        'present_days': present_days,
+        'absent_days': absent_days,
+        'percentage': round(percentage, 2),
+        'subject_stats': subject_stats,
+        'recent_attendance': recent_attendance
+    })

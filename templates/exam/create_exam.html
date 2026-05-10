@@ -1,251 +1,233 @@
-<!-- templates/authentication/password_reset_confirm.html -->
 {% extends 'Home/base.html' %}
 {% load static %}
 
-{% block title %}Confirm Password Reset - Student Management System{% endblock %}
+{% block title %}Create New Exam - EduSphere{% endblock %}
 
 {% block body %}
-<style>
-    .form-group {
-        margin-bottom: 1.5rem;
-    }
-    .card-header {
-        background-color: #f8f9fa;
-        border-bottom: 1px solid #e3e6f0;
-    }
-    .required:after {
-        content: " *";
-        color: red;
-    }
-    .user-icon {
-        font-size: 5rem;
-        color: #6c757d;
-        margin-bottom: 1rem;
-    }
-    .warning-icon {
-        font-size: 3rem;
-        color: #ffc107;
-        margin-bottom: 1rem;
-    }
-    .reset-details {
-        background-color: #f8f9fa;
-        padding: 15px;
-        border-radius: 5px;
-        margin: 15px 0;
-    }
-    .info-badge {
-        font-size: 0.9rem;
-        padding: 5px 10px;
-        margin: 2px;
-    }
-    .action-buttons {
-        margin-top: 30px;
-    }
-    .checkbox-container {
-        background-color: #fff3cd;
-        border-left: 4px solid #ffc107;
-        padding: 15px;
-        border-radius: 5px;
-        margin: 20px 0;
-    }
-</style>
-
 <div class="page-wrapper">
     <div class="content container-fluid">
+        
+        <!-- Page Header -->
         <div class="page-header">
-            <div class="row">
-                <div class="col-sm-12">
-                    <h3 class="page-title">Confirm Password Reset</h3>
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Create New Exam</h3>
                     <ul class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
-                        <li class="breadcrumb-item"><a href="
-                            {% if user_type == 'student' %}
-                                {% url 'manage_students_view' %}
-                            {% elif user_type == 'teacher' %}
-                                {% url 'manage_teachers_view' %}
-                            {% elif user_type == 'admin' %}
-                                {% url 'manage_admins' %}
-                            {% endif %}
-                        ">Manage {{ user_type|title }}s</a></li>
-                        <li class="breadcrumb-item active">Confirm Password Reset</li>
+                        <li class="breadcrumb-item"><a href="{% url 'index' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'exam_list' %}">Exams</a></li>
+                        <li class="breadcrumb-item active">Create Exam</li>
                     </ul>
+                </div>
+                <div class="col-auto text-right">
+                    <a href="{% url 'exam_list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left"></i> Back to Exams
+                    </a>
                 </div>
             </div>
         </div>
 
         <div class="row">
-            <div class="col-md-8 offset-md-2">
+            <div class="col-md-12">
                 <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title">
-                            <i class="fas fa-exclamation-triangle text-warning mr-2"></i>
-                            Reset Password Confirmation
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h5 class="card-title mb-0">
+              \              <i class="fas fa-plus-circle"></i> Create New Exam
                         </h5>
                     </div>
-                    <div class="card-body text-center">
-                        
+                    <div class="card-body">
                         {% if messages %}
                             {% for message in messages %}
-                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+                                <div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags == 'warning' %}warning{% else %}success{% endif %} alert-dismissible fade show">
+                                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %} mr-2"></i>
                                     {{ message }}
-                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                        <span aria-hidden="true">&times;</span>
-                                    </button>
+                                    <button type="button" class="close" data-dismiss="alert">&times;</button>
                                 </div>
                             {% endfor %}
                         {% endif %}
 
-                        <div class="text-center">
-                            <i class="fas fa-user-circle user-icon"></i>
-                        </div>
-                        
-                        <h4 class="mb-2">Reset Password for:</h4>
-                        <h3 class="mb-3 text-primary">{{ user_name }}</h3>
-                        
-                        <div class="reset-details">
-                            <div class="row">
-                                <div class="col-sm-6 text-right">
-                                    <strong>Email:</strong>
-                                </div>
-                                <div class="col-sm-6 text-left">
-                                    {{ user_email }}
-                                </div>
+                        {% if error %}
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-triangle"></i> {{ error }}
                             </div>
-                            <div class="row mt-2">
-                                <div class="col-sm-6 text-right">
-                                    <strong>User Type:</strong>
-                                </div>
-                                <div class="col-sm-6 text-left">
-                                    <span class="badge badge-{% if user_type == 'student' %}primary{% elif user_type == 'teacher' %}success{% else %}danger{% endif %} badge-lg">
-                                        {{ user_type|title }}
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="row mt-2">
-                                <div class="col-sm-6 text-right">
-                                    <strong>Account Status:</strong>
-                                </div>
-                                <div class="col-sm-6 text-left">
-                                    <span class="badge badge-success">Active</span>
-                                    {% if user_obj.user.password_generated %}
-                                        <span class="badge badge-warning">Using Temp Password</span>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="alert alert-warning text-left">
-                            <h6 class="alert-heading">
-                                <i class="fas fa-exclamation-circle mr-2"></i>
-                                Important Information:
-                            </h6>
-                            <p class="mb-0">Resetting this user's password will:</p>
-                            <ul class="mb-0 mt-2">
-                                <li class="mb-1">
-                                    <i class="fas fa-key text-warning mr-2"></i>
-                                    Generate a new random 10-character password
-                                </li>
-                                <li class="mb-1">
-                                    <i class="fas fa-envelope text-info mr-2"></i>
-                                    Send the new password to <strong>{{ user_email }}</strong>
-                                </li>
-                                <li class="mb-1">
-                                    <i class="fas fa-sign-out-alt text-danger mr-2"></i>
-                                    Log the user out from all active sessions
-                                </li>
-                                <li class="mb-1">
-                                    <i class="fas fa-clock text-muted mr-2"></i>
-                                    Mark the password as temporary (user must change on next login)
-                                </li>
-                            </ul>
-                        </div>
-                        
-                        <div class="checkbox-container">
-                            <div class="custom-control custom-checkbox">
-                                <input type="checkbox" class="custom-control-input" id="confirmCheck" required>
-                                <label class="custom-control-label font-weight-bold" for="confirmCheck">
-                                    I understand that this action will reset the user's password and cannot be undone
-                                </label>
-                            </div>
-                        </div>
-                        
-                        <div class="action-buttons">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-warning btn-lg" id="submitBtn" disabled>
-                                    <i class="fas fa-key mr-2"></i> Yes, Reset Password
-                                </button>
-                            </form>
+                        {% endif %}
+
+                        <form method="POST" id="createExamForm">
+                            {% csrf_token %}
                             
-                            <a href="
-                                {% if user_type == 'student' %}
-                                    {% url 'manage_students_view' %}
-                                {% elif user_type == 'teacher' %}
-                                    {% url 'manage_teachers_view' %}
-                                {% elif user_type == 'admin' %}
-                                    {% url 'manage_admins' %}
-                                {% endif %}
-                            " class="btn btn-secondary btn-lg ml-2">
-                                <i class="fas fa-times mr-2"></i> Cancel
-                            </a>
-                        </div>
-                        
-                        <hr class="my-4">
-                        
-                        <div class="text-left small text-muted">
-                            <i class="fas fa-info-circle mr-1"></i>
-                            The new password will be sent immediately to the user's email address.
-                            The user will be required to change it upon their next login.
-                        </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="form-section-title">
+                                        <i class="fas fa-info-circle"></i> Exam Information
+                                    </div>
+                                </div>
+
+                                <!-- Subject Mark Component -->
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-group">
+                                        <label>Subject Configuration <span class="text-danger">*</span></label>
+                                        <select class="form-control" name="subject_mark_component" id="subjectMarkComponent" required>
+                                            <option value="">-- Select Subject Configuration --</option>
+                                            {% for component in subject_mark_components %}
+                                            <option value="{{ component.id }}">{{ component.subject.code }} - {{ component.subject.name }} (Semester {{ component.semester.number }} | Batch: {{ component.batch.name }})</option>
+                                            {% endfor %}
+                                        </select>
+                                        <small class="form-text text-muted">Select the subject configuration for this exam</small>
+                                    </div>
+                                </div>
+
+                                <!-- Exam Type -->
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-group">
+                                        <label>Exam Type <span class="text-danger">*</span></label>
+                                        <select class="form-control" name="exam_type" id="examType" required>
+                                            <option value="">-- Select Exam Type --</option>
+                                            {% for type_code, type_name in exam_types %}
+                                            <option value="{{ type_code }}">{{ type_name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <small class="form-text text-muted">The type of exam being conducted</small>
+                                    </div>
+                                </div>
+
+                                <!-- Exam Date -->
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-group">
+                                        <label>Exam Date <span class="text-danger">*</span></label>
+                                        <input type="date" class="form-control" name="exam_date" 
+                                               value="{{ today|date:'Y-m-d' }}" required>
+                                        <small class="form-text text-muted">Date when the exam will be held</small>
+                                    </div>
+                                </div>
+
+                                <!-- Semester Info Display -->
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-group">
+                                        <label>Component Details</label>
+                                        <div class="border rounded p-3 bg-light" id="componentDetails" style="min-height: 100px;">
+                                            <div class="text-muted text-center">Select a subject configuration to view details</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Total Marks -->
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-group">
+                                        <label>Total Marks <span class="text-danger">*</span></label>
+                                        <input type="number" class="form-control" name="total_marks" 
+                                               step="0.5" min="1" max="1000" placeholder="Enter total marks" required>
+                                        <small class="form-text text-muted">Maximum marks for this exam (e.g., 100)</small>
+                                    </div>
+                                </div>
+
+                                <!-- Passing Marks -->
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-group">
+                                        <label>Passing Marks <span class="text-danger">*</span></label>
+                                        <input type="number" class="form-control" name="passing_marks" 
+                                               step="0.5" min="0" max="1000" placeholder="Enter passing marks" required>
+                                        <small class="form-text text-muted">Minimum marks required to pass (e.g., 40)</small>
+                                    </div>
+                                </div>
+
+                                <!-- Weightage Percentage (Display Only) -->
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-group">
+                                        <label>Weightage %</label>
+                                        <input type="text" class="form-control" id="weightageDisplay" readonly 
+                                               placeholder="Will be auto-filled">
+                                        <small class="form-text text-muted">Weightage from subject configuration (auto-filled)</small>
+                                    </div>
+                                </div>
+
+                                <!-- Active Status -->
+                                <div class="col-md-12 mb-3">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" name="is_published" id="isPublished">
+                                        <label class="form-check-label" for="isPublished">
+                                            <i class="fas fa-check-circle text-success"></i> Publish immediately
+                                        </label>
+                                        <small class="form-text text-muted">Publishing will make the exam visible to students</small>
+                                    </div>
+                                </div>
+
+                                <!-- Warning Alert -->
+                                <div class="col-12 mb-3">
+                                    <div class="alert alert-warning" id="warningAlert" style="display: none;">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        <span id="warningMessage"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="text-right mt-4">
+                                <a href="{% url 'exam_list' %}" class="btn btn-secondary mr-2">
+                                    <i class="fas fa-times"></i> Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Create Exam
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
-                
-                <!-- Additional Information Card -->
-                <div class="card mt-3">
-                    <div class="card-header bg-light">
-                        <h6 class="card-title mb-0">
-                            <i class="fas fa-shield-alt mr-2"></i>
-                            Security Guidelines
-                        </h6>
+            </div>
+        </div>
+
+        <!-- Recent Exams Section -->
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-history"></i> Recent Exams
+                        </h5>
                     </div>
                     <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="media mb-3">
-                                    <i class="fas fa-check-circle text-success mr-3 mt-1"></i>
-                                    <div class="media-body">
-                                        <h6>Strong Passwords</h6>
-                                        <small>Generated passwords are random and secure (10 characters)</small>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="media mb-3">
-                                    <i class="fas fa-clock text-warning mr-3 mt-1"></i>
-                                    <div class="media-body">
-                                        <h6>Immediate Action</h6>
-                                        <small>User should change password on first login</small>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="media mb-3">
-                                    <i class="fas fa-envelope text-info mr-3 mt-1"></i>
-                                    <div class="media-body">
-                                        <h6>Email Notification</h6>
-                                        <small>User receives password via email</small>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="media mb-3">
-                                    <i class="fas fa-history text-secondary mr-3 mt-1"></i>
-                                    <div class="media-body">
-                                        <h6>Audit Trail</h6>
-                                        <small>All password resets are logged</small>
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover table-center mb-0">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Subject</th>
+                                        <th>Exam Type</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                        <th class="text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for exam in exams %}
+                                    <tr class="align-middle">
+                                        <td>
+                                            <strong>{{ exam.subject_mark_component.subject.code }}</strong>
+                                            <br>
+                                            <small class="text-muted">{{ exam.subject_mark_component.subject.name|truncatechars:30 }}</small>
+                                        </td>
+                                        <td>{{ exam.get_exam_type_display }}</td>
+                                        <td>{{ exam.exam_date|date:"M d, Y" }}</td>
+                                        <td>
+                                            {% if exam.is_published %}
+                                                <span class="badge badge-success">Published</span>
+                                            {% else %}
+                                                <span class="badge badge-warning">Draft</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-right">
+                                            <a href="{% url 'exam_dashboard' exam.id %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i> View
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="text-center py-4">
+                                            <i class="fas fa-file-alt fa-3x text-muted mb-3 d-block"></i>
+                                            <p class="text-muted">No exams created yet</p>
+                                            <small class="text-muted">Create your first exam using the form above</small>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -254,15 +236,294 @@
     </div>
 </div>
 
+<style>
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .form-section-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #667eea;
+    }
+    .form-section-title i {
+        color: #667eea;
+        margin-right: 10px;
+    }
+    .card-header {
+        border-bottom: none;
+        border-radius: 10px 10px 0 0;
+        padding: 15px 20px;
+    }
+    .card-header .card-title {
+        color: white;
+        margin-bottom: 0;
+    }
+    .card {
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    .card-body {
+        padding: 20px;
+    }
+    .form-group label {
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #2c3e50;
+    }
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        padding: 10px 15px;
+        transition: all 0.3s ease;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 10px 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    .btn-secondary {
+        background: #6c757d;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 25px;
+        font-weight: 600;
+    }
+    .btn-outline-primary {
+        border: 1px solid #667eea;
+        color: #667eea;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    .btn-outline-primary:hover {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-color: transparent;
+    }
+    .badge {
+        padding: 5px 12px;
+        font-weight: 500;
+        border-radius: 20px;
+    }
+    .table td {
+        vertical-align: middle;
+        padding: 12px;
+    }
+    .thead-light th {
+        background: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+        color: #495057;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .text-muted {
+        color: #6c757d !important;
+    }
+    @media (max-width: 768px) {
+        .btn-primary, .btn-secondary {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        .text-right {
+            text-align: center !important;
+        }
+    }
+</style>
+
 <script>
-    // Enable submit button only when checkbox is checked
-    document.getElementById('confirmCheck').addEventListener('change', function() {
-        document.getElementById('submitBtn').disabled = !this.checked;
+document.addEventListener('DOMContentLoaded', function() {
+    const subjectSelect = document.getElementById('subjectMarkComponent');
+    const examTypeSelect = document.getElementById('examType');
+    const examDateInput = document.querySelector('input[name="exam_date"]');
+    const totalMarksInput = document.querySelector('input[name="total_marks"]');
+    const passingMarksInput = document.querySelector('input[name="passing_marks"]');
+    const weightageDisplay = document.getElementById('weightageDisplay');
+    const componentDetailsDiv = document.getElementById('componentDetails');
+    const warningAlert = document.getElementById('warningAlert');
+    const warningMessage = document.getElementById('warningMessage');
+
+    const componentPercentages = {};
+
+    {% for component in subject_mark_components %}
+        componentPercentages[{{ component.id }}] = {
+            mid_term: parseFloat("{{ component.mid_term_percentage }}"),
+            final: parseFloat("{{ component.final_term_percentage }}"),
+            quiz: parseFloat("{{ component.quiz_percentage }}"),
+            assignment: parseFloat("{{ component.assignment_percentage }}"),
+            presentation: parseFloat("{{ component.presentation_percentage }}"),
+            lab: parseFloat("{{ component.lab_percentage }}"),
+            viva: parseFloat("{{ component.viva_percentage }}"),
+            attendance: parseFloat("{{ component.attendance_percentage }}"),
+            subject_name: "{{ component.subject.name|escapejs }}",
+            subject_code: "{{ component.subject.code }}",
+            semester: "{{ component.semester.number }}",
+            batch: "{{ component.batch.name }}",
+            discipline: "{{ component.discipline.field }}"
+        };
+    {% endfor %}
+
+    function updateComponentDetails() {
+        const componentId = subjectSelect.value;
+        
+        if (componentId && componentPercentages[componentId]) {
+            const comp = componentPercentages[componentId];
+            
+            let html = `
+                <div class="row">
+                    <div class="col-12">
+                        <strong>${comp.subject_code} - ${comp.subject_name}</strong>
+                    </div>
+                    <div class="col-12 mt-2">
+                        <div class="row">
+                            <div class="col-6">
+                                <small><strong>Semester:</strong> ${comp.semester}</small>
+                            </div>
+                            <div class="col-6">
+                                <small><strong>Batch:</strong> ${comp.batch}</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 mt-1">
+                        <small><strong>Discipline:</strong> ${comp.discipline}</small>
+                    </div>
+                    <div class="col-12 mt-3">
+                        <hr class="my-1">
+                        <div class="row">
+                            <div class="col-12 mb-1">
+                                <small><strong>Mark Distribution:</strong></small>
+                            </div>
+                            <div class="col-6"><small>Mid Term:</small></div>
+                            <div class="col-6 text-right"><small><strong>${comp.mid_term}%</strong></small></div>
+                            <div class="col-6"><small>Final Term:</small></div>
+                            <div class="col-6 text-right"><small><strong>${comp.final}%</strong></small></div>
+                            <div class="col-6"><small>Quiz:</small></div>
+                            <div class="col-6 text-right"><small><strong>${comp.quiz}%</strong></small></div>
+                            <div class="col-6"><small>Assignment:</small></div>
+                            <div class="col-6 text-right"><small><strong>${comp.assignment}%</strong></small></div>
+                            <div class="col-6"><small>Presentation:</small></div>
+                            <div class="col-6 text-right"><small><strong>${comp.presentation}%</strong></small></div>
+                            <div class="col-6"><small>Lab:</small></div>
+                            <div class="col-6 text-right"><small><strong>${comp.lab}%</strong></small></div>
+                            <div class="col-6"><small>Viva:</small></div>
+                            <div class="col-6 text-right"><small><strong>${comp.viva}%</strong></small></div>
+                            <div class="col-6"><small>Attendance:</small></div>
+                            <div class="col-6 text-right"><small><strong>${comp.attendance}%</strong></small></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            componentDetailsDiv.innerHTML = html;
+            
+            const examType = examTypeSelect.value;
+            
+            if (examType && comp[examType] !== undefined) {
+                weightageDisplay.value = comp[examType] + '%';
+            } else {
+                weightageDisplay.value = '';
+            }
+            
+        } else {
+            componentDetailsDiv.innerHTML = '<div class="text-muted text-center">Select a subject configuration to view details</div>';
+            weightageDisplay.value = '';
+        }
+    }
+
+    function updateWeightage() {
+        const componentId = subjectSelect.value;
+        const examType = examTypeSelect.value;
+        
+        if (componentId && componentPercentages[componentId] && examType && componentPercentages[componentId][examType] !== undefined) {
+            const weightage = componentPercentages[componentId][examType];
+            weightageDisplay.value = weightage + '%';
+            
+            if (weightage === 0) {
+                warningAlert.style.display = 'block';
+                warningMessage.textContent = 'This exam type has 0% weightage in the subject configuration. It will not affect the final grade.';
+            } else {
+                warningAlert.style.display = 'none';
+            }
+        } else {
+            weightageDisplay.value = '';
+            warningAlert.style.display = 'none';
+        }
+    }
+
+    function validateForm() {
+        const examDate = new Date(examDateInput.value);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (examDate < today) {
+            alert('Exam date cannot be in the past.');
+            examDateInput.focus();
+            return false;
+        }
+        
+        const totalMarks = parseFloat(totalMarksInput.value);
+        const passingMarks = parseFloat(passingMarksInput.value);
+        
+        if (isNaN(totalMarks) || totalMarks <= 0) {
+            alert('Please enter valid total marks.');
+            totalMarksInput.focus();
+            return false;
+        }
+        
+        if (isNaN(passingMarks) || passingMarks < 0) {
+            alert('Please enter valid passing marks.');
+            passingMarksInput.focus();
+            return false;
+        }
+        
+        if (passingMarks > totalMarks) {
+            alert('Passing marks cannot be greater than total marks.');
+            passingMarksInput.focus();
+            return false;
+        }
+        
+        if (passingMarks > totalMarks * 0.6) {
+            if (!confirm('Warning: Passing marks are more than 60% of total marks. This may be too high. Continue?')) {
+                passingMarksInput.focus();
+                return false;
+            }
+        }
+        
+        return true;
+    }
+
+    subjectSelect.addEventListener('change', function() {
+        updateComponentDetails();
+        updateWeightage();
     });
     
-    // Prevent accidental form resubmission
-    if (window.history.replaceState) {
-        window.history.replaceState(null, null, window.location.href);
-    }
+    examTypeSelect.addEventListener('change', updateWeightage);
+    
+    const form = document.getElementById('createExamForm');
+    form.addEventListener('submit', function(e) {
+        if (!validateForm()) {
+            e.preventDefault();
+        }
+    });
+    
+    // Initial update
+    updateComponentDetails();
+    updateWeightage();
+});
 </script>
 {% endblock %}

@@ -386,3 +386,62 @@ def get_sections_for_assignment(request):
             return JsonResponse({'error': str(e)}, status=500)
     
     return JsonResponse({'error': 'Invalid request method'}, status=400)
+
+
+
+    from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from subject.models import SubjectAssign
+
+@login_required
+def teacher_assigned_subjects(request):
+    """View to show all subjects assigned to the logged-in teacher"""
+    
+    try:
+        teacher = request.user.teacher
+    except:
+        messages.error(request, "You are not registered as a teacher")
+        return redirect('home')
+    
+    # Get all subject assignments for this teacher
+    assigned_subjects = SubjectAssign.objects.filter(
+        teacher=teacher,
+        is_active=True
+    ).select_related('subject', 'batch', 'semester', 'discipline').prefetch_related('sections')
+    
+    # Filter by request parameters
+    batch_id = request.GET.get('batch')
+    semester_id = request.GET.get('semester')
+    discipline_id = request.GET.get('discipline')
+    
+    if batch_id:
+        assigned_subjects = assigned_subjects.filter(batch_id=batch_id)
+    if semester_id:
+        assigned_subjects = assigned_subjects.filter(semester_id=semester_id)
+    if discipline_id:
+        assigned_subjects = assigned_subjects.filter(discipline_id=discipline_id)
+    
+    # Pagination
+    paginator = Paginator(assigned_subjects, 12)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # Get filter options
+    batches = Batch.objects.all()
+    semesters = Semester.objects.all()
+    disciplines = Discipline.objects.all()
+    
+    context = {
+        'assigned_subjects': page_obj,
+        'batches': batches,
+        'semesters': semesters,
+        'disciplines': disciplines,
+        'selected_batch': batch_id,
+        'selected_semester': semester_id,
+        'selected_discipline': discipline_id,
+        'total_batches': assigned_subjects.values('batch').distinct().count(),
+        'total_sections': sum(a.sections.count() for a in assigned_subjects),
+    }
+    
+    return render(request, 'subject/teacher_assigned_subjects .html', context)

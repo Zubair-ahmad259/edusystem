@@ -13,13 +13,13 @@ from home_auth.models import CustomUser
 class SubjectMarkComponents(models.Model):
     """Model to define mark distribution for a subject across different exam types based on credit hours"""
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='mark_components')
-    teacher = models.ForeignKey(Teacher, on_delete=models.PROTECT, related_name='subject_mark_components')
-    semester = models.ForeignKey(Semester, on_delete=models.CASCADE)
-    batch = models.ForeignKey(Batch, on_delete=models.CASCADE)
-    section = models.ForeignKey(Section, on_delete=models.CASCADE, null=True, blank=True)
-    discipline = models.ForeignKey(Discipline, on_delete=models.CASCADE)
-    academic_year = models.CharField(max_length=9, default=f"{timezone.now().year}-{timezone.now().year+1}")
     
+    teacher = models.ForeignKey(Teacher, on_delete=models.SET_NULL, null=True, blank=True, related_name='subject_mark_components')
+    semester = models.ForeignKey(Semester, on_delete=models.SET_NULL, null=True, blank=True)
+    batch = models.ForeignKey(Batch, on_delete=models.SET_NULL, null=True, blank=True)
+    section = models.ForeignKey(Section, on_delete=models.SET_NULL, null=True, blank=True)
+    discipline = models.ForeignKey(Discipline, on_delete=models.SET_NULL, null=True, blank=True)
+    academic_year = models.CharField(max_length=9, blank=True, null=True)
     subject_type = models.CharField(max_length=20, default='theory')
     
     # Mark distribution percentages - Different defaults based on credit hours

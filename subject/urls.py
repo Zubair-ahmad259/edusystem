@@ -20,7 +20,7 @@ urlpatterns = [
     path('assign/view/', views.show_subject_assign, name='show_subject_assign'),
     path('assign/edit/<int:assign_id>/', views.edit_subject_assign, name='edit_subject_assign'),
     path('assign/delete/<int:assign_id>/', views.delete_subject_assign, name='delete_subject_assign'),
-    
+   path('teacher/assigned-subjects/', views.teacher_assigned_subjects, name='teacher_assigned_subjects'),
     # API endpoints
     path('api/quick-stats/', views.quick_stats_api, name='quick_stats_api'),
     path('api/get-sections/', views.get_sections_for_assignment, name='get_sections_for_assignment'),

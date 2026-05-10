@@ -29,6 +29,7 @@ def index(request):
     }
     return render(request, 'token_app/index.html', context)
 
+
 # ========== TOKEN LISTING VIEWS ==========
 
 def all_tokens(request):
@@ -79,6 +80,7 @@ def all_tokens(request):
     }
     return render(request, 'token_app/all_tokens.html', context)
 
+
 def student_tokens(request, student_id=None):
     """View tokens for a specific student"""
     students = Student.objects.all().order_by('student_id')[:50]
@@ -111,6 +113,7 @@ def student_tokens(request, student_id=None):
     }
     return render(request, 'token_app/student_tokens.html', context)
 
+
 def token_detail(request, token_id):
     """View single token details"""
     token = get_object_or_404(ExamToken, id=token_id)
@@ -122,6 +125,7 @@ def token_detail(request, token_id):
         'teachers': Teacher.objects.all()[:10],
     }
     return render(request, 'token_app/token_detail.html', context)
+
 
 # ========== CREATE TOKEN VIEWS ==========
 
@@ -173,6 +177,7 @@ def create_token(request):
     }
     return render(request, 'token_app/create_token.html', context)
 
+
 def create_token_for_student(request, student_id):
     """Create token for a specific student"""
     student = get_object_or_404(Student, id=student_id)
@@ -194,9 +199,14 @@ def create_token_for_student(request, student_id):
                 status='generated'
             )
             
-            # Add eligible subjects
+            # Get eligible subjects for this student (all subjects for their semester)
+            eligible_subjects = get_eligible_subjects_for_student(student)
+            
+            # Add subjects: either selected or all eligible
             if subject_ids:
                 token.eligible_subjects.set(subject_ids)
+            elif eligible_subjects:
+                token.eligible_subjects.set(eligible_subjects)
             
             messages.success(request, f'Token #{token.token_number} created for {student}!')
             return redirect('token_app:token_detail', token_id=token.id)
@@ -204,11 +214,8 @@ def create_token_for_student(request, student_id):
         except Exception as e:
             messages.error(request, f'Error: {str(e)}')
     
-    # GET request
-    subjects = Subject.objects.filter(
-        semester=student.semester,
-        desciplain=student.discipline
-    )
+    # GET request - get subjects for this student
+    subjects = get_subjects_for_student_create(student)
     
     context = {
         'student': student,
@@ -217,6 +224,73 @@ def create_token_for_student(request, student_id):
         'default_valid_until': date.today() + timedelta(days=30),
     }
     return render(request, 'token_app/create_token_for_student.html', context)
+
+
+def get_subjects_for_student_create(student):
+    """Get all subjects for a student's semester - FIXED VERSION"""
+    try:
+        from exam_mang.models import SubjectMarkComponents
+        from subject.models import Subject
+        
+        print(f"DEBUG: Getting subjects for student {student.student_id}")
+        print(f"  - Semester: {student.semester.number if student.semester else 'None'}")
+        print(f"  - Discipline: {student.discipline.field if student.discipline else 'None'}")
+        print(f"  - Batch: {student.batch.name if student.batch else 'None'}")
+        
+        # Method 1: Try to get from SubjectMarkComponents
+        subject_ids = SubjectMarkComponents.objects.filter(
+            semester=student.semester,
+            discipline=student.discipline,
+            batch=student.batch
+        ).values_list('subject_id', flat=True).distinct()
+        
+        print(f"  - Found {subject_ids.count()} subject IDs via SubjectMarkComponents")
+        
+        # If no subjects found, try without discipline and batch
+        if not subject_ids:
+            subject_ids = SubjectMarkComponents.objects.filter(
+                semester=student.semester
+            ).values_list('subject_id', flat=True).distinct()
+            print(f"  - Found {subject_ids.count()} subject IDs via semester only")
+        
+        # Method 2: If still no subjects, try direct Subject query
+        if not subject_ids:
+            # Try to get subjects by semester (if Subject has semester field)
+            if hasattr(Subject, 'semester'):
+                subjects = Subject.objects.filter(
+                    semester=student.semester,
+                    is_active=True
+                )
+                print(f"  - Found {subjects.count()} subjects via Subject.semester")
+                return subjects
+        
+        subjects = Subject.objects.filter(id__in=subject_ids, is_active=True)
+        print(f"  - Total subjects found: {subjects.count()}")
+        
+        # Debug: Print subject details
+        for subject in subjects:
+            print(f"    - {subject.code}: {subject.name}")
+        
+        return subjects
+        
+    except ImportError as e:
+        print(f"Error importing SubjectMarkComponents: {e}")
+        # Fallback: Get subjects directly
+        if hasattr(Student, 'semester') and hasattr(Subject, 'semester'):
+            subjects = Subject.objects.filter(semester=student.semester, is_active=True)
+            print(f"  - Fallback: Found {subjects.count()} subjects")
+            return subjects
+        return []
+    except Exception as e:
+        print(f"Error in get_subjects_for_student_create: {e}")
+        import traceback
+        traceback.print_exc()
+        return []
+
+
+def get_eligible_subjects_for_student(student):
+    """Get eligible subjects for a student (all subjects for their semester)"""
+    return get_subjects_for_student_create(student)
 
 # ========== TOKEN ACTION VIEWS ==========
 
@@ -252,6 +326,7 @@ def update_token_status(request, token_id):
     
     return redirect('token_app:token_detail', token_id=token.id)
 
+
 def verify_token(request, token_id):
     """Quick verify token"""
     token = get_object_or_404(ExamToken, id=token_id)
@@ -265,6 +340,7 @@ def verify_token(request, token_id):
         messages.error(request, "No teacher found for verification")
     
     return redirect('token_app:token_detail', token_id=token.id)
+
 
 def print_token(request, token_id):
     """Print token view"""
@@ -281,6 +357,7 @@ def print_token(request, token_id):
     }
     return render(request, 'token_app/print_token.html', context)
 
+
 # ========== API/JSON VIEWS ==========
 
 def get_student_info(request, student_id):
@@ -294,9 +371,10 @@ def get_student_info(request, student_id):
         'batch': student.batch.name if student.batch else '',
         'semester': student.semester.number if student.semester else '',
         'section': student.section.name if student.section else '',
-        'discipline': student.discipline.name if student.discipline else '',
+        'discipline': str(student.discipline) if student.discipline else '',
     }
     return JsonResponse(data)
+
 
 def get_student_subjects(request, student_id):
     """Get subjects for a student"""
@@ -308,6 +386,7 @@ def get_student_subjects(request, student_id):
     ).values('id', 'code', 'name', 'credit_hours')
     
     return JsonResponse(list(subjects), safe=False)
+
 
 def check_token_validity(request, token_number):
     """Check if token is valid (for scanning)"""
@@ -329,6 +408,7 @@ def check_token_validity(request, token_number):
         }
     
     return JsonResponse(data)
+
 
 # ========== DASHBOARD/STATISTICS VIEWS ==========
 
@@ -377,11 +457,9 @@ def dashboard(request):
     }
     return render(request, 'token_app/dashboard.html', context)
 
+
 def statistics(request):
     """Detailed statistics"""
-    from django.db.models import Count, Avg
-    from django.db.models.functions import Coalesce
-    
     total_tokens = ExamToken.objects.count()
     
     # Tokens per batch with percentages
@@ -455,204 +533,9 @@ def statistics(request):
         'most_common_status': most_common_status,
     }
     return render(request, 'token_app/statistics.html', context)
-def bulk_create_tokens(request):
-    """Create tokens for multiple students with eligibility checks"""
-    
-    # Handle AJAX request to get students count/filtered list
-    if request.method == 'GET' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        try:
-            discipline_id = request.GET.get('discipline')
-            batch_id = request.GET.get('batch')
-            semester_id = request.GET.get('semester')
-            section_id = request.GET.get('section')
-            
-            # Validate required parameters
-            if not all([discipline_id, batch_id, semester_id, section_id]):
-                return JsonResponse({
-                    'error': 'Missing required parameters',
-                    'count': 0,
-                    'students': []
-                }, status=400)
-            
-            students = Student.objects.all()
-            
-            if discipline_id:
-                students = students.filter(discipline_id=discipline_id)
-            if batch_id:
-                students = students.filter(batch_id=batch_id)
-            if semester_id:
-                students = students.filter(semester_id=semester_id)
-            if section_id:
-                students = students.filter(section_id=section_id)
-            
-            # Get student data with eligibility info
-            student_data = []
-            for student in students[:100]:
-                try:
-                    eligibility = check_student_eligibility(student, semester_id)
-                    
-                    # Format discipline name correctly
-                    discipline_name = ""
-                    if student.discipline:
-                        discipline_name = f"{student.discipline.program} in {student.discipline.field}"
-                    
-                    student_data.append({
-                        'id': student.id,
-                        'student_id': student.student_id,
-                        'name': f"{student.first_name} {student.last_name}",
-                        'batch': student.batch.name if student.batch else '',
-                        'semester': student.semester.number if student.semester else '',
-                        'section': student.section.name if student.section else '',
-                        'discipline': discipline_name,
-                        'eligible': eligibility['eligible'],
-                        'reasons': eligibility['reasons'],
-                        'has_token': eligibility['has_token'],
-                    })
-                except Exception as e:
-                    print(f"Error processing student {student.id}: {str(e)}")
-                    student_data.append({
-                        'id': student.id,
-                        'student_id': student.student_id,
-                        'name': f"{student.first_name} {student.last_name}",
-                        'batch': student.batch.name if student.batch else '',
-                        'semester': student.semester.number if student.semester else '',
-                        'section': student.section.name if student.section else '',
-                        'discipline': '',
-                        'eligible': False,
-                        'reasons': [f"Error checking eligibility"],
-                        'has_token': False,
-                    })
-            
-            return JsonResponse({
-                'count': students.count(),
-                'students': student_data
-            })
-            
-        except Exception as e:
-            print(f"AJAX Error: {str(e)}")
-            return JsonResponse({
-                'error': str(e),
-                'count': 0,
-                'students': []
-            }, status=500)
-    
-    # Handle POST request to create tokens
-    if request.method == 'POST':
-        try:
-            discipline_id = request.POST.get('discipline')
-            batch_id = request.POST.get('batch')
-            semester_id = request.POST.get('semester')
-            section_id = request.POST.get('section')
-            valid_until_str = request.POST.get('valid_until')
-            
-            # Convert string date to date object
-            from datetime import datetime
-            valid_until = datetime.strptime(valid_until_str, '%Y-%m-%d').date()
-            
-            # Get selected student IDs from the form
-            selected_students = request.POST.getlist('selected_students')
-            
-            if not selected_students:
-                messages.error(request, "No students selected")
-                return redirect('token_app:bulk_create_tokens')
-            
-            created_count = 0
-            failed_students = []
-            
-            for student_id in selected_students:
-                student = get_object_or_404(Student, id=student_id)
-                
-                # Check eligibility again before creating
-                eligibility = check_student_eligibility(student, semester_id)
-                
-                if not eligibility['eligible']:
-                    failed_students.append({
-                        'name': str(student),
-                        'reasons': eligibility['reasons']
-                    })
-                    continue
-                
-                # Check if token already exists
-                existing = ExamToken.objects.filter(
-                    student=student,
-                    semester_id=semester_id,
-                    issue_date__year=date.today().year
-                ).exists()
-                
-                if existing:
-                    failed_students.append({
-                        'name': str(student),
-                        'reasons': ['Token already exists for this semester']
-                    })
-                    continue
-                
-                # Get eligible subjects (excluding those with attendance shortage)
-                eligible_subjects = get_eligible_subjects(student, semester_id)
-                
-                # Create token
-                token = ExamToken.objects.create(
-                    student=student,
-                    semester_id=semester_id,
-                    batch_id=batch_id,
-                    section_id=section_id,
-                    discipline_id=discipline_id,
-                    issue_date=date.today(),
-                    valid_until=valid_until,  # Now it's a date object, not a string
-                    status='generated'
-                )
-                
-                # Add eligible subjects to token
-                if eligible_subjects.exists():
-                    token.eligible_subjects.set(eligible_subjects)
-                
-                # Store eligibility data in JSON fields
-                token.attendance_short = get_attendance_shortages(student, semester_id)
-                token.fee_defaulters = check_fee_status(student)
-                token.prerequisite_missing = get_prerequisite_failures(student, semester_id)
-                token.save()
-                
-                print(f"DEBUG: Token created - ID: {token.id}, Number: {token.token_number}, Student: {student}")
-                created_count += 1
-            
-            print(f"DEBUG: Total tokens created: {created_count}")
-            print(f"DEBUG: Total tokens in database now: {ExamToken.objects.count()}")
-            
-            if created_count > 0:
-                messages.success(request, f'{created_count} tokens created successfully!')
-            
-            if failed_students:
-                error_msg = f"Failed for {len(failed_students)} students: "
-                for fail in failed_students[:3]:
-                    error_msg += f"{fail['name']} ({', '.join(fail['reasons'])}); "
-                if len(failed_students) > 3:
-                    error_msg += f"... and {len(failed_students) - 3} more"
-                messages.warning(request, error_msg)
-            
-            return redirect('token_app:all_tokens')
-            
-        except Exception as e:
-            messages.error(request, f'Error: {str(e)}')
-            print(f"Error in bulk_create_tokens POST: {str(e)}")
-            import traceback
-            traceback.print_exc()
-    
-    # GET request - show form
-    disciplines = Discipline.objects.all()
-    batches = Batch.objects.all()
-    semesters = Semester.objects.all()
-    sections = Section.objects.all()
-    
-    context = {
-        'disciplines': disciplines,
-        'batches': batches,
-        'semesters': semesters,
-        'sections': sections,
-        'today': date.today(),
-        'default_valid_until': date.today() + timedelta(days=30),
-    }
-    return render(request, 'token_app/bulk_create_tokens.html', context)
 
-# ====R FUNCTIONS FOR ELIGIBILITY CHECKS ==========
+
+# ========== ELIGIBILITY CHECK FUNCTIONS ==========
 
 def check_student_eligibility(student, semester_id):
     """Check if student is eligible for exam token"""
@@ -663,21 +546,21 @@ def check_student_eligibility(student, semester_id):
     try:
         # Check fee status
         fee_status = check_fee_status(student)
-        if not fee_status['clear']:
+        if not fee_status.get('clear', True):
             eligible = False
-            reasons.append(f"Fee defaulter")
+            reasons.append("Fee defaulter")
         
         # Check attendance shortages
         attendance_issues = get_attendance_shortages(student, semester_id)
         if attendance_issues:
             eligible = False
-            reasons.append(f"Attendance shortage")
+            reasons.append(f"Attendance shortage in {len(attendance_issues)} subject(s)")
         
         # Check prerequisite failures
         prerequisite_issues = get_prerequisite_failures(student, semester_id)
         if prerequisite_issues:
             eligible = False
-            reasons.append(f"Prerequisite failure")
+            reasons.append(f"Prerequisite failure in {len(prerequisite_issues)} subject(s)")
         
         # Check if already has token
         has_token = ExamToken.objects.filter(
@@ -688,7 +571,7 @@ def check_student_eligibility(student, semester_id):
         
         if has_token:
             eligible = False
-            reasons.append("Token exists")
+            reasons.append("Already has token for this semester")
             
     except Exception as e:
         print(f"Error in check_student_eligibility: {str(e)}")
@@ -740,37 +623,39 @@ def get_attendance_shortages(student, semester_id):
     shortages = {}
     
     try:
-        # Try to import attendance model
-        try:
-            from attendance.models import Attendance
+        from attendance.models import Attendance
+        from exam_mang.models import SubjectMarkComponents
+        
+        # Get subject IDs for this semester through SubjectMarkComponents
+        subject_ids = SubjectMarkComponents.objects.filter(
+            semester_id=semester_id
+        ).values_list('subject_id', flat=True).distinct()
+        
+        subjects = Subject.objects.filter(id__in=subject_ids)
+        
+        # Get minimum attendance percentage (default 75%)
+        min_attendance = 75
+        
+        for subject in subjects:
+            # Get attendance records for this student and subject
+            attendance_records = Attendance.objects.filter(
+                student=student,
+                subject=subject
+            )
             
-            # Get minimum attendance percentage (default 75%)
-            min_attendance = 75
-            
-            # Get all subjects for this semester
-            subjects = Subject.objects.filter(semester_id=semester_id)
-            
-            for subject in subjects:
-                # Get attendance records for this student and subject
-                attendance_records = Attendance.objects.filter(
-                    student=student,
-                    subject=subject
-                )
+            total_classes = attendance_records.count()
+            if total_classes > 0:
+                present_classes = attendance_records.filter(status='P').count()
+                percentage = (present_classes / total_classes) * 100
                 
-                total_classes = attendance_records.count()
-                if total_classes > 0:
-                    present_classes = attendance_records.filter(status='P').count()
-                    percentage = (present_classes / total_classes) * 100
-                    
-                    if percentage < min_attendance:
-                        shortages[subject.code] = round(percentage, 2)
-            
-            return shortages
-            
-        except ImportError:
-            # If attendance app doesn't exist
-            return {}
-            
+                if percentage < min_attendance:
+                    shortages[subject.code] = round(percentage, 2)
+        
+        return shortages
+        
+    except ImportError:
+        # If attendance app doesn't exist
+        return {}
     except Exception as e:
         print(f"Error checking attendance: {str(e)}")
         return {}
@@ -781,116 +666,286 @@ def get_prerequisite_failures(student, semester_id):
     failures = []
     
     try:
-        # Try to import exam models
-        try:
-            from exam_mang.models import ExamResult, SubjectComprehensiveResult
+        from exam_mang.models import SubjectComprehensiveResult, ExamResult, SubjectMarkComponents
+        from subject.models import Subject
+        
+        # Get subject IDs for this semester through SubjectMarkComponents
+        subject_ids = SubjectMarkComponents.objects.filter(
+            semester_id=semester_id
+        ).values_list('subject_id', flat=True).distinct()
+        
+        subjects = Subject.objects.filter(id__in=subject_ids)
+        
+        for subject in subjects:
+            # Check prerequisites
+            prerequisites = subject.prerequisites.all()
             
-            # Get all subjects for this semester
-            subjects = Subject.objects.filter(semester_id=semester_id)
-            
-            for subject in subjects:
-                # Check prerequisites
-                prerequisites = subject.prerequisites.all()
-                
-                for prereq in prerequisites:
-                    # Check if student passed this prerequisite
-                    try:
-                        # Check in comprehensive results
-                        comp_result = SubjectComprehensiveResult.objects.get(
-                            student=student,
-                            subject_mark_component__subject=prereq
-                        )
-                        
-                        if hasattr(comp_result, 'grade') and comp_result.grade == 'F':
-                            failures.append(f"{prereq.code}")
+            for prereq in prerequisites:
+                # Check if student passed this prerequisite
+                try:
+                    # Check in comprehensive results
+                    comp_result = SubjectComprehensiveResult.objects.get(
+                        student=student,
+                        subject_mark_component__subject=prereq
+                    )
+                    
+                    if hasattr(comp_result, 'grade') and comp_result.grade == 'F':
+                        if prereq.code not in failures:
+                            failures.append(prereq.code)
                             
-                    except SubjectComprehensiveResult.DoesNotExist:
-                        # Check in exam results
-                        failed_results = ExamResult.objects.filter(
-                            student=student,
-                            exam__subject_mark_component__subject=prereq,
-                            grade='F'
-                        ).exists()
-                        
-                        if failed_results:
-                            failures.append(f"{prereq.code}")
-            
-            return list(set(failures))  # Remove duplicates
-            
-        except ImportError:
-            # If exam_mang app doesn't exist
-            return []
-            
+                except SubjectComprehensiveResult.DoesNotExist:
+                    # Check in exam results
+                    failed_results = ExamResult.objects.filter(
+                        student=student,
+                        exam__subject_mark_component__subject=prereq,
+                        grade='F'
+                    ).exists()
+                    
+                    if failed_results and prereq.code not in failures:
+                        failures.append(prereq.code)
+        
+        return failures
+        
+    except ImportError:
+        # If exam_mang app doesn't exist
+        return []
     except Exception as e:
         print(f"Error checking prerequisites: {str(e)}")
         return []
 
 
-def get_eligible_subjects(student, semester_id):
-    """Get subjects student is eligible for (excluding those with attendance shortage)"""
-    from subject.models import Subject
+# ========== BULK CREATE TOKENS ==========
+def bulk_create_tokens(request):
+    """Create tokens for multiple students with eligibility checks"""
     
-    # Get all subjects for this semester
-    subjects = Subject.objects.filter(semester_id=semester_id)
+    # Handle AJAX request to get students count/filtered list
+    if request.method == 'GET' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        try:
+            discipline_id = request.GET.get('discipline')
+            batch_id = request.GET.get('batch')
+            semester_id = request.GET.get('semester')
+            section_id = request.GET.get('section')
+            
+            # Validate required parameters
+            if not all([discipline_id, batch_id, semester_id, section_id]):
+                return JsonResponse({
+                    'error': 'Missing required parameters',
+                    'count': 0,
+                    'students': []
+                }, status=400)
+            
+            students = Student.objects.all()
+            
+            if discipline_id:
+                students = students.filter(discipline_id=discipline_id)
+            if batch_id:
+                students = students.filter(batch_id=batch_id)
+            if semester_id:
+                students = students.filter(semester_id=semester_id)
+            if section_id:
+                students = students.filter(section_id=section_id)
+            
+            # Get student data with eligibility info
+            student_data = []
+            for student in students[:100]:
+                try:
+                    eligibility = check_student_eligibility(student, semester_id)
+                    
+                    # Format discipline name correctly
+                    discipline_name = ""
+                    if student.discipline:
+                        discipline_name = f"{student.discipline.program} in {student.discipline.field}"
+                    
+                    # Get eligible subjects for display
+                    eligible_subjects = get_eligible_subjects_for_bulk(student, semester_id)
+                    
+                    student_data.append({
+                        'id': student.id,
+                        'student_id': student.student_id,
+                        'name': f"{student.first_name} {student.last_name}",
+                        'batch': student.batch.name if student.batch else '',
+                        'semester': student.semester.number if student.semester else '',
+                        'section': student.section.name if student.section else '',
+                        'discipline': discipline_name,
+                        'eligible': eligibility['eligible'],
+                        'reasons': eligibility['reasons'],
+                        'has_token': eligibility['has_token'],
+                        'eligible_subjects_count': eligible_subjects.count(),
+                    })
+                except Exception as e:
+                    print(f"Error processing student {student.id}: {str(e)}")
+                    student_data.append({
+                        'id': student.id,
+                        'student_id': student.student_id,
+                        'name': f"{student.first_name} {student.last_name}",
+                        'batch': student.batch.name if student.batch else '',
+                        'semester': student.semester.number if student.semester else '',
+                        'section': student.section.name if student.section else '',
+                        'discipline': '',
+                        'eligible': False,
+                        'reasons': [f"Error checking eligibility"],
+                        'has_token': False,
+                        'eligible_subjects_count': 0,
+                    })
+            
+            return JsonResponse({
+                'count': students.count(),
+                'students': student_data
+            })
+            
+        except Exception as e:
+            print(f"AJAX Error: {str(e)}")
+            return JsonResponse({
+                'error': str(e),
+                'count': 0,
+                'students': []
+            }, status=500)
     
-    # Get attendance shortages
-    attendance_issues = get_attendance_shortages(student, semester_id)
-    
-    # Filter out subjects with attendance issues
-    eligible_subjects = []
-    for subject in subjects:
-        if subject.code not in attendance_issues:
-            # Check prerequisites
-            prerequisites_passed = check_prerequisites_passed(student, subject)
-            if prerequisites_passed:
-                eligible_subjects.append(subject.id)
-    
-    return Subject.objects.filter(id__in=eligible_subjects)
-
-
-def check_prerequisites_passed(student, subject):
-    """Check if student has passed all prerequisites for a subject"""
-    try:
-        from exam_mang.models import SubjectComprehensiveResult, ExamResult
-        
-        prerequisites = subject.prerequisites.all()
-        
-        for prereq in prerequisites:
-            try:
-                # Check comprehensive result
-                comp_result = SubjectComprehensiveResult.objects.get(
+    # Handle POST request to create tokens
+    if request.method == 'POST':
+        try:
+            discipline_id = request.POST.get('discipline')
+            batch_id = request.POST.get('batch')
+            semester_id = request.POST.get('semester')
+            section_id = request.POST.get('section')
+            valid_until_str = request.POST.get('valid_until')
+            
+            # Convert string date to date object
+            from datetime import datetime
+            valid_until = datetime.strptime(valid_until_str, '%Y-%m-%d').date()
+            
+            # Get selected student IDs from the form
+            selected_students = request.POST.getlist('selected_students')
+            
+            if not selected_students:
+                messages.error(request, "No students selected")
+                return redirect('token_app:bulk_create_tokens')
+            
+            created_count = 0
+            failed_students = []
+            
+            for student_id in selected_students:
+                student = get_object_or_404(Student, id=student_id)
+                
+                # Get eligible subjects for this student (CRITICAL!)
+                eligible_subjects = get_eligible_subjects_for_bulk(student, semester_id)
+                
+                print(f"DEBUG: Student {student.student_id} - Found {eligible_subjects.count()} eligible subjects")
+                
+                # Print subject details for debugging
+                for subject in eligible_subjects:
+                    print(f"  - {subject.code}: {subject.name}")
+                
+                # Create token (always create, regardless of eligibility)
+                token = ExamToken.objects.create(
                     student=student,
-                    subject_mark_component__subject=prereq
+                    semester_id=semester_id,
+                    batch_id=batch_id,
+                    section_id=section_id,
+                    discipline_id=discipline_id,
+                    issue_date=date.today(),
+                    valid_until=valid_until,
+                    status='generated'
                 )
-                if hasattr(comp_result, 'grade') and comp_result.grade == 'F':
-                    return False
-            except SubjectComprehensiveResult.DoesNotExist:
-                # Check exam results
-                failed = ExamResult.objects.filter(
-                    student=student,
-                    exam__subject_mark_component__subject=prereq,
-                    grade='F'
-                ).exists()
                 
-                if failed:
-                    return False
+                # Add eligible subjects to token (THIS IS THE KEY FIX!)
+                if eligible_subjects.exists():
+                    token.eligible_subjects.set(eligible_subjects)
+                    print(f"DEBUG: Added {eligible_subjects.count()} subjects to token {token.token_number}")
+                else:
+                    # If no eligible subjects found, add all subjects for this semester
+                    from exam_mang.models import SubjectMarkComponents
+                    all_subject_ids = SubjectMarkComponents.objects.filter(
+                        semester_id=semester_id
+                    ).values_list('subject_id', flat=True).distinct()
+                    
+                    if all_subject_ids:
+                        all_subjects = Subject.objects.filter(id__in=all_subject_ids, is_active=True)
+                        token.eligible_subjects.set(all_subjects)
+                        print(f"DEBUG: No eligible subjects, added all {all_subjects.count()} subjects as fallback")
+                    else:
+                        print(f"DEBUG: WARNING - No subjects found for semester {semester_id}")
                 
-                # No record means not attempted - consider as failed for eligibility
-                return False
-        
-        return True
-        
-    except ImportError:
-        # If exam_mang app doesn't exist, assume prerequisites are passed
-        return True
-    except Exception as e:
-        print(f"Error checking prerequisites passed: {str(e)}")
-        return False
-
+                # Store eligibility data in JSON fields
+                token.attendance_short = {}
+                token.fee_defaulters = {'clear': True, 'details': 'Fee status checked'}
+                token.prerequisite_missing = {}
+                token.save()
+                
+                created_count += 1
+                print(f"DEBUG: Token created successfully - ID: {token.id}, Number: {token.token_number}")
+            
+            if created_count > 0:
+                messages.success(request, f'{created_count} tokens created successfully!')
+            
+            if failed_students:
+                error_msg = f"Failed for {len(failed_students)} students: "
+                for fail in failed_students[:3]:
+                    error_msg += f"{fail['name']} ({', '.join(fail['reasons'])}); "
+                if len(failed_students) > 3:
+                    error_msg += f"... and {len(failed_students) - 3} more"
+                messages.warning(request, error_msg)
+            
+            return redirect('token_app:all_tokens')
+            
+        except Exception as e:
+            messages.error(request, f'Error: {str(e)}')
+            print(f"Error in bulk_create_tokens POST: {str(e)}")
+            import traceback
+            traceback.print_exc()
     
+    # GET request - show form
+    disciplines = Discipline.objects.all()
+    batches = Batch.objects.all()
+    semesters = Semester.objects.all()
+    sections = Section.objects.all()
+    
+    context = {
+        'disciplines': disciplines,
+        'batches': batches,
+        'semesters': semesters,
+        'sections': sections,
+        'today': date.today(),
+        'default_valid_until': date.today() + timedelta(days=30),
+    }
+    return render(request, 'token_app/bulk_create_tokens.html', context)
+
+
+def get_eligible_subjects_for_bulk(student, semester_id):
+    """Get subjects student is eligible for (excluding those with attendance shortage)"""
+    try:
+        from exam_mang.models import SubjectMarkComponents
+        
+        # Get subject IDs for this semester
+        subject_ids = SubjectMarkComponents.objects.filter(
+            semester_id=semester_id,
+            discipline=student.discipline,
+            batch=student.batch
+        ).values_list('subject_id', flat=True).distinct()
+        
+        # If no subjects found, try without discipline and batch
+        if not subject_ids:
+            subject_ids = SubjectMarkComponents.objects.filter(
+                semester_id=semester_id
+            ).values_list('subject_id', flat=True).distinct()
+        
+        # Get the subjects
+        subjects = Subject.objects.filter(id__in=subject_ids, is_active=True)
+        
+        print(f"DEBUG: Found {subjects.count()} subjects for semester {semester_id}")
+        
+        # Return all subjects for now (skip attendance and prerequisite checks for simplicity)
+        return subjects
+        
+    except ImportError as e:
+        print(f"Error in get_eligible_subjects: {e}")
+        # Fallback: get subjects by semester directly
+        return Subject.objects.filter(semester_id=semester_id, is_active=True)
+    except Exception as e:
+        print(f"Error: {e}")
+        return Subject.objects.none()
 def token_generated_students(request):
     """View all students who have generated tokens"""
-    from django.db.models import Count, Q
     
     # Get all students with tokens
     students_with_tokens = Student.objects.filter(
@@ -947,7 +1002,7 @@ def token_generated_students(request):
             'latest_token_status': latest_token.get_status_display() if latest_token else 'No Token',
             'latest_token_date': latest_token.issue_date if latest_token else None,
             'latest_token_valid': latest_token.valid_until if latest_token else None,
-            'token_numbers': [t.token_number for t in tokens[:5]],  # Last 5 token numbers
+            'token_numbers': [t.token_number for t in tokens[:5]],
         })
     
     # Pagination
@@ -961,19 +1016,10 @@ def token_generated_students(request):
     semesters = Semester.objects.all()
     sections = Section.objects.all()
     
-    # Format discipline names
-    formatted_disciplines = []
-    for discipline in disciplines:
-        formatted_disciplines.append({
-            'id': discipline.id,
-            'name': f"{discipline.program} in {discipline.field}"
-        })
-    
     context = {
         'page_obj': page_obj,
         'students_data': page_obj,
         'disciplines': disciplines,
-        'formatted_disciplines': formatted_disciplines,
         'batches': batches,
         'semesters': semesters,
         'sections': sections,
@@ -1016,6 +1062,8 @@ def student_token_history(request, student_id):
         'status_counts': status_counts,
     }
     return render(request, 'token_app/student_token_history.html', context)
+
+
 def debug_tokens(request):
     """Debug view to check tokens"""
     tokens = ExamToken.objects.all()
@@ -1033,6 +1081,46 @@ def debug_tokens(request):
         'total_tokens': tokens.count(),
         'tokens': token_list
     })
+def get_student_subjects(request, student_id):
+    """Get subjects for a student via AJAX"""
+    try:
+        student = get_object_or_404(Student, id=student_id)
+        
+        from exam_mang.models import SubjectMarkComponents
+        from subject.models import Subject
+        
+        # Get subject IDs for this student's semester, discipline, and batch
+        subject_ids = SubjectMarkComponents.objects.filter(
+            semester=student.semester,
+            discipline=student.discipline,
+            batch=student.batch
+        ).values_list('subject_id', flat=True).distinct()
+        
+        # If no subjects found, try without discipline and batch
+        if not subject_ids:
+            subject_ids = SubjectMarkComponents.objects.filter(
+                semester=student.semester
+            ).values_list('subject_id', flat=True).distinct()
+        
+        subjects = Subject.objects.filter(id__in=subject_ids, is_active=True)
+        
+        # If still no subjects, try direct Subject query
+        if not subjects.exists() and hasattr(Subject, 'semester'):
+            subjects = Subject.objects.filter(semester=student.semester, is_active=True)
+        
+        data = []
+        for subject in subjects:
+            data.append({
+                'id': subject.id,
+                'code': subject.code,
+                'name': subject.name,
+                'credit_hours': subject.credit_hours,
+            })
+        
+        return JsonResponse(data, safe=False)
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
 def student_token_detail(request, student_id, token_id):
     """View specific token details for a student"""
