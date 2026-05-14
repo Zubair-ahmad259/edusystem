@@ -1,0 +1,499 @@
+{% extends 'teacher/teacher_dashboard.html' %}
+{% load static %}
+
+{% block title %}Upload Marks - EduSphere{% endblock %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        
+        <!-- Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags == 'warning' %}warning{% else %}success{% endif %} alert-dismissible fade show">
+                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %} mr-2"></i>
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Upload Marks</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'index' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'teacher_dashboard' %}">Teacher Dashboard</a></li>
+                        <li class="breadcrumb-item active">Upload Marks</li>
+                    </ul>
+                </div>
+                <div class="col-auto">
+                    <div class="btn-group">
+                        <a href="{% url 'subject_mark_components' %}" class="btn btn-primary">
+                            <i class="fas fa-cogs"></i> Configure Subjects
+                        </a>
+                        <a href="{% url 'teacher_dashboard' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subjects and Sections -->
+        {% for subject_data in subjects_data %}
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="subject-header">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                        <div>
+                            <h4 class="subject-title">
+                                <i class="fas fa-book-open me-2"></i>
+                                {{ subject_data.subject.code }} - {{ subject_data.subject.name }}
+                                <span class="badge bg-secondary ms-2">{{ subject_data.subject.credit_hours }} Credit Hours</span>
+                            </h4>
+                        </div>
+                        <div class="subject-stats mt-2 mt-md-0">
+                            <div class="total-marks-badge">
+                                <i class="fas fa-star-of-life"></i>
+                                <strong>Total: 100 Marks</strong>
+                            </div>
+                            <a href="{% url 'student_subject_marks' %}?subject_id={{ subject_data.subject.id }}" 
+                               class="btn btn-sm btn-info ms-2">
+                                <i class="fas fa-chart-line"></i> View Student Marks
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            {% for section_data in subject_data.sections %}
+            <div class="col-md-6 col-lg-6 mb-4">
+                <div class="card section-card">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-users me-2"></i> Section {{ section_data.section.name }}
+                            </h5>
+                            <div class="student-badge-mini">
+                                <i class="fas fa-user-graduate"></i>
+                                <span>{{ section_data.student_count }}</span>
+                                <small>Students</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Component-wise Marks Grid -->
+                        <div class="component-grid">
+                            {% for exam in section_data.exam_types %}
+                                <div class="component-card">
+                                    <div class="component-header">
+                                        <span class="component-name">{{ exam.name }}</span>
+                                        <span class="component-marks">{{ exam.max_marks|floatformat:0 }}/{{ exam.max_marks|floatformat:0 }}</span>
+                                    </div>
+                                    <div class="component-body">
+                                        {% if exam.uploaded %}
+                                            <a href="{% url 'view_marks' subject_data.subject.id section_data.section.id exam.type %}" 
+                                               class="btn-component btn-view-component">
+                                                <i class="fas fa-eye"></i> View {{ exam.name }}
+                                            </a>
+                                            <span class="badge-uploaded">
+                                                <i class="fas fa-check-circle"></i> {{ exam.student_count }}/{{ section_data.student_count }}
+                                            </span>
+                                        {% else %}
+                                            <a href="{% url 'upload_marks_direct' subject_data.subject.id section_data.section.id exam.type %}" 
+                                               class="btn-component btn-upload-component">
+                                                <i class="fas fa-upload"></i> Upload {{ exam.name }}
+                                            </a>
+                                            <span class="badge-pending">
+                                                <i class="fas fa-clock"></i> Pending
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Section Student Marks Link -->
+                        <div class="text-center mt-3">
+                            <a href="{% url 'student_subject_marks' %}?subject_id={{ subject_data.subject.id }}&section_id={{ section_data.section.id }}" 
+                               class="btn btn-sm btn-outline-info w-100">
+                                <i class="fas fa-users"></i> View All Students Marks in Section {{ section_data.section.name }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% empty %}
+        <div class="row">
+            <div class="col-12">
+                <div class="empty-state text-center py-5">
+                    <i class="fas fa-upload fa-4x text-muted mb-3 d-block"></i>
+                    <h5>No Subjects Found</h5>
+                    <p class="text-muted">Please configure mark distribution for your subjects first.</p>
+                    <a href="{% url 'subject_mark_components' %}" class="btn btn-primary">
+                        <i class="fas fa-cogs"></i> Configure Subjects
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .page-header {
+        margin-bottom: 20px;
+    }
+    
+    .page-title {
+        font-size: 24px;
+        font-weight: 600;
+        color: #1e293b;
+        margin: 0;
+    }
+    
+    .breadcrumb {
+        background: transparent;
+        padding: 0;
+        margin: 5px 0 0;
+    }
+    
+    .breadcrumb-item a {
+        color: #667eea;
+        text-decoration: none;
+    }
+    
+    .subject-header {
+        padding: 15px 0;
+        border-bottom: 2px solid #e2e8f0;
+        margin-bottom: 15px;
+    }
+    
+    .subject-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1e293b;
+        margin: 0;
+    }
+    
+    .subject-stats {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    
+    .total-marks-badge {
+        background: linear-gradient(135deg, #667eea20, #764ba220);
+        padding: 5px 15px;
+        border-radius: 25px;
+        font-size: 13px;
+        color: #667eea;
+    }
+    
+    .total-marks-badge i {
+        margin-right: 6px;
+    }
+    
+    .badge {
+        padding: 5px 12px;
+        font-weight: 500;
+        border-radius: 20px;
+    }
+    
+    .bg-secondary {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .section-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        height: 100%;
+        background: white;
+    }
+    
+    .section-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    
+    .card-header {
+        border-bottom: none;
+        border-radius: 12px 12px 0 0;
+        padding: 15px 20px;
+    }
+    
+    .card-header .card-title {
+        color: white;
+        margin-bottom: 0;
+    }
+    
+    .card-body {
+        padding: 20px;
+    }
+    
+    .student-badge-mini {
+        background: rgba(255,255,255,0.2);
+        padding: 5px 15px;
+        border-radius: 25px;
+        font-size: 12px;
+    }
+    
+    .student-badge-mini i {
+        font-size: 11px;
+        margin-right: 4px;
+    }
+    
+    .student-badge-mini span {
+        font-size: 14px;
+        font-weight: 700;
+        margin: 0 4px;
+    }
+    
+    .student-badge-mini small {
+        font-size: 10px;
+    }
+    
+    /* Component Grid */
+    .component-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    
+    .component-card {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 12px;
+        transition: all 0.3s ease;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .component-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    
+    .component-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .component-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: #1e293b;
+    }
+    
+    .component-marks {
+        font-size: 11px;
+        font-weight: 600;
+        color: #28a745;
+        background: rgba(40,167,69,0.1);
+        padding: 2px 8px;
+        border-radius: 20px;
+    }
+    
+    .component-body {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .btn-component {
+        padding: 6px 12px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 11px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .btn-upload-component {
+        background: white;
+        color: #667eea;
+        border: 1px solid #667eea;
+    }
+    
+    .btn-upload-component:hover {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        transform: translateY(-2px);
+    }
+    
+    .btn-view-component {
+        background: #e9ecef;
+        color: #495057;
+        border: 1px solid #dee2e6;
+    }
+    
+    .btn-view-component:hover {
+        background: #dee2e6;
+        transform: translateY(-2px);
+    }
+    
+    .badge-uploaded, .badge-pending {
+        font-size: 10px;
+        padding: 3px 8px;
+        border-radius: 20px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+    
+    .badge-uploaded {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .badge-pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .btn-info {
+        background: linear-gradient(135deg, #17a2b8, #138496);
+        border: none;
+        border-radius: 6px;
+        padding: 5px 12px;
+        font-weight: 500;
+        color: white;
+        font-size: 12px;
+    }
+    
+    .btn-info:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(23,162,184,0.4);
+        color: white;
+    }
+    
+    .btn-outline-info {
+        border: 1px solid #17a2b8;
+        color: #17a2b8;
+        background: white;
+        border-radius: 6px;
+        padding: 6px 12px;
+        font-size: 12px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-outline-info:hover {
+        background: linear-gradient(135deg, #17a2b8, #138496);
+        color: white;
+        border-color: transparent;
+        transform: translateY(-2px);
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border: none;
+        border-radius: 6px;
+        padding: 8px 20px;
+        font-weight: 500;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102,126,234,0.4);
+        color: white;
+    }
+    
+    .btn-outline-primary {
+        border: 1px solid #667eea;
+        color: #667eea;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+        background: white;
+    }
+    
+    .btn-outline-primary:hover {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border-color: transparent;
+    }
+    
+    .empty-state {
+        padding: 60px 20px;
+        text-align: center;
+        background: white;
+        border-radius: 12px;
+    }
+    
+    .empty-state i {
+        opacity: 0.5;
+    }
+    
+    .alert {
+        border-radius: 10px;
+        border: none;
+    }
+    
+    @media (max-width: 768px) {
+        .component-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .component-body {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .btn-component {
+            justify-content: center;
+        }
+        
+        .subject-header .d-flex {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        
+        .subject-stats {
+            width: 100%;
+            justify-content: space-between;
+        }
+        
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .btn-group .btn {
+            width: 100%;
+        }
+    }
+</style>
+
+<script>
+    // Auto-dismiss alerts after 5 seconds
+    setTimeout(function() {
+        $('.alert').fadeOut('slow');
+    }, 5000);
+</script>
+{% endblock %}

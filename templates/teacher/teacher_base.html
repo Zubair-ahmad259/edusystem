@@ -393,14 +393,14 @@
                 <li class="submenu">
                     <a href="javascript:void(0);"><i class="fas fa-tasks"></i> <span>Assignments</span> <i class="fas fa-chevron-down menu-arrow"></i></a>
                     <ul>
-                        <li><a href="{% url 'assignment:teacher_assignment_list' %}">My Assignments</a></li>
-                        <li><a href="{% url 'assignment:teacher_assignment_create' %}">Create Assignment</a></li>
+                        <li><a href="{% url 'assignment:teacher_assignment_list' %}"> Assignments</a></li>
+                        <li><a href="{% url 'assignment:teacher_assignment_create' %}">upload Assignment</a></li>
                     </ul>
                 </li>
                 <li>
                     <a href="{% url 'subject:teacher_assigned_subjects' %}">
                         <i class="fas fa-book"></i> 
-                        <span>My Subjects</span>
+                        <span>Subjects</span>
                     </a>
                 </li>
                 <li>
@@ -412,7 +412,7 @@
                 <li>
                     <a href="{% url 'timetables:my_timetable' %}">
                         <i class="fas fa-calendar-alt"></i> 
-                        <span>My Timetable</span>
+                        <span>Timetable</span>
                     </a>
                 </li>
                 
@@ -421,7 +421,7 @@
                     <a href="javascript:void(0);"><i class="fas fa-file-alt"></i> <span>Exams & Results</span> <i class="fas fa-chevron-down menu-arrow"></i></a>
                     <ul>
                         <li><a href="{% url 'subject_mark_components' %}"><i class="fas fa-star-of-life"></i> Mark Components</a></li>
-                        <li><a href="{% url 'create_exam' %}"><i class="fas fa-plus-circle"></i> Create Exam</a></li>
+                        <li><a href="{% url 'upload_marks_dashboard' %}"><i class="fas fa-plus-circle"></i> Create Exam</a></li>
                         <li><a href="#"><i class="fas fa-edit"></i> Upload Marks</a></li>
                         <li><a href="#"><i class="fas fa-chart-bar"></i> View Results</a></li>
                         <li><a href="#"><i class="fas fa-print"></i> Generate Reports</a></li>

@@ -33,6 +33,7 @@ from django.db.models import Q, Sum, Avg, Count
 from django.core.paginator import Paginator
 # dashjboard
 
+
 def dashboard(request):
     """Main dashboard page"""
     # Get statistics
@@ -182,141 +183,66 @@ def exam_dashboard(request, exam_id):
         'avg_percentage': avg_percentage,
     }
     return render(request, 'exam/exam_dashboard.html', context)
-
-# exam
-
-# def create_exam(request):
-#     if request.method == 'POST':
-#         try:
-#             # Get form data
-#             exam_type = request.POST.get('exam_type')
-#             subject_mark_component_id = request.POST.get('subject_mark_component')
-#             exam_date = request.POST.get('exam_date')
-#             total_marks = request.POST.get('total_marks')
-#             passing_marks = request.POST.get('passing_marks')
-#             weightage_percentage = request.POST.get('weightage_percentage', 100.00)
-#             is_published = request.POST.get('is_published') == 'on'
-            
-#             # Get subject mark component
-#             subject_mark_component = SubjectMarkComponents.objects.get(id=subject_mark_component_id)
-            
-#             # Create exam
-#             exam = Exam.objects.create(
-#                 exam_type=exam_type,
-#                 subject_mark_component=subject_mark_component,
-#                 exam_date=exam_date,
-#                 total_marks=Decimal(total_marks),
-#                 passing_marks=Decimal(passing_marks) if passing_marks else Decimal('0.00'),
-#                 weightage_percentage=Decimal(weightage_percentage),
-#                 is_published=is_published
-#             )
-            
-#             return redirect('exam_dashboard', exam_id=exam.id)
-            
-#         except Exception as e:
-#             context = {
-#                 'error': str(e),
-#                 'subject_mark_components': SubjectMarkComponents.objects.all(),
-#             }
-#             return render(request, 'exam/create_exam.html', context)
-    
-#     # GET request
-#     context = {
-#         'subject_mark_components': SubjectMarkComponents.objects.all(),
-#         'exam_types': Exam.EXAM_TYPE_CHOICES,
-#     }
-#     return render(request, 'exam/create_exam.html', context)
-
-
 def create_exam(request):
-    """Create a new exam"""
-    # GET request - show the form
+    """Create a new exam - Teacher specific, only assigned subjects"""
+    from teachers.models import Teacher
+    from subject.models import SubjectAssign
+    
     if request.method == 'GET':
         try:
-            # Get current date for today's default
             today = datetime.now()
             
-            # Get all subject mark components
-            subject_mark_components = SubjectMarkComponents.objects.all().select_related(
-                'subject', 'semester', 'batch'
-            )
+            try:
+                teacher = Teacher.objects.get(user=request.user)
+            except Teacher.DoesNotExist:
+                messages.error(request, 'Teacher profile not found!')
+                return redirect('dashboard')
             
-            # Get exam types from Exam model
+            # Get subjects assigned to this teacher
+            assigned_subject_ids = SubjectAssign.objects.filter(
+                teacher=teacher,
+                is_active=True
+            ).values_list('subject_id', flat=True).distinct()
+            
+            # Get subject mark components only for assigned subjects
+            subject_mark_components = SubjectMarkComponents.objects.filter(
+                subject_id__in=assigned_subject_ids,
+                teacher=teacher
+            ).select_related('subject', 'semester', 'batch')
+            
+            # Calculate valid configurations count
+            valid_configs = subject_mark_components.filter(total_percentage=100).count()
+            
             exam_types = Exam.EXAM_TYPE_CHOICES
+            
+            recent_exams = Exam.objects.filter(
+                subject_mark_component__teacher=teacher
+            ).select_related(
+                'subject_mark_component__subject'
+            ).order_by('-created_at')[:5]
             
             context = {
                 'subject_mark_components': subject_mark_components,
                 'exam_types': exam_types,
                 'today': today,
-                'exams': Exam.objects.all().order_by('-created_at')[:5],  # Recent exams for sidebar
+                'exams': recent_exams,
+                'valid_configs': valid_configs,
             }
             
             return render(request, 'exam/create_exam.html', context)
             
         except Exception as e:
-            # Log the error for debugging
-            print(f"Error in create_exam GET: {str(e)}")
-            
-            # Return a simple error page or redirect
+            print(f"Error: {str(e)}")
             context = {
                 'error': f'Error loading form: {str(e)}',
-                'subject_mark_components': SubjectMarkComponents.objects.all(),
+                'subject_mark_components': [],
                 'exam_types': Exam.EXAM_TYPE_CHOICES,
                 'today': datetime.now(),
+                'exams': [],
+                'valid_configs': 0,
             }
             return render(request, 'exam/create_exam.html', context)
     
-    # POST request - process form submission
-    elif request.method == 'POST':
-        try:
-            # Get form data
-            exam_type = request.POST.get('exam_type')
-            subject_mark_component_id = request.POST.get('subject_mark_component')
-            exam_date = request.POST.get('exam_date')
-            total_marks = request.POST.get('total_marks')
-            passing_marks = request.POST.get('passing_marks')
-            weightage_percentage = request.POST.get('weightage_percentage', 100.00)
-            is_published = request.POST.get('is_published') == 'on'
-            
-            # Validate required fields
-            if not all([exam_type, subject_mark_component_id, exam_date, total_marks]):
-                messages.error(request, 'Please fill all required fields!')
-                return redirect('create_exam')
-            
-            # Get subject mark component
-            subject_mark_component = SubjectMarkComponents.objects.get(id=subject_mark_component_id)
-            
-            # Create exam
-            exam = Exam.objects.create(
-                exam_type=exam_type,
-                subject_mark_component=subject_mark_component,
-                exam_date=exam_date,
-                total_marks=Decimal(total_marks),
-                passing_marks=Decimal(passing_marks) if passing_marks else Decimal('0.00'),
-                weightage_percentage=Decimal(weightage_percentage),
-                is_published=is_published
-            )
-            
-            messages.success(request, f'Exam created successfully for {subject_mark_component.subject.code}!')
-            return redirect('exam_dashboard', exam_id=exam.id)
-            
-        except SubjectMarkComponents.DoesNotExist:
-            messages.error(request, 'Selected subject configuration does not exist!')
-            return redirect('create_exam')
-        except Exception as e:
-            messages.error(request, f'Error creating exam: {str(e)}')
-            
-            # Return to form with error
-            context = {
-                'error': str(e),
-                'subject_mark_components': SubjectMarkComponents.objects.all(),
-                'exam_types': Exam.EXAM_TYPE_CHOICES,
-                'today': datetime.now(),
-            }
-            return render(request, 'exam/create_exam.html', context)
-    
-    # If not GET or POST, return error
-    return render(request, 'exam/error.html', {'error': 'Invalid request method'})
 
 def delete_exam(request, exam_id):
     """Delete confirmation page for an exam"""
@@ -791,148 +717,196 @@ def calculate_cumulative_gpa(student):
     else:
         return Decimal('0.00')
 
-# def subject_mark_components(request):
-#     """Configure mark distribution for subjects"""
-#     if request.method == 'POST':
-#         subject_id = request.POST.get('subject')
-#         teacher_id = request.POST.get('teacher')
-#         semester_id = request.POST.get('semester')
-#         batch_id = request.POST.get('batch')
-#         section_id = request.POST.get('section')
-#         discipline_id = request.POST.get('discipline')
-#         academic_year = request.POST.get('academic_year')
-        
-#         component, created = SubjectMarkComponents.objects.update_or_create(
-#             subject_id=subject_id,
-#             teacher_id=teacher_id,
-#             semester_id=semester_id,
-#             batch_id=batch_id,
-#             section_id=section_id if section_id else None,
-#             discipline_id=discipline_id,
-#             academic_year=academic_year,
-#             defaults={
-#                 'mid_term_percentage': Decimal(request.POST.get('mid_term', 20.00)),
-#                 'final_term_percentage': Decimal(request.POST.get('final', 65.00)),
-#                 'quiz_percentage': Decimal(request.POST.get('quiz', 5.00)),
-#                 'assignment_percentage': Decimal(request.POST.get('assignment', 5.00)),
-#                 'presentation_percentage': Decimal(request.POST.get('presentation', 5.00)),
-#                 'lab_percentage': Decimal(request.POST.get('lab', 0.00)),
-#                 'viva_percentage': Decimal(request.POST.get('viva', 0.00)),
-#                 'attendance_percentage': Decimal(request.POST.get('attendance', 5.00)),
-#                 'notes': request.POST.get('notes', ''),
-#             }
-#         )
-        
-#         return redirect('subject_mark_components')
-    
-#     components = SubjectMarkComponents.objects.all().select_related(
-#         'subject', 'teacher', 'semester', 'batch', 'section', 'discipline'
-#     )
-    
-#     context = {
-#         'components': components,
-#         'subjects': Subject.objects.all(),
-#         'teachers': Teacher.objects.all(),
-#         'semesters': Semester.objects.all(),
-#         'batches': Batch.objects.all(),
-#         'sections': Section.objects.all(),
-#         'disciplines': Discipline.objects.all(),
-#     }
-    
-#     return render(request, 'exam/subject_mark_components.html', context)
 
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from django.http import JsonResponse
+
+
 from datetime import datetime
-from decimal import Decimal
 
+from decimal import Decimal
 def subject_mark_components(request):
-    """Configure mark distribution for subjects - Simplified version (only subject)"""
+    """Configure mark distribution for subjects - Teacher specific with sections"""
+    from teachers.models import Teacher
+    from subject.models import SubjectAssign, Subject
+    from .models import Exam, ExamResult
+    from django.contrib import messages
+    from decimal import Decimal
+    
+    # Get logged-in teacher
+    try:
+        teacher = Teacher.objects.get(user=request.user)
+    except Teacher.DoesNotExist:
+        messages.error(request, 'Teacher profile not found!')
+        return redirect('dashboard')
+    
+    # Exam types list for template
+    exam_type_list = [
+        ('mid_term', 'Mid Term'),
+        ('final', 'Final'),
+        ('quiz', 'Quiz'),
+        ('assignment', 'Assignment'),
+        ('presentation', 'Presentation'),
+        ('lab', 'Lab'),
+        ('viva', 'Viva'),
+        ('attendance', 'Attendance'),
+    ]
+    
+    # Get subjects assigned to this teacher with their sections
+    subject_assignments = SubjectAssign.objects.filter(
+        teacher=teacher,
+        is_active=True
+    ).select_related('subject', 'batch', 'semester', 'discipline').prefetch_related('sections')
+    
+    # Organize data by subject with sections
+    subjects_with_sections = {}
+    for assignment in subject_assignments:
+        subject = assignment.subject
+        if subject.id not in subjects_with_sections:
+            subjects_with_sections[subject.id] = {
+                'subject': subject,
+                'assignments': []
+            }
+        
+        # Get sections for this assignment
+        sections_list = list(assignment.sections.all())
+        
+        # Try to get existing mark component (use filter().first() instead of get_or_create)
+        mark_component = SubjectMarkComponents.objects.filter(
+            subject=subject,
+            teacher=teacher,
+            semester=assignment.semester,
+            batch=assignment.batch,
+            discipline=assignment.discipline
+        ).first()
+        
+        # If no component exists, create one with defaults
+        if not mark_component:
+            mark_component = SubjectMarkComponents.objects.create(
+                subject=subject,
+                teacher=teacher,
+                semester=assignment.semester,
+                batch=assignment.batch,
+                discipline=assignment.discipline,
+                mid_term_percentage=Decimal('20.00'),
+                final_term_percentage=Decimal('65.00'),
+                quiz_percentage=Decimal('5.00'),
+                assignment_percentage=Decimal('5.00'),
+                presentation_percentage=Decimal('0.00'),
+                lab_percentage=Decimal('0.00'),
+                viva_percentage=Decimal('0.00'),
+                attendance_percentage=Decimal('5.00'),
+                section=sections_list[0] if sections_list else None,
+                academic_year=get_current_academic_year(),
+            )
+        
+        # Check which components have marks uploaded
+        locked_components = []
+        has_any_marks = False
+        
+        for exam_type, _ in exam_type_list:
+            exam = Exam.objects.filter(
+                subject_mark_component=mark_component,
+                exam_type=exam_type
+            ).first()
+            
+            if exam:
+                has_results = ExamResult.objects.filter(exam=exam).exists()
+                if has_results:
+                    locked_components.append(exam_type)
+                    has_any_marks = True
+        
+        subjects_with_sections[subject.id]['assignments'].append({
+            'assignment_id': assignment.id,
+            'batch': assignment.batch,
+            'semester': assignment.semester,
+            'discipline': assignment.discipline,
+            'sections': sections_list,
+            'section_names': ', '.join([s.name for s in sections_list]),
+            'student_count': Student.objects.filter(section__in=sections_list).count(),
+            'locked_components': locked_components,
+            'has_any_marks': has_any_marks,
+            'all_components_locked': len(locked_components) >= 8,
+            'config': mark_component,  # Pass the config object
+            'config_exists': True,
+        })
     
     if request.method == 'POST':
         try:
-            # Get form data - ONLY subject now
             subject_id = request.POST.get('subject')
+            assignment_id = request.POST.get('assignment_id')
             
-            # Validate required fields
             if not subject_id:
                 messages.error(request, 'Please select a subject!')
                 return redirect('subject_mark_components')
             
-            # Get the subject
-            subject = get_object_or_404(Subject, id=subject_id)
+            subject = Subject.objects.get(id=subject_id)
+            assignment = SubjectAssign.objects.get(id=assignment_id, teacher=teacher)
             
-            # Parse percentage values with safe defaults
-            mid_term = Decimal(request.POST.get('mid_term', '20.00'))
-            final_term = Decimal(request.POST.get('final', '65.00'))
-            quiz = Decimal(request.POST.get('quiz', '5.00'))
-            assignment = Decimal(request.POST.get('assignment', '5.00'))
-            presentation = Decimal(request.POST.get('presentation', '0.00'))
-            lab = Decimal(request.POST.get('lab', '0.00'))
-            viva = Decimal(request.POST.get('viva', '0.00'))
-            attendance = Decimal(request.POST.get('attendance', '5.00'))
+            # Get existing mark component
+            mark_component = SubjectMarkComponents.objects.filter(
+                subject=subject,
+                teacher=teacher,
+                semester=assignment.semester,
+                batch=assignment.batch,
+                discipline=assignment.discipline
+            ).first()
+            
+            if not mark_component:
+                # Create new component if it doesn't exist
+                first_section = assignment.sections.first()
+                mark_component = SubjectMarkComponents.objects.create(
+                    subject=subject,
+                    teacher=teacher,
+                    semester=assignment.semester,
+                    batch=assignment.batch,
+                    discipline=assignment.discipline,
+                    section=first_section,
+                    academic_year=get_current_academic_year(),
+                )
+            
+            # Parse percentage values
+            updates = {}
+            for exam_type, _ in exam_type_list:
+                value = Decimal(request.POST.get(exam_type, '0.00'))
+                
+                # Check if this exam type is locked (has existing results)
+                exam = Exam.objects.filter(
+                    subject_mark_component=mark_component,
+                    exam_type=exam_type
+                ).first()
+                if exam and ExamResult.objects.filter(exam=exam).exists():
+                    # Skip updating locked components
+                    continue
+                
+                updates[f'{exam_type}_percentage'] = value
             
             # Calculate total
-            total = (mid_term + final_term + quiz + assignment + 
-                    presentation + lab + viva + attendance)
+            total = sum(updates.values())
             
-            # Validate total is 100%
             if abs(total - Decimal('100.00')) > Decimal('0.01'):
                 messages.warning(request, f'Total percentage is {total}%, not 100%.')
             
-            # Check if configuration already exists for this subject
-            component, created = SubjectMarkComponents.objects.update_or_create(
-                subject=subject,
-                defaults={
-                    'mid_term_percentage': mid_term,
-                    'final_term_percentage': final_term,
-                    'quiz_percentage': quiz,
-                    'assignment_percentage': assignment,
-                    'presentation_percentage': presentation,
-                    'lab_percentage': lab,
-                    'viva_percentage': viva,
-                    'attendance_percentage': attendance,
-                    # Set default values for required fields (to satisfy model constraints)
-                    'teacher_id': get_default_teacher(),
-                    'semester_id': get_default_semester(),
-                    'batch_id': get_default_batch(),
-                    'discipline_id': get_default_discipline(),
-                    'academic_year': get_current_academic_year(),
-                }
-            )
+            # Update the component
+            for key, value in updates.items():
+                setattr(mark_component, key, value)
+            mark_component.save()
             
-            if created:
-                messages.success(request, f'Mark distribution for {subject.code} created successfully!')
-            else:
-                messages.success(request, f'Mark distribution for {subject.code} updated successfully!')
-                
+            section_names = ', '.join([s.name for s in assignment.sections.all()])
+            messages.success(request, f'Mark distribution for {subject.code} ({assignment.batch.name} - Sections: {section_names}) saved successfully!')
+            
         except Exception as e:
             messages.error(request, f'Error saving configuration: {str(e)}')
         
         return redirect('subject_mark_components')
     
-    # GET request - show the form
-    # Get all subjects with their configurations
-    components = SubjectMarkComponents.objects.all().select_related('subject').order_by('-id')
-    subjects = Subject.objects.all().order_by('code')
-    
-    # Calculate statistics
-    total_configs = components.count()
-    valid_configs = components.filter(total_percentage=100).count()
-    invalid_configs = total_configs - valid_configs
-    
     context = {
-        'components': components,
-        'subjects': subjects,
-        'total_configs': total_configs,
-        'valid_configs': valid_configs,
-        'invalid_configs': invalid_configs,
+        'subjects_with_sections': subjects_with_sections,
+        'teacher': teacher,
+        'total_subjects': len(subjects_with_sections),
+        'total_assignments': sum(len(s['assignments']) for s in subjects_with_sections.values()),
+        'exam_type_list': exam_type_list,
     }
     
     return render(request, 'exam/subject_mark_components.html', context)
-
-
 def get_default_teacher():
     """Get or create a default teacher"""
     from teachers.models import Teacher
@@ -994,20 +968,20 @@ def get_current_academic_year():
     """Get current academic year"""
     current_year = datetime.now().year
     return f"{current_year}-{current_year + 1}"
+
 def load_mark_component(request, id):
-    """Load configuration data for editing"""
+    """Load configuration data for editing - Teacher specific"""
     try:
+        teacher = Teacher.objects.get(user=request.user)
         component = SubjectMarkComponents.objects.get(id=id)
+        
+        # Verify teacher owns this configuration
+        if component.teacher_id != teacher.id:
+            return JsonResponse({'success': False, 'error': 'Unauthorized - You do not own this configuration'})
+        
         data = {
             'success': True,
             'subject_id': component.subject_id,
-            'teacher_id': component.teacher_id,
-            'semester_id': component.semester_id,
-            'batch_id': component.batch_id,
-            'section_id': component.section_id,
-            'discipline_id': component.discipline_id,
-            'academic_year': component.academic_year,
-            'notes': component.notes,
             'mid_term_percentage': str(component.mid_term_percentage),
             'final_term_percentage': str(component.final_term_percentage),
             'quiz_percentage': str(component.quiz_percentage),
@@ -1018,29 +992,57 @@ def load_mark_component(request, id):
             'attendance_percentage': str(component.attendance_percentage),
         }
         return JsonResponse(data)
+    except Teacher.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Teacher not found'})
     except SubjectMarkComponents.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Configuration not found'})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
 def delete_mark_component(request, id):
-    """Delete confirmation page for mark distribution configuration"""
-    # Get the component or show 404 error
-    component = get_object_or_404(SubjectMarkComponents, id=id)
+    """Delete mark distribution configuration - Teacher specific"""
+    from teachers.models import Teacher
+    from subject.models import SubjectAssign
+    from django.contrib import messages
+    from django.shortcuts import get_object_or_404, redirect
+    from .models import SubjectMarkComponents
     
-    if request.method == 'POST':
-        # User confirmed deletion
-        subject_code = component.subject.code
-        component.delete()
-        messages.success(request, f'Mark distribution for {subject_code} has been deleted successfully!')
+    try:
+        teacher = Teacher.objects.get(user=request.user)
+    except Teacher.DoesNotExist:
+        messages.error(request, 'Teacher profile not found!')
+        return redirect('subject_mark_components')
+    except Exception as e:
+        messages.error(request, f'Error finding teacher: {str(e)}')
         return redirect('subject_mark_components')
     
-    # Show confirmation page for GET request
-    return render(request, 'exam/delete_confirmation.html', {
+    # Get the component
+    try:
+        component = get_object_or_404(SubjectMarkComponents, id=id)
+    except Exception as e:
+        messages.error(request, f'Configuration not found: {str(e)}')
+        return redirect('subject_mark_components')
+    
+    # Verify teacher owns this configuration
+    if component.teacher_id != teacher.id:
+        messages.error(request, 'You are not authorized to delete this configuration!')
+        return redirect('subject_mark_components')
+    
+    if request.method == 'POST':
+        try:
+            subject_code = component.subject.code
+            component.delete()
+            messages.success(request, f'Mark distribution for {subject_code} deleted successfully!')
+        except Exception as e:
+            messages.error(request, f'Error deleting configuration: {str(e)}')
+        return redirect('subject_mark_components')
+    
+    # GET request - show confirmation page
+    context = {
         'component': component,
         'title': 'Delete Mark Distribution'
-    })
-
+    }
+    return render(request, 'exam/delete_confirmation.html', context)
 def subject_result_detail(request, student_id, subject_mark_component_id):
     """Detailed view of a student's result in a subject"""
     student = get_object_or_404(Student, id=student_id)
@@ -1412,3 +1414,580 @@ def transcript_detail(request, pk):
     }
     
     return render(request, 'transcript_detail.html', context)
+
+
+
+
+
+
+
+
+
+
+    # ==================== DIRECT MARKS UPLOAD SYSTEM ====================
+def student_subject_marks(request):
+    """Show all students with their total marks in each subject, grouped by section"""
+    from teachers.models import Teacher
+    from student.models import Student
+    from subject.models import Subject
+    from Academic.models import Section
+    from django.core.paginator import Paginator
+    from django.db.models import Q
+    from collections import defaultdict
+    
+    try:
+        teacher = Teacher.objects.get(user=request.user)
+        
+        # Get filter parameters
+        selected_subject_id = request.GET.get('subject_id')
+        selected_section_id = request.GET.get('section_id')
+        search_query = request.GET.get('search', '')
+        
+        # Get all subjects assigned to this teacher
+        assigned_subjects = Subject.objects.filter(
+            assigned_teachers__teacher=teacher,
+            assigned_teachers__is_active=True
+        ).distinct()
+        
+        # Get all sections
+        sections = Section.objects.all()
+        
+        # If subject_id is provided, filter to that subject only
+        if selected_subject_id:
+            assigned_subjects = assigned_subjects.filter(id=selected_subject_id)
+        
+        # Get students based on filters
+        students = Student.objects.all()
+        
+        if selected_section_id:
+            students = students.filter(section_id=selected_section_id)
+        
+        if search_query:
+            students = students.filter(
+                Q(student_id__icontains=search_query) |
+                Q(first_name__icontains=search_query) |
+                Q(last_name__icontains=search_query)
+            )
+        
+        # Prepare student data with marks, grouped by section
+        students_by_section = defaultdict(list)
+        
+        for student in students:
+            section_name = student.section.name if student.section else 'No Section'
+            
+            for subject in assigned_subjects:
+                # Get mark component
+                mark_component = SubjectMarkComponents.objects.filter(
+                    subject=subject,
+                    teacher=teacher
+                ).first()
+                
+                if not mark_component:
+                    continue
+                
+                # Get marks for each component
+                component_marks = {
+                    'mid_term': {'uploaded': False, 'marks': 0, 'max': float(mark_component.mid_term_percentage)},
+                    'final': {'uploaded': False, 'marks': 0, 'max': float(mark_component.final_term_percentage)},
+                    'quiz': {'uploaded': False, 'marks': 0, 'max': float(mark_component.quiz_percentage)},
+                    'assignment': {'uploaded': False, 'marks': 0, 'max': float(mark_component.assignment_percentage)},
+                    'lab': {'uploaded': False, 'marks': 0, 'max': float(mark_component.lab_percentage)},
+                    'attendance': {'uploaded': False, 'marks': 0, 'max': float(mark_component.attendance_percentage)},
+                }
+                
+                total_marks = 0
+                total_max = 0
+                
+                for exam_type in component_marks.keys():
+                    exam = Exam.objects.filter(
+                        subject_mark_component=mark_component,
+                        exam_type=exam_type
+                    ).first()
+                    
+                    if exam:
+                        result = ExamResult.objects.filter(exam=exam, student=student).first()
+                        if result and result.marks_obtained:
+                            component_marks[exam_type]['uploaded'] = True
+                            component_marks[exam_type]['marks'] = float(result.marks_obtained)
+                            total_marks += float(result.marks_obtained)
+                            total_max += component_marks[exam_type]['max']
+                
+                percentage = (total_marks / total_max * 100) if total_max > 0 else 0
+                is_passed = percentage >= 50
+                grade = calculate_grade(percentage)
+                
+                students_by_section[section_name].append({
+                    'id': student.id,
+                    'student_id': student.student_id,
+                    'name': f"{student.first_name} {student.last_name}",
+                    'email': student.email,
+                    'section': section_name,
+                    'subject_id': subject.id,
+                    'subject_code': subject.code,
+                    'subject_name': subject.name,
+                    'mid_term': component_marks['mid_term'],
+                    'final': component_marks['final'],
+                    'quiz': component_marks['quiz'],
+                    'assignment': component_marks['assignment'],
+                    'lab': component_marks['lab'],
+                    'attendance': component_marks['attendance'],
+                    'total_marks': total_marks,
+                    'percentage': percentage,
+                    'grade': grade,
+                    'is_passed': is_passed,
+                })
+        
+        context = {
+            'students_by_section': dict(students_by_section),
+            'subjects': assigned_subjects,
+            'sections': sections,
+            'selected_subject_id': selected_subject_id,
+            'selected_section_id': selected_section_id,
+            'search_query': search_query,
+        }
+        
+        return render(request, 'exam/student_subject_marks.html', context)
+        
+    except Teacher.DoesNotExist:
+        messages.error(request, 'Teacher profile not found!')
+        return redirect('dashboard')
+def calculate_grade(percentage):
+    """Calculate grade based on percentage"""
+    if percentage >= 90:
+        return 'A+'
+    elif percentage >= 80:
+        return 'A'
+    elif percentage >= 70:
+        return 'B'
+    elif percentage >= 60:
+        return 'C'
+    elif percentage >= 50:
+        return 'D'
+    else:
+        return 'F'
+
+
+
+def upload_marks_dashboard(request):
+    """Dashboard showing all subjects and sections for marks upload"""
+    from teachers.models import Teacher
+    from subject.models import SubjectAssign
+    from student.models import Student
+    
+    try:
+        teacher = Teacher.objects.get(user=request.user)
+        
+        # Get all subject assignments for this teacher
+        subject_assignments = SubjectAssign.objects.filter(
+            teacher=teacher,
+            is_active=True
+        ).select_related('subject', 'batch', 'semester', 'discipline').prefetch_related('sections')
+        
+        # Organize data by subject
+        subjects_data = []
+        processed_assignments = set()
+        
+        for assignment in subject_assignments:
+            subject = assignment.subject
+            
+            # Skip if we already processed this subject (to avoid duplicates)
+            if subject.id in processed_assignments:
+                continue
+            processed_assignments.add(subject.id)
+            
+            # Get mark distribution for this subject
+            mark_component = SubjectMarkComponents.objects.filter(
+                subject=subject,
+                teacher=teacher
+            ).first()
+            
+            if not mark_component:
+                continue
+            
+            # Get all sections for this subject from all assignments
+            all_sections = []
+            all_assignments = SubjectAssign.objects.filter(
+                teacher=teacher,
+                subject=subject,
+                is_active=True
+            ).prefetch_related('sections')
+            
+            for assign in all_assignments:
+                for section in assign.sections.all():
+                    # Get student count
+                    student_count = Student.objects.filter(section=section).count()
+                    
+                    # Get exam types with their status and max marks
+                    exam_types = []
+                    exam_type_list = [
+                        ('mid_term', 'Mid Term', mark_component.mid_term_percentage),
+                        ('final', 'Final', mark_component.final_term_percentage),
+                        ('quiz', 'Quiz', mark_component.quiz_percentage),
+                        ('assignment', 'Assignment', mark_component.assignment_percentage),
+                        ('presentation', 'Presentation', mark_component.presentation_percentage),
+                        ('lab', 'Lab', mark_component.lab_percentage),
+                        ('viva', 'Viva', mark_component.viva_percentage),
+                        ('attendance', 'Attendance', mark_component.attendance_percentage),
+                    ]
+                    
+                    for exam_type, exam_name, percentage in exam_type_list:
+                        if percentage > 0:
+                            # Check if marks already uploaded
+                            exam = Exam.objects.filter(
+                                subject_mark_component=mark_component,
+                                exam_type=exam_type
+                            ).first()
+                            
+                            if exam:
+                                results_count = ExamResult.objects.filter(
+                                    exam=exam, 
+                                    student__section=section
+                                ).count()
+                                uploaded = results_count > 0
+                            else:
+                                uploaded = False
+                                results_count = 0
+                            
+                            exam_types.append({
+                                'type': exam_type,
+                                'name': exam_name,
+                                'percentage': float(percentage),
+                                'max_marks': float(percentage),  # Max marks equals percentage
+                                'uploaded': uploaded,
+                                'student_count': results_count,
+                            })
+                    
+                    all_sections.append({
+                        'section': section,
+                        'batch': assign.batch,
+                        'semester': assign.semester,
+                        'student_count': student_count,
+                        'exam_types': exam_types,
+                    })
+            
+            subjects_data.append({
+                'subject': subject,
+                'mark_component': mark_component,
+                'sections': all_sections,
+            })
+        
+        context = {
+            'teacher': teacher,
+            'subjects_data': subjects_data,
+        }
+        
+        return render(request, 'exam/upload_marks_dashboard.html', context)
+        
+    except Teacher.DoesNotExist:
+        messages.error(request, 'Teacher profile not found!')
+        return redirect('dashboard')
+def select_exam_type_for_marks(request, subject_id, section_id):
+    """Select exam type after choosing subject and section"""
+    from teachers.models import Teacher
+    
+    subject = get_object_or_404(Subject, id=subject_id)
+    section = get_object_or_404(Section, id=section_id)
+    
+    try:
+        teacher = Teacher.objects.get(user=request.user)
+        
+        # Get mark distribution for this subject
+        mark_component = SubjectMarkComponents.objects.filter(
+            subject=subject,
+            teacher=teacher
+        ).first()
+        
+        if not mark_component:
+            messages.error(request, 'Mark distribution not configured for this subject!')
+            return redirect('upload_marks_dashboard')
+        
+        # Get available exam types (those with percentage > 0)
+        available_exams = []
+        for exam_type, exam_name in Exam.EXAM_TYPE_CHOICES:
+            percentage = getattr(mark_component, f'{exam_type}_percentage', 0)
+            if percentage > 0:
+                # Check if already uploaded
+                existing_exam = Exam.objects.filter(
+                    subject_mark_component=mark_component,
+                    exam_type=exam_type
+                ).first()
+                
+                available_exams.append({
+                    'type': exam_type,
+                    'name': exam_name,
+                    'percentage': percentage,
+                    'is_uploaded': existing_exam is not None,
+                    'exam_id': existing_exam.id if existing_exam else None,
+                })
+        
+        context = {
+            'subject': subject,
+            'section': section,
+            'teacher': teacher,
+            'mark_component': mark_component,
+            'available_exams': available_exams,
+        }
+        
+        return render(request, 'exam/select_exam_type.html', context)
+        
+    except Teacher.DoesNotExist:
+        messages.error(request, 'Teacher profile not found!')
+        return redirect('upload_marks_dashboard')
+
+def upload_marks_direct(request, subject_id, section_id, exam_type):
+    """Direct marks upload for a specific exam type with proper max marks"""
+    from teachers.models import Teacher
+    from decimal import Decimal
+    
+    subject = get_object_or_404(Subject, id=subject_id)
+    section = get_object_or_404(Section, id=section_id)
+    
+    try:
+        teacher = Teacher.objects.get(user=request.user)
+        
+        # Get mark distribution for this subject
+        mark_component = SubjectMarkComponents.objects.filter(
+            subject=subject,
+            teacher=teacher
+        ).first()
+        
+        if not mark_component:
+            messages.error(request, 'Mark distribution not configured for this subject!')
+            return redirect('upload_marks_dashboard')
+        
+        # Get the percentage weightage for this exam type
+        weightage_field = f'{exam_type}_percentage'
+        weightage = float(getattr(mark_component, weightage_field, 0))
+        
+        # Calculate maximum marks based on weightage (out of 100 total)
+        # If Mid Term = 15%, then max marks = 15
+        max_marks = weightage  # Because total is 100 marks
+        
+        # Get or create exam for this type
+        exam, created = Exam.objects.get_or_create(
+            subject_mark_component=mark_component,
+            exam_type=exam_type,
+            defaults={
+                'total_marks': Decimal(str(max_marks)),
+                'passing_marks': Decimal(str(max_marks * 0.4)),  # 40% of max marks
+                'weightage_percentage': Decimal(str(weightage)),
+                'is_published': True,
+            }
+        )
+        
+        # Update exam if weightage changed
+        if not created and exam.total_marks != max_marks:
+            exam.total_marks = Decimal(str(max_marks))
+            exam.passing_marks = Decimal(str(max_marks * 0.4))
+            exam.weightage_percentage = Decimal(str(weightage))
+            exam.save()
+        
+        # Get students in this section
+        students = Student.objects.filter(section=section).order_by('student_id')
+        
+        # Get existing results
+        existing_results = {}
+        for result in ExamResult.objects.filter(exam=exam, student__in=students):
+            existing_results[result.student.id] = result
+        
+        if request.method == 'POST':
+            success_count = 0
+            for student in students:
+                marks_key = f'marks_{student.id}'
+                marks_value = request.POST.get(marks_key)
+                
+                if marks_value:
+                    try:
+                        marks_obtained = Decimal(marks_value)
+                        is_absent = request.POST.get(f'absent_{student.id}') == 'on'
+                        remarks = request.POST.get(f'remarks_{student.id}', '')
+                        
+                        # Validate marks not exceeding max_marks
+                        if marks_obtained > Decimal(str(max_marks)):
+                            messages.warning(request, f'Marks for {student.first_name} {student.last_name} exceed maximum ({max_marks})')
+                            marks_obtained = Decimal(str(max_marks))
+                        
+                        result, result_created = ExamResult.objects.update_or_create(
+                            exam=exam,
+                            student=student,
+                            defaults={
+                                'marks_obtained': marks_obtained,
+                                'is_absent': is_absent,
+                                'remarks': remarks,
+                                'entered_by': teacher,
+                            }
+                        )
+                        success_count += 1
+                    except:
+                        pass
+            
+            # messages.success(request, f'Successfully saved marks for {success_count} students!')
+            return redirect('view_marks', subject_id=subject_id, section_id=section_id, exam_type=exam_type)
+        
+        context = {
+            'subject': subject,
+            'section': section,
+            'exam_type': exam_type,
+            'exam_type_display': dict(Exam.EXAM_TYPE_CHOICES).get(exam_type, exam_type),
+            'exam': exam,
+            'students': students,
+            'existing_results': existing_results,
+            'mark_component': mark_component,
+            'weightage': weightage,
+            'max_marks': max_marks,  # This is the important field - max marks for this exam
+        }
+        
+        return render(request, 'exam/upload_marks_direct.html', context)
+        
+    except Teacher.DoesNotExist:
+        messages.error(request, 'Teacher profile not found!')
+        return redirect('upload_marks_dashboard')
+
+def view_marks(request, subject_id, section_id, exam_type):
+    """View uploaded marks for a specific exam type"""
+    from teachers.models import Teacher
+    from student.models import Student
+    from subject.models import Subject
+    from Academic.models import Section
+    from .models import SubjectMarkComponents, Exam, ExamResult
+    
+    subject = get_object_or_404(Subject, id=subject_id)
+    section = get_object_or_404(Section, id=section_id)
+    
+    try:
+        teacher = Teacher.objects.get(user=request.user)
+        
+        # Get mark distribution
+        mark_component = SubjectMarkComponents.objects.filter(
+            subject=subject,
+            teacher=teacher
+        ).first()
+        
+        if not mark_component:
+            messages.error(request, 'Mark distribution not configured!')
+            return redirect('upload_marks_dashboard')
+        
+        # Get exam
+        exam = Exam.objects.filter(
+            subject_mark_component=mark_component,
+            exam_type=exam_type
+        ).first()
+        
+        if not exam:
+            messages.warning(request, 'No marks uploaded yet for this exam type!')
+            return redirect('upload_marks_dashboard')
+        
+        # Get students in this section
+        students = Student.objects.filter(section=section).order_by('student_id')
+        
+        # Prepare student data with results
+        students_data = []
+        present_count = 0
+        absent_count = 0
+        marks_list = []
+        
+        for student in students:
+            try:
+                result = ExamResult.objects.get(exam=exam, student=student)
+                has_result = True
+                marks_obtained = result.marks_obtained
+                percentage = result.percentage
+                is_absent = result.is_absent
+                remarks = result.remarks
+                
+                if is_absent:
+                    absent_count += 1
+                elif marks_obtained is not None:
+                    present_count += 1
+                    marks_list.append(float(marks_obtained))
+            except ExamResult.DoesNotExist:
+                has_result = False
+                marks_obtained = None
+                percentage = None
+                is_absent = False
+                remarks = ''
+            
+            students_data.append({
+                'id': student.id,
+                'student_id': student.student_id,
+                'first_name': student.first_name,
+                'last_name': student.last_name,
+                'has_result': has_result,
+                'marks_obtained': marks_obtained,
+                'percentage': percentage,
+                'is_absent': is_absent,
+                'remarks': remarks,
+            })
+        
+        # Calculate average marks
+        avg_marks = sum(marks_list) / len(marks_list) if marks_list else 0
+        total_students = len(students_data)
+        
+        context = {
+            'subject': subject,
+            'section': section,
+            'exam_type': exam_type,
+            'exam_type_display': dict(Exam.EXAM_TYPE_CHOICES).get(exam_type, exam_type),
+            'exam': exam,
+            'students_data': students_data,
+            'total_students': total_students,
+            'present_count': present_count,
+            'absent_count': absent_count,
+            'avg_marks': round(avg_marks, 2),
+        }
+        
+        return render(request, 'exam/view_marks.html', context)
+        
+    except Teacher.DoesNotExist:
+        messages.error(request, 'Teacher profile not found!')
+        return redirect('upload_marks_dashboard')
+def delete_mark_component(request, id):
+    """Delete mark distribution configuration - Only if no marks uploaded"""
+    from teachers.models import Teacher
+    from .models import Exam, ExamResult
+    from django.contrib import messages
+    from django.shortcuts import get_object_or_404, redirect
+    
+    try:
+        teacher = Teacher.objects.get(user=request.user)
+    except Teacher.DoesNotExist:
+        messages.error(request, 'Teacher profile not found!')
+        return redirect('subject_mark_components')
+    
+    # Get the component
+    component = get_object_or_404(SubjectMarkComponents, id=id)
+    
+    # Verify teacher owns this configuration
+    if component.teacher_id != teacher.id:
+        messages.error(request, 'You are not authorized to delete this configuration!')
+        return redirect('subject_mark_components')
+    
+    # Check if any marks have been uploaded for this configuration
+    exams = Exam.objects.filter(subject_mark_component=component)
+    has_marks = False
+    for exam in exams:
+        if ExamResult.objects.filter(exam=exam).exists():
+            has_marks = True
+            break
+    
+    if has_marks:
+        messages.error(request, 'Cannot delete configuration because marks have already been uploaded!')
+        return redirect('subject_mark_components')
+    
+    if request.method == 'POST':
+        try:
+            subject_code = component.subject.code
+            component.delete()
+            messages.success(request, f'Mark distribution for {subject_code} deleted successfully!')
+        except Exception as e:
+            messages.error(request, f'Error deleting configuration: {str(e)}')
+        return redirect('subject_mark_components')
+    
+    # GET request - show confirmation page
+    context = {
+        'component': component,
+        'title': 'Delete Mark Distribution'
+    }
+    return render(request, 'exam/delete_confirmation.html', context)
+
+        

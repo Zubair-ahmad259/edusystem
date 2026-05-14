@@ -9,6 +9,14 @@ urlpatterns = [
     # Subject Mark Components
     path('subject-mark-components/', views.subject_mark_components, name='subject_mark_components'),
     
+path('student-subject-marks/', views.student_subject_marks, name='student_subject_marks'),
+# path('student-subject-detail/<int:student_id>/<int:subject_id>/', views.student_subject_detail, name='student_subject_detail'),
+
+    path('upload-marks/', views.upload_marks_dashboard, name='upload_marks_dashboard'),
+    path('upload-marks/<int:subject_id>/<int:section_id>/', views.select_exam_type_for_marks, name='select_exam_type_for_marks'),
+    path('upload-marks/<int:subject_id>/<int:section_id>/<str:exam_type>/', views.upload_marks_direct, name='upload_marks_direct'),
+    path('view-marks/<int:subject_id>/<int:section_id>/<str:exam_type>/', views.view_marks, name='view_marks'),
+    
     # Exam management
     path('exams/', views.exam_list, name='exam_list'),
     path('exam/create/', views.create_exam, name='create_exam'),

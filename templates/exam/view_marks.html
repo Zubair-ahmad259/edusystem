@@ -1,0 +1,175 @@
+{% extends 'teacher/teacher_dashboard.html' %}
+{% load static %}
+
+{% block title %}View {{ exam_type_display }} Marks{% endblock %}
+
+{% block body %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'upload_marks_dashboard' %}">Upload Marks</a></li>
+                    <li class="breadcrumb-item active">{{ exam_type_display }} Marks</li>
+                </ol>
+            </nav>
+            <h2 class="text-primary">
+                <i class="fas fa-chart-line"></i> {{ exam_type_display }} Marks
+            </h2>
+            <p class="text-muted">
+                <strong>{{ subject.code }} - {{ subject.name }}</strong> | 
+                Section: {{ section.name }}
+            </p>
+        </div>
+        <div class="col text-end">
+            <a href="{% url 'upload_marks_direct' subject.id section.id exam_type %}" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Edit Marks
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card bg-primary text-white">
+                <div class="stat-number">{{ total_students }}</div>
+                <div class="stat-label">Total Students</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card bg-success text-white">
+                <div class="stat-number">{{ present_count }}</div>
+                <div class="stat-label">Present</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card bg-danger text-white">
+                <div class="stat-number">{{ absent_count }}</div>
+                <div class="stat-label">Absent</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card bg-info text-white">
+                <div class="stat-number">{{ avg_marks }}</div>
+                <div class="stat-label">Average Marks</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Marks Table -->
+    <div class="card shadow">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Student Results</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Student ID</th>
+                            <th>Student Name</th>
+                            <th class="text-center">Marks<br><small>(Max: {{ exam.total_marks|floatformat:0 }})</small></th>
+                            <th class="text-center">Percentage</th>
+                            <th class="text-center">Status</th>
+                            <th>Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students_data %}
+                        <tr>
+                            <td>{{ forloop.counter }}</div>
+                            <td>{{ student.student_id }}</div>
+                            <td>{{ student.first_name }} {{ student.last_name }}</div>
+                            
+                            <!-- Marks Column -->
+                            <td class="text-center">
+                                {% if student.has_result %}
+                                    {% if student.is_absent %}
+                                        <span class="badge bg-danger">Absent</span>
+                                    {% else %}
+                                        <strong>{{ student.marks_obtained|floatformat:1 }}</strong>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Percentage Column -->
+                            <td class="text-center">
+                                {% if student.has_result and student.marks_obtained and not student.is_absent %}
+                                    <div class="progress" style="height: 6px; width: 60px; display: inline-block;">
+                                        <div class="progress-bar bg-{% if student.percentage >= 75 %}success{% elif student.percentage >= 50 %}warning{% else %}danger{% endif %}" 
+                                             style="width: {{ student.percentage }}%"></div>
+                                    </div>
+                                    <br>
+                                    <strong>{{ student.percentage|floatformat:1 }}%</strong>
+                                {% elif student.has_result and student.is_absent %}
+                                    <span class="text-muted">0%</span>
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Status Column -->
+                            <td class="text-center">
+                                {% if student.has_result %}
+                                    {% if student.is_absent %}
+                                        <span class="badge bg-danger">Absent</span>
+                                    {% elif student.percentage >= 50 %}
+                                        <span class="badge bg-success">Pass</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">Fail</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge bg-secondary">Not Entered</span>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Remarks Column -->
+                            <td>{{ student.remarks|default:"-" }}</div>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4">
+                                <i class="fas fa-users fa-3x text-muted mb-2 d-block"></i>
+                                <p>No students found in this section.</p>
+                            </div>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .stat-card {
+        padding: 20px;
+        border-radius: 16px;
+        text-align: center;
+    }
+    .stat-number {
+        font-size: 32px;
+        font-weight: 700;
+    }
+    .stat-label {
+        font-size: 13px;
+        opacity: 0.9;
+    }
+    .bg-primary { background: linear-gradient(135deg, #667eea, #764ba2); }
+    .bg-success { background: linear-gradient(135deg, #28a745, #20c997); }
+    .bg-danger { background: linear-gradient(135deg, #dc3545, #c82333); }
+    .bg-info { background: linear-gradient(135deg, #17a2b8, #138496); }
+    .badge { padding: 6px 12px; border-radius: 20px; }
+    .progress {
+        border-radius: 10px;
+        background-color: #e2e8f0;
+    }
+    @media (max-width: 768px) {
+        .stat-number { font-size: 24px; }
+        .stat-card { padding: 12px; }
+    }
+</style>
+{% endblock %}

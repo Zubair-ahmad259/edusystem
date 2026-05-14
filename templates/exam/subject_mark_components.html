@@ -1,660 +1,467 @@
-{% extends 'Home/base.html' %}
+{% extends 'teacher/teacher_dashboard.html' %}
 {% load static %}
 
 {% block title %}Subject Mark Distribution - EduSphere{% endblock %}
 
 {% block body %}
-<div class="page-wrapper">
-    <div class="content container-fluid">
-        
-        <!-- Page Header -->
-        <div class="page-header">
-            <div class="row align-items-center">
-                <div class="col">
-                    <h3 class="page-title">Subject Mark Distribution</h3>
-                    <ul class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="{% url 'index' %}">Dashboard</a></li>
-                        <li class="breadcrumb-item active">Mark Distribution</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- Messages -->
-        {% if messages %}
-        <div class="row">
-            <div class="col-12">
-                {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
-                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %} mr-2"></i>
-                    {{ message }}
-                    <button type="button" class="close" data-dismiss="alert">&times;</button>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- Stats Cards -->
-        <div class="row">
-            <div class="col-md-3">
-                <div class="card dash-widget">
-                    <div class="card-body">
-                        <span class="dash-widget-icon bg-primary"><i class="fas fa-cogs"></i></span>
-                        <div class="dash-widget-info">
-                            <h3>{{ components|length }}</h3>
-                            <span>Total Configurations</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card dash-widget">
-                    <div class="card-body">
-                        <span class="dash-widget-icon bg-success"><i class="fas fa-check-circle"></i></span>
-                        <div class="dash-widget-info">
-                            <h3>{{ valid_configs|default:0 }}</h3>
-                            <span>Valid (100%)</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card dash-widget">
-                    <div class="card-body">
-                        <span class="dash-widget-icon bg-warning"><i class="fas fa-exclamation-triangle"></i></span>
-                        <div class="dash-widget-info">
-                            <h3>{{ invalid_configs|default:0 }}</h3>
-                            <span>Invalid (≠100%)</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card dash-widget">
-                    <div class="card-body">
-                        <span class="dash-widget-icon bg-info"><i class="fas fa-book"></i></span>
-                        <div class="dash-widget-info">
-                            <h3>{{ subjects|length }}</h3>
-                            <span>Total Subjects</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Configuration Form -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header bg-gradient-primary text-white">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-plus-circle"></i> Configure Mark Distribution
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <form method="post" id="distribution-form">
-                            {% csrf_token %}
-                            
-                            <div class="row">
-                                <!-- Subject Selection Only -->
-                                <div class="col-md-12 mb-3">
-                                    <div class="form-group">
-                                        <label>Subject <span class="text-danger">*</span></label>
-                                        <select class="form-control" name="subject" id="subject-select" required>
-                                            <option value="">Select Subject</option>
-                                            {% for subject in subjects %}
-                                            <option value="{{ subject.id }}" data-credits="{{ subject.credit_hours }}">
-                                                {{ subject.code }} - {{ subject.name }} ({{ subject.credit_hours }} CH)
-                                            </option>
-                                            {% endfor %}
-                                        </select>
-                                        <small class="form-text text-muted" id="credit-hours-display"></small>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <hr class="my-4">
-
-                            <!-- Mark Distribution Title -->
-                            <h6 class="mb-3 text-primary">Mark Distribution (Percentages)</h6>
-                            <small class="text-muted d-block mb-3">Total must equal 100%</small>
-
-                            <div class="row">
-                                <div class="col-md-3 mb-3">
-                                    <div class="form-group">
-                                        <label>Mid Term</label>
-                                        <div class="input-group">
-                                            <input type="number" class="form-control percentage-input" 
-                                                   name="mid_term" step="0.01" min="0" max="100" value="20.00" required>
-                                            <div class="input-group-append">
-                                                <span class="input-group-text">%</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <div class="form-group">
-                                        <label>Final Term</label>
-                                        <div class="input-group">
-                                            <input type="number" class="form-control percentage-input" 
-                                                   name="final" step="0.01" min="0" max="100" value="65.00" required>
-                                            <div class="input-group-append">
-                                                <span class="input-group-text">%</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <div class="form-group">
-                                        <label>Quiz</label>
-                                        <div class="input-group">
-                                            <input type="number" class="form-control percentage-input" 
-                                                   name="quiz" step="0.01" min="0" max="100" value="5.00" required>
-                                            <div class="input-group-append">
-                                                <span class="input-group-text">%</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <div class="form-group">
-                                        <label>Assignment</label>
-                                        <div class="input-group">
-                                            <input type="number" class="form-control percentage-input" 
-                                                   name="assignment" step="0.01" min="0" max="100" value="5.00" required>
-                                            <div class="input-group-append">
-                                                <span class="input-group-text">%</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-md-3 mb-3">
-                                    <div class="form-group">
-                                        <label>Presentation</label>
-                                        <div class="input-group">
-                                            <input type="number" class="form-control percentage-input" 
-                                                   name="presentation" step="0.01" min="0" max="100" value="0.00" required>
-                                            <div class="input-group-append">
-                                                <span class="input-group-text">%</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <div class="form-group">
-                                        <label>Lab</label>
-                                        <div class="input-group">
-                                            <input type="number" class="form-control percentage-input" 
-                                                   name="lab" step="0.01" min="0" max="100" value="0.00" required>
-                                            <div class="input-group-append">
-                                                <span class="input-group-text">%</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <div class="form-group">
-                                        <label>Viva</label>
-                                        <div class="input-group">
-                                            <input type="number" class="form-control percentage-input" 
-                                                   name="viva" step="0.01" min="0" max="100" value="0.00" required>
-                                            <div class="input-group-append">
-                                                <span class="input-group-text">%</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <div class="form-group">
-                                        <label>Attendance</label>
-                                        <div class="input-group">
-                                            <input type="number" class="form-control percentage-input" 
-                                                   name="attendance" step="0.01" min="0" max="100" value="5.00" required>
-                                            <div class="input-group-append">
-                                                <span class="input-group-text">%</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Total Percentage Display -->
-                            <div class="row mt-4">
-                                <div class="col-md-6">
-                                    <div class="alert alert-info">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <span>Internal Marks (Quiz + Assignment + Presentation + Attendance):</span>
-                                            <strong id="internal-total" class="text-primary">10.00%</strong>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="alert" id="total-percentage-alert">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <span>Total Percentage:</span>
-                                            <strong id="total-percentage" class="text-primary">100.00%</strong>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Action Buttons -->
-                            <div class="text-right mt-4">
-                                <button type="button" class="btn btn-secondary" onclick="resetForm()">
-                                    <i class="fas fa-redo"></i> Reset
-                                </button>
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-save"></i> Save Distribution
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Existing Configurations -->
-        <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header bg-gradient-primary text-white">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="card-title mb-0">
-                                <i class="fas fa-list"></i> Existing Configurations
-                            </h5>
-                            <button class="btn btn-sm btn-light" onclick="location.reload()">
-                                <i class="fas fa-sync-alt"></i> Refresh
-                            </button>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        {% if components %}
-                        <div class="table-responsive">
-                            <table class="table table-hover table-center mb-0">
-                                <thead class="thead-light">
-                                    <tr>
-                                        <th>Subject</th>
-                                        <th>Distribution</th>
-                                        <th>Total</th>
-                                        <th>Status</th>
-                                        <th class="text-right">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for component in components %}
-                                    <tr class="align-middle">
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="avatar-img rounded-circle bg-gradient-primary text-white d-flex align-items-center justify-content-center mr-2" style="width: 35px; height: 35px;">
-                                                    <span style="font-size: 14px;">{{ component.subject.code|slice:":2" }}</span>
-                                                </div>
-                                                <div>
-                                                    <strong>{{ component.subject.code }}</strong>
-                                                    <br>
-                                                    <small class="text-muted">{{ component.subject.name|truncatechars:35 }}</small>
-                                                    <br>
-                                                    <small class="text-muted">{{ component.subject.credit_hours }} Credit Hours</small>
-                                                </div>
-                                            </div>
-                                         </div></td>
-                                        <td>
-                                            <div class="distribution-details">
-                                                <small>📝 Mid: {{ component.mid_term_percentage }}%</small><br>
-                                                <small>📖 Final: {{ component.final_term_percentage }}%</small><br>
-                                                <small>❓ Quiz: {{ component.quiz_percentage }}%</small><br>
-                                                <small>📚 Assignment: {{ component.assignment_percentage }}%</small>
-                                                {% if component.lab_percentage > 0 %}
-                                                <small>🔬 Lab: {{ component.lab_percentage }}%</small><br>
-                                                {% endif %}
-                                                {% if component.presentation_percentage > 0 %}
-                                                <small>🎤 Presentation: {{ component.presentation_percentage }}%</small><br>
-                                                {% endif %}
-                                                {% if component.viva_percentage > 0 %}
-                                                <small>🗣️ Viva: {{ component.viva_percentage }}%</small>
-                                                {% endif %}
-                                            </div>
-                                         </div></td>
-                                        <td>
-                                            <span class="badge {% if component.total_percentage == 100 %}badge-success{% else %}badge-danger{% endif %}">
-                                                {{ component.total_percentage }}%
-                                            </span>
-                                         </div></td>
-                                        <td>
-                                            {% if component.total_percentage == 100 %}
-                                                <span class="badge badge-success">Valid</span>
-                                            {% else %}
-                                                <span class="badge badge-danger">Invalid</span>
-                                            {% endif %}
-                                         </div></td>
-                                        <td class="text-right">
-                                            <div class="btn-group" role="group">
-                                                <button type="button" class="btn btn-sm btn-outline-primary" 
-                                                        onclick="loadConfiguration({{ component.id }})"
-                                                        title="Load into form">
-                                                    <i class="fas fa-copy"></i>
-                                                </button>
-                                                <a href="{% url 'delete_mark_component' component.id %}" 
-                                                   class="btn btn-sm btn-outline-danger"
-                                                   title="Delete"
-                                                   onclick="return confirm('Delete this configuration?')">
-                                                    <i class="fas fa-trash-alt"></i>
-                                                </a>
-                                            </div>
-                                         </div></td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                        {% else %}
-                        <div class="empty-state text-center py-5">
-                            <i class="fas fa-cogs fa-4x text-muted mb-3 d-block"></i>
-                            <h5>No Configurations Found</h5>
-                            <p class="text-muted">Configure your first mark distribution above.</p>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="page-header">
+                <h3 class="page-title">
+                    <i class="fas fa-chart-pie me-2"></i> Mark Distribution Configuration
+                </h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'index' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Mark Distribution</li>
+                </ul>
             </div>
         </div>
     </div>
+
+    <!-- Configuration Cards -->
+    {% for subject_data in subjects_with_sections.values %}
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="subject-header">
+                <h4 class="subject-title">
+                    <i class="fas fa-book-open me-2"></i>
+                    {{ subject_data.subject.code }} - {{ subject_data.subject.name }}
+                    <span class="badge bg-secondary ms-2">{{ subject_data.subject.credit_hours }} Credit Hours</span>
+                </h4>
+            </div>
+        </div>
+        
+        {% for assignment in subject_data.assignments %}
+        <div class="col-xl-6 col-lg-6 col-md-12 mb-4">
+            <div class="config-card">
+                <div class="config-card-header">
+                    <div>
+                        <h5 class="config-title">
+                            <i class="fas fa-layer-group text-primary me-2"></i> {{ assignment.batch.name }}
+                        </h5>
+                        <p class="config-subtitle mb-0">
+                            <i class="fas fa-calendar me-1"></i> Semester: {{ assignment.semester.number }} | 
+                            <i class="fas fa-users me-1"></i> Sections: {{ assignment.section_names }}
+                        </p>
+                        <p class="config-subtitle mb-0">
+                            <i class="fas fa-building me-1"></i> Discipline: {{ assignment.discipline.field }}
+                        </p>
+                    </div>
+                    <div class="student-badge">
+                        <i class="fas fa-user-graduate"></i>
+                        <span>{{ assignment.student_count }}</span>
+                        <small>Students</small>
+                    </div>
+                </div>
+                
+                <div class="config-card-body">
+                    <form method="POST" class="config-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="subject" value="{{ subject_data.subject.id }}">
+                        <input type="hidden" name="assignment_id" value="{{ assignment.assignment_id }}">
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label><i class="fas fa-chart-line"></i> Mid Term (%)</label>
+                                    <input type="number" name="mid_term" 
+                                           class="form-control exam-input" 
+                                           step="0.5" 
+                                           value="{{ assignment.config.mid_term_percentage|default:'20.00' }}"
+                                           {% if 'mid_term' in assignment.locked_components %}disabled{% endif %}>
+                                    {% if 'mid_term' in assignment.locked_components %}
+                                    <small class="text-danger"><i class="fas fa-lock"></i> Marks uploaded - Locked</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label><i class="fas fa-chart-line"></i> Final Term (%)</label>
+                                    <input type="number" name="final" 
+                                           class="form-control exam-input" 
+                                           step="0.5" 
+                                           value="{{ assignment.config.final_term_percentage|default:'65.00' }}"
+                                           {% if 'final' in assignment.locked_components %}disabled{% endif %}>
+                                    {% if 'final' in assignment.locked_components %}
+                                    <small class="text-danger"><i class="fas fa-lock"></i> Marks uploaded - Locked</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label><i class="fas fa-question-circle"></i> Quiz (%)</label>
+                                    <input type="number" name="quiz" 
+                                           class="form-control exam-input" 
+                                           step="0.5" 
+                                           value="{{ assignment.config.quiz_percentage|default:'5.00' }}"
+                                           {% if 'quiz' in assignment.locked_components %}disabled{% endif %}>
+                                    {% if 'quiz' in assignment.locked_components %}
+                                    <small class="text-danger"><i class="fas fa-lock"></i> Marks uploaded - Locked</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label><i class="fas fa-tasks"></i> Assignment (%)</label>
+                                    <input type="number" name="assignment" 
+                                           class="form-control exam-input" 
+                                           step="0.5" 
+                                           value="{{ assignment.config.assignment_percentage|default:'5.00' }}"
+                                           {% if 'assignment' in assignment.locked_components %}disabled{% endif %}>
+                                    {% if 'assignment' in assignment.locked_components %}
+                                    <small class="text-danger"><i class="fas fa-lock"></i> Marks uploaded - Locked</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label><i class="fas fa-chalkboard"></i> Presentation (%)</label>
+                                    <input type="number" name="presentation" 
+                                           class="form-control exam-input" 
+                                           step="0.5" 
+                                           value="{{ assignment.config.presentation_percentage|default:'0.00' }}"
+                                           {% if 'presentation' in assignment.locked_components %}disabled{% endif %}>
+                                    {% if 'presentation' in assignment.locked_components %}
+                                    <small class="text-danger"><i class="fas fa-lock"></i> Marks uploaded - Locked</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label><i class="fas fa-flask"></i> Lab (%)</label>
+                                    <input type="number" name="lab" 
+                                           class="form-control exam-input" 
+                                           step="0.5" 
+                                           value="{{ assignment.config.lab_percentage|default:'0.00' }}"
+                                           {% if 'lab' in assignment.locked_components %}disabled{% endif %}>
+                                    {% if 'lab' in assignment.locked_components %}
+                                    <small class="text-danger"><i class="fas fa-lock"></i> Marks uploaded - Locked</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label><i class="fas fa-comments"></i> Viva (%)</label>
+                                    <input type="number" name="viva" 
+                                           class="form-control exam-input" 
+                                           step="0.5" 
+                                           value="{{ assignment.config.viva_percentage|default:'0.00' }}"
+                                           {% if 'viva' in assignment.locked_components %}disabled{% endif %}>
+                                    {% if 'viva' in assignment.locked_components %}
+                                    <small class="text-danger"><i class="fas fa-lock"></i> Marks uploaded - Locked</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label><i class="fas fa-calendar-check"></i> Attendance (%)</label>
+                                    <input type="number" name="attendance" 
+                                           class="form-control exam-input" 
+                                           step="0.5" 
+                                           value="{{ assignment.config.attendance_percentage|default:'5.00' }}"
+                                           {% if 'attendance' in assignment.locked_components %}disabled{% endif %}>
+                                    {% if 'attendance' in assignment.locked_components %}
+                                    <small class="text-danger"><i class="fas fa-lock"></i> Marks uploaded - Locked</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="total-percentage mt-3">
+                            <div class="alert alert-info mb-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span><i class="fas fa-percent"></i> Total Percentage:</span>
+                                    <strong class="total-value h4 mb-0">0.00%</strong>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-right mt-3">
+                            {% if assignment.config and assignment.config.id and not assignment.has_any_marks %}
+                            <a href="{% url 'delete_mark_component' assignment.config.id %}" 
+                               class="btn btn-danger"
+                               onclick="return confirm('Delete this configuration? All unsaved data will be lost.')">
+                                <i class="fas fa-trash-alt"></i> Delete Configuration
+                            </a>
+                            {% endif %}
+                            <button type="submit" class="btn btn-primary"
+                                    {% if assignment.all_components_locked %}disabled{% endif %}>
+                                <i class="fas fa-save"></i> Save Configuration
+                            </button>
+                        </div>
+                        
+                        {% if assignment.all_components_locked %}
+                        <div class="alert alert-warning mt-3 mb-0">
+                            <i class="fas fa-lock me-2"></i> All components have marks uploaded. Configuration is locked.
+                        </div>
+                        {% elif assignment.has_any_marks %}
+                        <div class="alert alert-info mt-3 mb-0">
+                            <i class="fas fa-info-circle me-2"></i> Some components have marks uploaded and cannot be modified.
+                        </div>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% empty %}
+    <div class="empty-state">
+        <div class="text-center py-5">
+            <i class="fas fa-folder-open fa-4x text-muted mb-3"></i>
+            <h4>No Subjects Assigned</h4>
+            <p class="text-muted">You haven't been assigned any subjects yet. Please contact the administrator.</p>
+        </div>
+    </div>
+    {% endfor %}
 </div>
 
 <style>
-    .dash-widget {
-        border-radius: 10px;
-        transition: all 0.3s ease;
-        border: none;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    .page-header {
         margin-bottom: 20px;
     }
-    .dash-widget:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    }
-    .dash-widget-icon {
-        font-size: 40px;
-        float: left;
-        width: 70px;
-        height: 70px;
-        line-height: 70px;
-        text-align: center;
-        background: rgba(0,0,0,0.05);
-        border-radius: 50%;
-        margin-right: 15px;
-        color: white;
-    }
-    .dash-widget-info {
-        overflow: hidden;
-    }
-    .dash-widget-info h3 {
-        font-size: 28px;
+    .page-title {
+        font-size: 24px;
         font-weight: 600;
-        margin-bottom: 5px;
+        color: #1e293b;
+        margin: 0;
     }
-    .dash-widget-info span {
-        font-size: 14px;
-        color: #6c757d;
+    .breadcrumb {
+        background: transparent;
+        padding: 0;
+        margin: 5px 0 0;
     }
-    .bg-gradient-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-    .card-header {
-        border-bottom: none;
-        border-radius: 10px 10px 0 0;
-        padding: 15px 20px;
-    }
-    .card-header .card-title {
-        color: white;
-        margin-bottom: 0;
-    }
-    .card {
-        border: none;
-        border-radius: 10px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        margin-bottom: 20px;
-    }
-    .card-body {
-        padding: 20px;
-    }
-    .form-group label {
-        font-weight: 600;
-        margin-bottom: 8px;
-        color: #2c3e50;
-    }
-    .form-control, .form-select {
-        border-radius: 8px;
-        border: 1px solid #dee2e6;
-        padding: 10px 15px;
-        transition: all 0.3s ease;
-    }
-    .form-control:focus, .form-select:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-    }
-    .btn-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border: none;
-        border-radius: 8px;
-        padding: 10px 25px;
-        font-weight: 600;
-        transition: all 0.3s ease;
-    }
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-    }
-    .btn-secondary {
-        background: #6c757d;
-        border: none;
-        border-radius: 8px;
-        padding: 10px 25px;
-        font-weight: 600;
-    }
-    .btn-outline-primary {
-        border: 1px solid #667eea;
+    .breadcrumb-item a {
         color: #667eea;
-        border-radius: 6px;
-        transition: all 0.3s ease;
+        text-decoration: none;
     }
-    .btn-outline-primary:hover {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-color: transparent;
+    .subject-header {
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #e2e8f0;
     }
-    .btn-outline-danger {
-        border: 1px solid #dc3545;
-        color: #dc3545;
-        border-radius: 6px;
-        transition: all 0.3s ease;
-    }
-    .btn-outline-danger:hover {
-        background: #dc3545;
-        color: white;
+    .subject-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: #1e293b;
+        margin: 0;
     }
     .badge {
         padding: 5px 12px;
-        font-weight: 500;
         border-radius: 20px;
+        font-size: 12px;
     }
-    .badge-success {
-        background: #28a745;
+    .bg-secondary {
+        background: #64748b;
+    }
+    .config-card {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    .config-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+    }
+    .config-card-header {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        padding: 20px;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    .config-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #1e293b;
+        margin: 0 0 5px;
+    }
+    .config-subtitle {
+        font-size: 12px;
+        color: #64748b;
+        margin: 0;
+    }
+    .student-badge {
+        background: white;
+        padding: 8px 20px;
+        border-radius: 30px;
+        text-align: center;
+        min-width: 100px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .student-badge i {
+        font-size: 14px;
+        color: #667eea;
+        margin-right: 5px;
+    }
+    .student-badge span {
+        font-size: 20px;
+        font-weight: 700;
+        color: #667eea;
+        display: inline-block;
+        margin: 0 5px;
+    }
+    .student-badge small {
+        font-size: 11px;
+        color: #64748b;
+    }
+    .config-card-body {
+        padding: 20px;
+    }
+    .form-group {
+        margin-bottom: 15px;
+    }
+    .form-group label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #475569;
+        margin-bottom: 5px;
+        display: block;
+    }
+    .form-group label i {
+        width: 20px;
+        color: #667eea;
+    }
+    .form-control {
+        font-size: 14px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        transition: all 0.3s ease;
+    }
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+        outline: none;
+    }
+    .form-control:disabled {
+        background-color: #f1f5f9;
+        cursor: not-allowed;
+    }
+    .text-danger {
+        font-size: 10px;
+        display: block;
+        margin-top: 5px;
+    }
+    .total-percentage {
+        margin-top: 20px;
+    }
+    .alert {
+        border-radius: 10px;
+        border: none;
+    }
+    .alert-info {
+        background: #e0f2fe;
+        color: #0369a1;
+    }
+    .alert-warning {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    .btn {
+        padding: 8px 20px;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: none;
+    }
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea, #764ba2);
         color: white;
     }
-    .badge-danger {
+    .btn-primary:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102,126,234,0.4);
+    }
+    .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+    .btn-danger {
         background: #dc3545;
         color: white;
     }
-    .table td {
-        vertical-align: middle;
-        padding: 12px;
-    }
-    .thead-light th {
-        background: #f8f9fa;
-        border-bottom: 2px solid #dee2e6;
-        color: #495057;
-        font-size: 13px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    .avatar-img {
-        object-fit: cover;
-        font-weight: 600;
-    }
-    .distribution-details small {
-        font-size: 11px;
-        display: inline-block;
-        margin-right: 8px;
-        line-height: 1.6;
+    .btn-danger:hover {
+        background: #c82333;
+        transform: translateY(-2px);
     }
     .empty-state {
-        padding: 40px 20px;
+        background: white;
+        border-radius: 16px;
+        padding: 40px;
         text-align: center;
     }
     @media (max-width: 768px) {
-        .dash-widget-icon {
-            width: 50px;
-            height: 50px;
-            line-height: 50px;
-            font-size: 25px;
+        .config-card-header {
+            flex-direction: column;
+            text-align: center;
         }
-        .dash-widget-info h3 {
+        .student-badge {
+            width: 100%;
+        }
+        .page-title {
             font-size: 20px;
         }
-        .table td, .table th {
-            padding: 10px 8px;
-            font-size: 12px;
+        .subject-title {
+            font-size: 18px;
         }
-        .btn-primary, .btn-secondary {
+        .btn {
             width: 100%;
             margin-bottom: 10px;
         }
         .text-right {
             text-align: center !important;
         }
-        .distribution-details small {
-            font-size: 10px;
-        }
     }
 </style>
 
 <script>
-$(document).ready(function() {
-    function calculateTotal() {
-        var total = 0;
-        var internal = 0;
+    // Auto-calculate total percentage for each form
+    document.querySelectorAll('.config-form').forEach(form => {
+        const inputs = form.querySelectorAll('.exam-input:not([disabled])');
+        const totalSpan = form.querySelector('.total-value');
         
-        $('.percentage-input').each(function() {
-            var value = parseFloat($(this).val()) || 0;
-            total += value;
+        function calculateTotal() {
+            let total = 0;
+            inputs.forEach(input => {
+                total += parseFloat(input.value) || 0;
+            });
+            totalSpan.textContent = total.toFixed(2) + '%';
             
-            var name = $(this).attr('name');
-            if (['quiz', 'assignment', 'presentation', 'attendance'].includes(name)) {
-                internal += value;
+            const alertDiv = form.querySelector('.alert-info');
+            if (alertDiv) {
+                if (Math.abs(total - 100) < 0.01) {
+                    alertDiv.classList.remove('alert-info');
+                    alertDiv.classList.add('alert-success');
+                    alertDiv.innerHTML = `<div class="d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-check-circle"></i> Total Percentage: Valid</span>
+                        <strong class="total-value h4 mb-0">${total.toFixed(2)}%</strong>
+                    </div>`;
+                } else {
+                    alertDiv.classList.remove('alert-success');
+                    alertDiv.classList.add('alert-info');
+                    alertDiv.innerHTML = `<div class="d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-percent"></i> Total Percentage:</span>
+                        <strong class="total-value h4 mb-0">${total.toFixed(2)}%</strong>
+                    </div>`;
+                }
             }
+        }
+        
+        inputs.forEach(input => {
+            input.addEventListener('input', calculateTotal);
         });
         
-        $('#total-percentage').text(total.toFixed(2) + '%');
-        $('#internal-total').text(internal.toFixed(2) + '%');
-        
-        var alertDiv = $('#total-percentage-alert');
-        if (Math.abs(total - 100) < 0.01) {
-            alertDiv.removeClass('alert-danger').addClass('alert-success');
-            alertDiv.find('strong').css('color', '#28a745');
-        } else {
-            alertDiv.removeClass('alert-success').addClass('alert-danger');
-            alertDiv.find('strong').css('color', '#dc3545');
-        }
-        
-        return total;
-    }
-    
-    $('.percentage-input').on('input', calculateTotal);
-    
-    $('#subject-select').on('change', function() {
-        var selectedOption = $(this).find('option:selected');
-        var credits = selectedOption.data('credits');
-        if (credits) {
-            $('#credit-hours-display').text(credits + ' Credit Hours');
-        } else {
-            $('#credit-hours-display').text('');
-        }
-    });
-    
-    $('#distribution-form').on('submit', function(e) {
-        var total = calculateTotal();
-        
-        if (Math.abs(total - 100) > 0.01) {
-            if (!confirm(`Total percentage is ${total.toFixed(2)}%, not 100%. Do you want to save anyway?`)) {
-                e.preventDefault();
-                return false;
-            }
-        }
-        return true;
-    });
-    
-    calculateTotal();
-});
-
-function resetForm() {
-    if (confirm('Reset all form fields?')) {
-        document.getElementById('distribution-form').reset();
-        $('.percentage-input').val(function() {
-            var name = $(this).attr('name');
-            switch(name) {
-                case 'mid_term': return '20.00';
-                case 'final': return '65.00';
-                case 'quiz': return '5.00';
-                case 'assignment': return '5.00';
-                case 'presentation': return '0.00';
-                case 'lab': return '0.00';
-                case 'viva': return '0.00';
-                case 'attendance': return '5.00';
-                default: return '0.00';
-            }
-        });
         calculateTotal();
-    }
-}
-
-function loadConfiguration(id) {
-    fetch(`/exam/mark-distribution/load/${id}/`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                $('select[name="subject"]').val(data.subject_id);
-                
-                $('input[name="mid_term"]').val(data.mid_term_percentage);
-                $('input[name="final"]').val(data.final_term_percentage);
-                $('input[name="quiz"]').val(data.quiz_percentage);
-                $('input[name="assignment"]').val(data.assignment_percentage);
-                $('input[name="presentation"]').val(data.presentation_percentage);
-                $('input[name="lab"]').val(data.lab_percentage);
-                $('input[name="viva"]').val(data.viva_percentage);
-                $('input[name="attendance"]').val(data.attendance_percentage);
-                
-                calculateTotal();
-                
-                $('html, body').animate({ scrollTop: 0 }, 500);
-                alert('Configuration loaded into form.');
-            } else {
-                alert('Error: ' + data.error);
-            }
-        })
-        .catch(error => alert('Error loading configuration'));
-}
-
-function calculateTotal() {
-    var total = 0;
-    $('.percentage-input').each(function() {
-        total += parseFloat($(this).val()) || 0;
     });
-    $('#total-percentage').text(total.toFixed(2) + '%');
-    return total;
-}
 </script>
 {% endblock %}

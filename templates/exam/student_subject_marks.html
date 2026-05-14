@@ -1,0 +1,430 @@
+{% extends 'teacher/teacher_dashboard.html' %}
+{% load static %}
+
+{% block title %}Student Subject Marks - EduSphere{% endblock %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Student Subject Marks</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'index' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'teacher_dashboard' %}">Teacher Dashboard</a></li>
+                        <li class="breadcrumb-item active">Student Marks</li>
+                    </ul>
+                </div>
+                <div class="col-auto">
+                    <div class="btn-group">
+                        <a href="{% url 'upload_marks_dashboard' %}" class="btn btn-primary">
+                            <i class="fas fa-upload"></i> Upload Marks
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="card filter-card mb-4">
+            <div class="card-header bg-gradient-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-filter me-2"></i> Filter Students</h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" class="row">
+                    <div class="col-md-4 mb-2">
+                        <label>Select Subject</label>
+                        <select name="subject_id" class="form-control" onchange="this.form.submit()">
+                            <option value="">-- All Subjects --</option>
+                            {% for subject in subjects %}
+                            <option value="{{ subject.id }}" {% if selected_subject_id|stringformat:"s" == subject.id|stringformat:"s" %}selected{% endif %}>
+                                {{ subject.code }} - {{ subject.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <label>Select Section</label>
+                        <select name="section_id" class="form-control" onchange="this.form.submit()">
+                            <option value="">-- All Sections --</option>
+                            {% for section in sections %}
+                            <option value="{{ section.id }}" {% if selected_section_id|stringformat:"s" == section.id|stringformat:"s" %}selected{% endif %}>
+                                Section {{ section.name }} ({{ section.batch.name }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <label>Search Student</label>
+                        <input type="text" name="search" class="form-control" placeholder="Search by name or ID..." value="{{ search_query }}">
+                    </div>
+                    <div class="col-md-12 mt-2 text-right">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i> Apply Filters
+                        </button>
+                        <a href="{% url 'student_subject_marks' %}" class="btn btn-secondary">
+                            <i class="fas fa-redo"></i> Reset
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Group Results by Section -->
+        {% for section_name, section_students in students_by_section.items %}
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="section-header">
+                    <h4 class="section-title">
+                        <i class="fas fa-users me-2"></i> Section {{ section_name }}
+                        <span class="badge bg-info ms-2">{{ section_students|length }} Students</span>
+                    </h4>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-bordered">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th style="width: 50px;">#</th>
+                                        <th>Student ID</th>
+                                        <th>Student Name</th>
+                                        <th>Subject</th>
+                                        <th class="text-center">Mid Term<br><small>(20)</small></th>
+                                        <th class="text-center">Final<br><small>(50)</small></th>
+                                        <th class="text-center">Quiz<br><small>(5)</small></th>
+                                        <th class="text-center">Assignment<br><small>(5)</small></th>
+                                        <th class="text-center">Lab<br><small>(20)</small></th>
+                                        <th class="text-center">Attendance<br><small>(5)</small></th>
+                                        <th class="text-center">Total<br><small>(100)</small></th>
+                                        <th class="text-center">Percentage</th>
+                                        <th class="text-center">Grade</th>
+                                        <th class="text-center">Status</th>
+                                        <th class="text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for student in section_students %}
+                                    <tr>
+                                        <td class="text-center">{{ forloop.counter }}</div>
+                                        <td><strong>{{ student.student_id }}</strong></div>
+                                        <td>
+                                            <div>
+                                                <strong>{{ student.name }}</strong>
+                                                <br>
+                                                <small class="text-muted">{{ student.email|default:"No email" }}</small>
+                                            </div>
+                                        </div>
+                                        <td>{{ student.subject_code }} - {{ student.subject_name }}</div>
+                                        
+                                        <!-- Mid Term -->
+                                        <td class="text-center">
+                                            {% if student.mid_term.uploaded %}
+                                                <span class="text-success">{{ student.mid_term.marks|floatformat:1 }}</span>
+                                            {% else %}
+                                                <span class="text-muted">—</span>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Final -->
+                                        <td class="text-center">
+                                            {% if student.final.uploaded %}
+                                                <span class="text-success">{{ student.final.marks|floatformat:1 }}</span>
+                                            {% else %}
+                                                <span class="text-muted">—</span>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Quiz -->
+                                        <td class="text-center">
+                                            {% if student.quiz.uploaded %}
+                                                <span class="text-success">{{ student.quiz.marks|floatformat:1 }}</span>
+                                            {% else %}
+                                                <span class="text-muted">—</span>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Assignment -->
+                                        <td class="text-center">
+                                            {% if student.assignment.uploaded %}
+                                                <span class="text-success">{{ student.assignment.marks|floatformat:1 }}</span>
+                                            {% else %}
+                                                <span class="text-muted">—</span>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Lab -->
+                                        <td class="text-center">
+                                            {% if student.lab.uploaded %}
+                                                <span class="text-success">{{ student.lab.marks|floatformat:1 }}</span>
+                                            {% else %}
+                                                <span class="text-muted">—</span>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Attendance -->
+                                        <td class="text-center">
+                                            {% if student.attendance.uploaded %}
+                                                <span class="text-success">{{ student.attendance.marks|floatformat:1 }}</span>
+                                            {% else %}
+                                                <span class="text-muted">—</span>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Total -->
+                                        <td class="text-center">
+                                            <strong class="{% if student.total_marks >= 50 %}text-success{% else %}text-danger{% endif %}">
+                                                {{ student.total_marks|floatformat:1 }}
+                                            </strong>
+                                        </div>
+                                        
+                                        <!-- Percentage -->
+                                        <td class="text-center">
+                                            <div class="progress" style="height: 6px; width: 60px; display: inline-block;">
+                                                <div class="progress-bar bg-{% if student.percentage >= 75 %}success{% elif student.percentage >= 50 %}warning{% else %}danger{% endif %}" 
+                                                     style="width: {{ student.percentage }}%"></div>
+                                            </div>
+                                            <br>
+                                            <strong>{{ student.percentage|floatformat:1 }}%</strong>
+                                        </div>
+                                        
+                                        <!-- Grade -->
+                                        <td class="text-center">
+                                            <span class="badge badge-{% if student.grade == 'A+' or student.grade == 'A' %}success{% elif student.grade == 'F' %}danger{% else %}warning{% endif %}">
+                                                {{ student.grade|default:"-" }}
+                                            </span>
+                                        </div>
+                                        
+                                        <!-- Status -->
+                                        <td class="text-center">
+                                            {% if student.is_passed %}
+                                                <span class="badge badge-success">
+                                                    <i class="fas fa-check-circle"></i> Passed
+                                                </span>
+                                            {% else %}
+                                                <span class="badge badge-danger">
+                                                    <i class="fas fa-times-circle"></i> Failed
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Action -->
+                                        <td class="text-center">
+                                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i> Details
+                                            </a>
+                                        </div>
+                                    </table>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="row">
+            <div class="col-12">
+                <div class="empty-state text-center py-5">
+                    <i class="fas fa-chart-line fa-4x text-muted mb-3 d-block"></i>
+                    <h5>No Data Found</h5>
+                    <p class="text-muted">No student marks available for the selected filters.</p>
+                    <a href="{% url 'upload_marks_dashboard' %}" class="btn btn-primary mt-2">
+                        <i class="fas fa-upload"></i> Upload Marks
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .page-header {
+        margin-bottom: 20px;
+    }
+    
+    .page-title {
+        font-size: 24px;
+        font-weight: 600;
+        color: #1e293b;
+        margin: 0;
+    }
+    
+    .breadcrumb {
+        background: transparent;
+        padding: 0;
+        margin: 5px 0 0;
+    }
+    
+    .breadcrumb-item a {
+        color: #667eea;
+        text-decoration: none;
+    }
+    
+    .filter-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        background: white;
+    }
+    
+    .filter-card .card-header {
+        border-radius: 12px 12px 0 0;
+        padding: 12px 20px;
+    }
+    
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .section-header {
+        padding: 10px 0;
+        margin-bottom: 15px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    
+    .section-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1e293b;
+        margin: 0;
+    }
+    
+    .card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        background: white;
+    }
+    
+    .card-header {
+        border-bottom: none;
+        border-radius: 12px 12px 0 0;
+        padding: 15px 20px;
+    }
+    
+    .table th {
+        font-size: 12px;
+        text-align: center;
+        vertical-align: middle;
+    }
+    
+    .table td {
+        vertical-align: middle;
+        font-size: 13px;
+    }
+    
+    .badge {
+        padding: 5px 12px;
+        font-weight: 500;
+        border-radius: 20px;
+    }
+    
+    .badge-success {
+        background: #28a745;
+        color: white;
+    }
+    
+    .badge-danger {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .badge-warning {
+        background: #ffc107;
+        color: #212529;
+    }
+    
+    .badge-info {
+        background: #17a2b8;
+        color: white;
+    }
+    
+    .progress {
+        border-radius: 10px;
+        background-color: #e2e8f0;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border: none;
+        border-radius: 6px;
+        padding: 8px 20px;
+        font-weight: 500;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102,126,234,0.4);
+        color: white;
+    }
+    
+    .btn-secondary {
+        background: #6c757d;
+        border: none;
+        border-radius: 6px;
+        padding: 8px 20px;
+        font-weight: 500;
+        color: white;
+    }
+    
+    .btn-outline-primary {
+        border: 1px solid #667eea;
+        color: #667eea;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+        background: white;
+    }
+    
+    .btn-outline-primary:hover {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border-color: transparent;
+    }
+    
+    .empty-state {
+        padding: 60px 20px;
+        text-align: center;
+        background: white;
+        border-radius: 12px;
+    }
+    
+    @media (max-width: 768px) {
+        .table {
+            font-size: 11px;
+        }
+        
+        .table th, .table td {
+            padding: 8px 4px;
+        }
+        
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .btn-group .btn {
+            width: 100%;
+        }
+    }
+</style>
+
+<script>
+    // Auto-dismiss alerts after 5 seconds
+    setTimeout(function() {
+        $('.alert').fadeOut('slow');
+    }, 5000);
+</script>
+{% endblock %}
