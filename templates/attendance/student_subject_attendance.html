@@ -1,0 +1,273 @@
+{% extends 'students/base.html' %}
+{% load static %}
+
+{% block title %}{{ subject.code }} - Attendance Details{% endblock %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">{{ subject.code }} - {{ subject.name }}</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'student_dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'student_attendance_dashboard' %}">Attendance</a></li>
+                        <li class="breadcrumb-item active">Subject Details</li>
+                    </ul>
+                </div>
+                <div class="col-auto">
+                    <a href="{% url 'student_attendance_dashboard' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subject Info -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> Subject Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <p class="mb-0"><strong>Subject Code:</strong></p>
+                                <p>{{ subject.code }}</p>
+                            </div>
+                            <div class="col-md-4">
+                                <p class="mb-0"><strong>Subject Name:</strong></p>
+                                <p>{{ subject.name }}</p>
+                            </div>
+                            <div class="col-md-4">
+                                <p class="mb-0"><strong>Credit Hours:</strong></p>
+                                <p>{{ subject.credit_hours }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="stat-card stat-card-primary">
+                    <div class="stat-number">{{ total_classes }}</div>
+                    <div class="stat-label">Total Classes</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card stat-card-success">
+                    <div class="stat-number">{{ present_count }}</div>
+                    <div class="stat-label">Present</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card stat-card-danger">
+                    <div class="stat-number">{{ absent_count }}</div>
+                    <div class="stat-label">Absent</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card stat-card-info">
+                    <div class="stat-number">{{ percentage }}%</div>
+                    <div class="stat-label">Attendance</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="progress" style="height: 25px;">
+                            <div class="progress-bar {% if percentage >= 75 %}bg-success{% elif percentage >= 50 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                 style="width: {{ percentage }}%">
+                                {{ percentage }}%
+                            </div>
+                        </div>
+                        <div class="alert alert-warning mt-3 mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Required:</strong> 75% attendance needed
+                            {% if percentage < 75 %}
+                            <span class="text-danger"> - You need {{ required_days|default:"more" }} days to reach 75%</span>
+                            {% else %}
+                            <span class="text-success"> - You have good attendance!</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attendance Records -->
+        <div class="card">
+            <div class="card-header bg-gradient-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-table me-2"></i> Attendance Records</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Date</th>
+                                <th>Day</th>
+                                <th>Status</th>
+                                <th>Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for att in attendances %}
+                            <tr>
+                                <td>{{ forloop.counter }}</div>
+                                <td>{{ att.date|date:"F d, Y" }}</div>
+                                <td>{{ att.date|date:"l" }}</div>
+                                <td>
+                                    {% if att.status == 'P' %}
+                                        <span class="badge badge-success"><i class="fas fa-check-circle"></i> Present</span>
+                                    {% else %}
+                                        <span class="badge badge-danger"><i class="fas fa-times-circle"></i> Absent</span>
+                                    {% endif %}
+                                </div>
+                                <td>{{ att.remarks|default:"-" }}</div>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4">
+                                    <i class="fas fa-calendar-week fa-3x text-muted mb-2 d-block"></i>
+                                    <p>No attendance records found for this subject</p>
+                                </div>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i> Attendance Trend</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="attendanceChart" style="height: 300px;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Chart Data
+    const dates = [
+        {% for att in attendances %}
+            "{{ att.date|date:'M d' }}",
+        {% endfor %}
+    ];
+    const statuses = [
+        {% for att in attendances %}
+            {% if att.status == 'P' %}1{% else %}0{% endif %},
+        {% endfor %}
+    ];
+
+    const ctx = document.getElementById('attendanceChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dates.reverse(),
+            datasets: [{
+                label: 'Attendance (1=Present, 0=Absent)',
+                data: statuses.reverse(),
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: statuses.map(s => s === 1 ? '#28a745' : '#dc3545'),
+                pointBorderColor: '#fff',
+                pointRadius: 6,
+                pointHoverRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            scales: {
+                y: {
+                    min: 0,
+                    max: 1.2,
+                    ticks: {
+                        stepSize: 1,
+                        callback: function(value) {
+                            return value === 1 ? 'Present' : value === 0 ? 'Absent' : '';
+                        }
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.raw === 1 ? 'Present' : 'Absent';
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+
+<style>
+    .stat-card {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+    }
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    .stat-number {
+        font-size: 32px;
+        font-weight: 700;
+    }
+    .stat-label {
+        font-size: 13px;
+        color: #64748b;
+    }
+    .stat-card-primary .stat-number { color: #667eea; }
+    .stat-card-success .stat-number { color: #28a745; }
+    .stat-card-danger .stat-number { color: #dc3545; }
+    .stat-card-info .stat-number { color: #17a2b8; }
+    .badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: 500;
+    }
+    .badge-success { background: #28a745; color: white; }
+    .badge-danger { background: #dc3545; color: white; }
+    .progress {
+        border-radius: 12px;
+        background-color: #e2e8f0;
+    }
+    .bg-gradient-primary { background: linear-gradient(135deg, #667eea, #764ba2); }
+    @media (max-width: 768px) {
+        .stat-number { font-size: 24px; }
+    }
+</style>
+{% endblock %}

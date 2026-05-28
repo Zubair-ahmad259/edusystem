@@ -1,0 +1,136 @@
+{% extends 'students/base.html' %}
+{% load static %}
+
+{% block title %}Access Restricted - EduSphere{% endblock %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Access Restricted</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'student_dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Marks</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Restricted Access Card -->
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card text-center">
+                    <div class="card-body py-5">
+                        <div class="restricted-icon mb-4">
+                            {% if fee_defaulter %}
+                                <i class="fas fa-money-bill-wave fa-4x text-danger"></i>
+                            {% elif has_ufm_case %}
+                                <i class="fas fa-gavel fa-4x text-danger"></i>
+                            {% else %}
+                                <i class="fas fa-lock fa-4x text-warning"></i>
+                            {% endif %}
+                        </div>
+                        
+                        <h3 class="text-danger mb-3">Access Restricted</h3>
+                        
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            {{ error_message }}
+                        </div>
+                        
+                        <div class="mt-4">
+                            {% if fee_defaulter %}
+                                <div class="card bg-light mb-3">
+                                    <div class="card-body">
+                                        <h5>Outstanding Fee Details</h5>
+                                        <div class="table-responsive">
+                                            <table class="table table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Semester</th>
+                                                        <th>Amount</th>
+                                                        <th>Paid</th>
+                                                        <th>Due</th>
+                                                        <th>Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for fee in student.uploadfee_set.all %}
+                                                        {% if not fee.is_fully_paid %}
+                                                        <tr>
+                                                            <td>Semester {{ fee.semester.number }} </div>
+                                                            <td>PKR {{ fee.amount|floatformat:2 }}</div>
+                                                            <td>PKR {{ fee.paid_amount|floatformat:2 }}</div>
+                                                            <td>PKR {{ fee.remaining_amount|floatformat:2 }}</div>
+                                                            <td>
+                                                                {% if fee.is_overdue %}
+                                                                    <span class="badge bg-danger">Overdue</span>
+                                                                {% else %}
+                                                                    <span class="badge bg-warning">Pending</span>
+                                                                {% endif %}
+                                                             </div>
+                                                        </tr>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                            <i class="fas fa-credit-card"></i> Clear Dues
+                                        </a>
+                                    </div>
+                                </div>
+                            {% elif has_ufm_case %}
+                                <div class="card bg-light mb-3">
+                                    <div class="card-body">
+                                        <h5>Disciplinary Case Information</h5>
+                                        <p>There is an ongoing disciplinary case against you. Please contact:</p>
+                                        <ul class="text-left">
+                                            <li><strong>Examination Department:</strong> exam@edusphere.edu.pk</li>
+                                            <li><strong>Student Affairs Office:</strong> studentaffairs@edusphere.edu.pk</li>
+                                            <li><strong>Phone:</strong> +92 XXX XXXXXXX</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="btn-group mt-3">
+                            <a href="{% url 'student_dashboard' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Dashboard
+                            </a>
+                                <i class="fas fa-headset"></i> Contact Support
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .restricted-icon {
+        margin-bottom: 20px;
+    }
+    .btn-group {
+        gap: 10px;
+    }
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border: none;
+        border-radius: 8px;
+        padding: 10px 25px;
+    }
+    .btn-secondary {
+        border-radius: 8px;
+        padding: 10px 25px;
+    }
+    .alert {
+        border-radius: 12px;
+    }
+</style>
+{% endblock %}

@@ -27,4 +27,7 @@ urlpatterns = [
     
     # AJAX
     path('get-sections/', views.get_sections_by_batch, name='get_sections_by_batch'),
+
+        path('timetable/', views.student_timetable, name='student_timetable'),
+
 ]

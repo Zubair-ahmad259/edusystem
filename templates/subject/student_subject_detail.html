@@ -1,0 +1,134 @@
+{% extends 'students/base.html' %}
+{% load static %}
+
+{% block title %}{{ subject.code }} - {{ subject.name }}{% endblock %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">{{ subject.code }} - {{ subject.name }}</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'student_dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'subject:student_my_subjects' %}">My Subjects</a></li>
+                        <li class="breadcrumb-item active">Subject Details</li>
+                    </ul>
+                </div>
+                <div class="col-auto">
+                    <a href="{% url 'subject:student_my_subjects' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left"></i> Back to Subjects
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subject Information -->
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> Subject Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Subject Code:</strong> {{ subject.code }}</p>
+                                <p><strong>Subject Name:</strong> {{ subject.name }}</p>
+                                <p><strong>Credit Hours:</strong> {{ subject.credit_hours }}</p>
+                                <p><strong>Subject Type:</strong> {{ subject.get_subject_type_display }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Teacher:</strong> {{ teacher.first_name }} {{ teacher.last_name }}</p>
+                                <p><strong>Batch:</strong> {{ student.batch.name }}</p>
+                                <p><strong>Semester:</strong> Semester {{ student.semester.number }}</p>
+                                <p><strong>Section:</strong> {{ student.section.name }}</p>
+                            </div>
+                        </div>
+                        {% if subject.description %}
+                        <div class="mt-3">
+                            <strong>Description:</strong>
+                            <p>{{ subject.description }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <!-- Quick Stats -->
+                <div class="card mb-4">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i> Quick Stats</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="stat-item">
+                            <span>Total Marks:</span>
+                            <strong>100</strong>
+                        </div>
+                        <div class="stat-item">
+                            <span>Assignments:</span>
+                            <strong>5</strong>
+                        </div>
+                        <div class="stat-item">
+                            <span>Quizzes:</span>
+                            <strong>3</strong>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Teacher Info -->
+                <div class="card">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-chalkboard-user me-2"></i> Teacher Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="teacher-info text-center">
+                            <div class="teacher-avatar mb-3">
+                                <div class="avatar-circle">
+                                    <i class="fas fa-user-tie fa-3x"></i>
+                                </div>
+                            </div>
+                            <h5>{{ teacher.first_name }} {{ teacher.last_name }}</h5>
+                            <p class="text-muted">{{ teacher.email }}</p>
+                            <p class="text-muted">{{ teacher.qualification|default:"No qualification listed" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .stat-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .stat-item:last-child {
+        border-bottom: none;
+    }
+    
+    .avatar-circle {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #667eea20, #764ba220);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+        color: #667eea;
+    }
+    
+    .teacher-info h5 {
+        margin-bottom: 5px;
+    }
+</style>
+{% endblock %}

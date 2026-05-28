@@ -1134,7 +1134,6 @@ def teacher_availability_view(request):
         )
         
         messages.success(request, 'Availability added successfully!')
-        return redirect('teacher_availability')
     
     context = {
         'teacher': teacher,

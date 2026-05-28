@@ -20,6 +20,11 @@
                 </div>
             </div>
         </div>
+        <a href="{% url 'exam_manag:delete_comprehensive' %}" 
+   class="btn btn-danger btn-sm"
+   onclick="return confirm('⚠️ WARNING: This will delete ALL comprehensive results! This action cannot be undone. Continue?')">
+    <i class="fas fa-trash-alt"></i> Delete All Results
+</a>
 
         <!-- Stats Cards -->
         <div class="row">
@@ -34,6 +39,7 @@
                     </div>
                 </div>
             </div>
+
             <div class="col-md-3">
                 <div class="card dash-widget">
                     <div class="card-body">
@@ -76,7 +82,7 @@
                     <h5 class="mb-0">
                         <i class="fas fa-filter me-2"></i> Filter Results
                     </h5>
-                    <a href="{% url 'comprehensive_results' %}" class="btn btn-sm btn-light">
+                    <a href="{% url 'exam_manag:comprehensive_results' %}" class="btn btn-sm btn-light">
                         <i class="fas fa-sync-alt me-1"></i> Reset
                     </a>
                 </div>
@@ -195,7 +201,7 @@
                     <span class="badge bg-primary me-1">Semester: {{ selected_semester_name|default:selected_semester }}</span>
                     {% endif %}
                 </div>
-                <a href="{% url 'comprehensive_results' %}" class="btn btn-sm btn-outline-info">Clear All</a>
+                <a href="{% url 'exam_manag:comprehensive_results' %}" class="btn btn-sm btn-outline-info">Clear All</a>
             </div>
         </div>
         {% endif %}
@@ -284,11 +290,10 @@
                                         <small>CGPA</small>
                                     </div>
                                 </td>
-                                <td class="text-center">
-                                    <a href="{% url 'generate_transcript' student_data.student.id %}" class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-scroll"></i>
-                                    </a>
-                                </td>
+<td class="text-center">
+        <i class="fas fa-scroll"></i>
+    </a>
+</td>
                             </tr>
                             <!-- Detailed Row -->
                             <tr id="details-{{ forloop.counter }}" class="collapse">

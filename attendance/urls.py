@@ -5,7 +5,12 @@ from . import views
 urlpatterns = [
     # Dashboard
     path('', views.attendance_dashboard, name='attendance_dashboard'),
-    
+        path('student/dashboard/', views.student_attendance_dashboard, name='student_attendance_dashboard'),
+
+      path('student/my-attendance/', views.student_my_attendance, name='student_my_attendance'),
+    path('student/subject/<int:subject_id>/', views.student_subject_attendance, name='student_subject_attendance'),
+    path('student/api/attendance/<int:subject_id>/', views.student_attendance_api, name='student_attendance_api'),
+
     # Attendance CRUD
     path('list/', views.attendance_list, name='attendance_list'),
     path('mark/', views.mark_attendance, name='mark_attendance'),

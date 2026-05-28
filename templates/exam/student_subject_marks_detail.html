@@ -1,0 +1,232 @@
+{% extends 'students/base.html' %}
+{% load static %}
+
+{% block title %}{{ subject.code }} - Marks Detail{% endblock %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">{{ subject.code }} - {{ subject.name }}</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'student_dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'student_my_marks' %}">My Marks</a></li>
+                        <li class="breadcrumb-item active">Subject Details</li>
+                    </ul>
+                </div>
+                <div class="col-auto">
+                    <a href="{% url 'student_my_marks' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left"></i> Back to Marks
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overall Result -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i> Overall Result</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-3">
+                                <div class="result-card">
+                                    <h4>Total Marks</h4>
+                                    <h2 class="text-primary">{{ total_obtained|floatformat:1 }}/{{ total_max|floatformat:0 }}</h2>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="result-card">
+                                    <h4>Percentage</h4>
+                                    <h2 class="{% if overall_percentage >= 75 %}text-success{% elif overall_percentage >= 50 %}text-warning{% else %}text-danger{% endif %}">
+                                        {{ overall_percentage }}%
+                                    </h2>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="result-card">
+                                    <h4>Grade</h4>
+                                    <h2 class="{% if grade == 'A+' or grade == 'A' %}text-success{% elif grade == 'F' %}text-danger{% else %}text-warning{% endif %}">
+                                        {{ grade }}
+                                    </h2>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="result-card">
+                                    <h4>Status</h4>
+                                    <h2>
+                                        {% if is_passed %}
+                                            <span class="badge badge-success">PASSED</span>
+                                        {% else %}
+                                            <span class="badge badge-danger">FAILED</span>
+                                        {% endif %}
+                                    </h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="progress mt-3" style="height: 20px;">
+                            <div class="progress-bar {% if overall_percentage >= 75 %}bg-success{% elif overall_percentage >= 50 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                 style="width: {{ overall_percentage }}%">
+                                {{ overall_percentage }}%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Component-wise Marks -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i> Component-wise Marks</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Component</th>
+                                        <th>Weightage</th>
+                                        <th class="text-center">Obtained Marks</th>
+                                        <th class="text-center">Max Marks</th>
+                                        <th class="text-center">Percentage</th>
+                                        <th class="text-center">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for exam in exam_results %}
+                                    <tr>
+                                        <td>{{ exam.exam.get_exam_type_display }}</div>
+                                        <td>{{ exam.exam.weightage_percentage }}%</div>
+                                        <td class="text-center">
+                                            {% if exam.result and not exam.result.is_absent %}
+                                                <strong class="text-success">{{ exam.obtained|floatformat:1 }}</strong>
+                                            {% elif exam.result and exam.result.is_absent %}
+                                                <span class="text-danger">Absent</span>
+                                            {% else %}
+                                                <span class="text-muted">—</span>
+                                            {% endif %}
+                                        </div>
+                                        <td class="text-center">{{ exam.max|floatformat:0 }}</div>
+                                        <td class="text-center">
+                                            {% if exam.percentage > 0 %}
+                                                <div class="progress" style="height: 6px; width: 80px; display: inline-block;">
+                                                    <div class="progress-bar {% if exam.percentage >= 75 %}bg-success{% elif exam.percentage >= 50 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                                         style="width: {{ exam.percentage }}%"></div>
+                                                </div>
+                                                <br>
+                                                <strong>{{ exam.percentage|floatformat:1 }}%</strong>
+                                            {% else %}
+                                                —
+                                            {% endif %}
+                                        </div>
+                                        <td class="text-center">
+                                            {% if exam.result %}
+                                                {% if exam.result.is_absent %}
+                                                    <span class="badge badge-danger">Absent</span>
+                                                {% elif exam.percentage >= 50 %}
+                                                    <span class="badge badge-success">Pass</span>
+                                                {% else %}
+                                                    <span class="badge badge-warning">Fail</span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="badge badge-secondary">Pending</span>
+                                            {% endif %}
+                                        </div>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4">
+                                            <i class="fas fa-chart-simple fa-3x text-muted mb-2 d-block"></i>
+                                            <p>No exam results available</p>
+                                        </div>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subject Info -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> Subject Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <p><strong>Credit Hours:</strong> {{ subject.credit_hours }}</p>
+                            </div>
+                            <div class="col-md-4">
+                                <p><strong>Subject Type:</strong> {{ subject.get_subject_type_display }}</p>
+                            </div>
+                            <div class="col-md-4">
+                                <p><strong>Total Components:</strong> {{ exam_results|length }}</p>
+                            </div>
+                        </div>
+                        {% if subject.description %}
+                        <div class="mt-2">
+                            <strong>Description:</strong>
+                            <p>{{ subject.description }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .result-card {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 12px;
+        margin-bottom: 10px;
+    }
+    .result-card h4 {
+        font-size: 14px;
+        color: #64748b;
+        margin-bottom: 10px;
+    }
+    .result-card h2 {
+        font-size: 28px;
+        font-weight: 700;
+        margin: 0;
+    }
+    .badge {
+        padding: 8px 20px;
+        font-size: 14px;
+        border-radius: 25px;
+    }
+    .badge-success { background: #28a745; color: white; }
+    .badge-danger { background: #dc3545; color: white; }
+    .badge-warning { background: #ffc107; color: #212529; }
+    .badge-secondary { background: #6c757d; color: white; }
+    .text-success { color: #28a745 !important; }
+    .text-danger { color: #dc3545 !important; }
+    .text-warning { color: #fd7e14 !important; }
+    @media (max-width: 768px) {
+        .result-card h2 {
+            font-size: 22px;
+        }
+        .badge {
+            padding: 5px 12px;
+            font-size: 12px;
+        }
+    }
+</style>
+{% endblock %}

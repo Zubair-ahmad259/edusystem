@@ -1,0 +1,298 @@
+{% extends 'students/base.html' %}
+{% load static %}
+
+{% block title %}My Subjects - EduSphere{% endblock %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        
+        <!-- Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags == 'warning' %}warning{% else %}success{% endif %} alert-dismissible fade show">
+                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %} mr-2"></i>
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">My Subjects</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'student_dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">My Subjects</li>
+                    </ul>
+                </div>
+                <div class="col-auto">
+                    <a href="{% url 'student_dashboard' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student Info Card -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-user-graduate me-2"></i> Student Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <p class="mb-0"><strong>Name:</strong></p>
+                                <p>{{ student.first_name }} {{ student.last_name }}</p>
+                            </div>
+                            <div class="col-md-3">
+                                <p class="mb-0"><strong>Student ID:</strong></p>
+                                <p>{{ student.student_id }}</p>
+                            </div>
+                            <div class="col-md-3">
+                                <p class="mb-0"><strong>Batch:</strong></p>
+                                <p>{{ student.batch.name }}</p>
+                            </div>
+                            <div class="col-md-3">
+                                <p class="mb-0"><strong>Semester:</strong></p>
+                                <p>Semester {{ student.semester.number }}</p>
+                            </div>
+                            <div class="col-md-3">
+                                <p class="mb-0"><strong>Section:</strong></p>
+                                <p>{{ student.section.name }}</p>
+                            </div>
+                            <div class="col-md-3">
+                                <p class="mb-0"><strong>Discipline:</strong></p>
+                                <p>{{ student.discipline.field }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="stat-card stat-card-primary">
+                    <div class="stat-icon"><i class="fas fa-book"></i></div>
+                    <div class="stat-info">
+                        <h3 class="stat-number">{{ subjects|length }}</h3>
+                        <p class="stat-label">Total Subjects</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card stat-card-success">
+                    <div class="stat-icon"><i class="fas fa-star-of-life"></i></div>
+                    <div class="stat-info">
+                        <h3 class="stat-number">{{ total_credits }}</h3>
+                        <p class="stat-label">Total Credits</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card stat-card-info">
+                    <div class="stat-icon"><i class="fas fa-chalkboard-user"></i></div>
+                    <div class="stat-info">
+                        <h3 class="stat-number">{{ teachers_count }}</h3>
+                        <p class="stat-label">Teachers</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subjects Grid -->
+        <div class="row">
+            {% for subject in subjects %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="subject-card">
+                    <div class="subject-card-header">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <span class="subject-code-badge">{{ subject.code }}</span>
+                                <h5 class="subject-title mt-2 mb-0">{{ subject.name }}</h5>
+                            </div>
+                            <div class="credit-badge">
+                                <i class="fas fa-star-of-life me-1"></i> {{ subject.credit_hours }} CH
+                            </div>
+                        </div>
+                    </div>
+                    <div class="subject-card-body">
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <i class="fas fa-chalkboard-user text-primary"></i>
+                                <span class="info-label">Teacher:</span>
+                                <span class="info-value">{{ subject.teacher_name|default:"Not Assigned" }}</span>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-layer-group text-success"></i>
+                                <span class="info-label">Semester:</span>
+                                <span class="info-value">Semester {{ subject.semester }}</span>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-box text-warning"></i>
+                                <span class="info-label">Batch:</span>
+                                <span class="info-value">{{ subject.batch_name }}</span>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-users text-info"></i>
+                                <span class="info-label">Section:</span>
+                                <span class="info-value">{{ subject.section }}</span>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-building text-secondary"></i>
+                                <span class="info-label">Discipline:</span>
+                                <span class="info-value">{{ subject.discipline }}</span>
+                            </div>
+                        </div>
+                        
+                        {% if subject.description %}
+                        <div class="subject-description mt-3">
+                            <p class="mb-0">{{ subject.description|truncatechars:80 }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="subject-card-footer">
+                        <a href="{% url 'subject:student_subject_detail' subject.id %}" class="btn btn-primary w-100">
+                            <i class="fas fa-eye me-2"></i> View Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <div class="empty-state text-center py-5">
+                    <i class="fas fa-book fa-4x text-muted mb-3 d-block"></i>
+                    <h5>No Subjects Found</h5>
+                    <p class="text-muted">No subjects are assigned to your section for this semester.</p>
+                    <p class="text-muted">Please contact your academic coordinator.</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if subjects.has_other_pages %}
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        {% if subjects.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ subjects.previous_page_number }}">
+                                <i class="fas fa-chevron-left"></i> Previous
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for num in subjects.paginator.page_range %}
+                        <li class="page-item {% if subjects.number == num %}active{% endif %}">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                        {% endfor %}
+                        
+                        {% if subjects.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ subjects.next_page_number }}">
+                                Next <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .stat-card {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+    }
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+    }
+    .stat-card-primary .stat-icon { background: linear-gradient(135deg, #667eea20, #764ba220); color: #667eea; }
+    .stat-card-success .stat-icon { background: linear-gradient(135deg, #28a74520, #20c99720); color: #28a745; }
+    .stat-card-info .stat-icon { background: linear-gradient(135deg, #17a2b820, #13849620); color: #17a2b8; }
+    .stat-number { font-size: 28px; font-weight: 700; margin: 0; color: #1e293b; }
+    .stat-label { font-size: 13px; color: #64748b; margin: 0; }
+    
+    .subject-card {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    .subject-card:hover { transform: translateY(-5px); box-shadow: 0 12px 30px rgba(0,0,0,0.12); }
+    .subject-card-header {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        padding: 20px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .subject-code-badge {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        display: inline-block;
+    }
+    .subject-title { font-size: 18px; font-weight: 600; color: #1e293b; margin: 0; }
+    .credit-badge { background: rgba(0,0,0,0.05); padding: 4px 12px; border-radius: 20px; font-size: 12px; }
+    .subject-card-body { padding: 20px; }
+    .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .info-item { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+    .info-item i { width: 20px; font-size: 14px; }
+    .info-label { color: #64748b; font-weight: 500; }
+    .info-value { color: #1e293b; font-weight: 600; }
+    .subject-description { margin-top: 15px; padding-top: 10px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b; }
+    .subject-card-footer { padding: 15px 20px 20px; border-top: 1px solid #e2e8f0; background: #fafbfc; }
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border: none;
+        border-radius: 10px;
+        padding: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102,126,234,0.3); color: white; }
+    .empty-state { padding: 60px 20px; text-align: center; background: white; border-radius: 20px; }
+    .page-link { border-radius: 8px; margin: 0 3px; color: #667eea; }
+    .page-item.active .page-link { background: linear-gradient(135deg, #667eea, #764ba2); border-color: transparent; color: white; }
+    .card-header { border-bottom: none; border-radius: 12px 12px 0 0; padding: 15px 20px; }
+    .bg-gradient-primary { background: linear-gradient(135deg, #667eea, #764ba2); }
+    
+    @media (max-width: 768px) {
+        .info-grid { grid-template-columns: 1fr; gap: 8px; }
+        .stat-number { font-size: 22px; }
+        .stat-icon { width: 50px; height: 50px; font-size: 22px; }
+        .subject-title { font-size: 16px; }
+    }
+</style>
+{% endblock %}

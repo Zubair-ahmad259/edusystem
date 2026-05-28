@@ -44,7 +44,6 @@
                     </h3>
                     <ul class="breadcrumb">
                         <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
-                        <li class="breadcrumb-item"><a href="{% url 'exam_list' %}">Exams</a></li>
                         <li class="breadcrumb-item active">
                             {{ exam.subject_mark_component.subject.code }} - {{ exam.get_exam_type_display }}
                         </li>
@@ -97,13 +96,11 @@
                             <div class="col-md-4 text-right">
                                 <div class="action-buttons">
                                     {% if not exam.is_published %}
-                                    <a href="{% url 'publish_exam' exam.id %}" 
                                        class="btn btn-success" 
                                        onclick="return confirm('Publish this exam? This action cannot be undone.')">
                                         <i class="fas fa-paper-plane"></i> Publish Exam
                                     </a>
                                     {% endif %}
-                                    <a href="{% url 'upload_results' exam.id %}" class="btn btn-primary">
                                         <i class="fas fa-upload"></i> Upload Results
                                     </a>
                                 </div>
@@ -199,7 +196,6 @@
                             <i class="fas fa-list"></i> Students & Results ({{ results|length }}/{{ total_students }})
                         </h5>
                         <div class="card-action">
-                            <a href="{% url 'upload_results' exam.id %}" class="btn btn-sm btn-primary">
                                 <i class="fas fa-edit"></i> Edit Results
                             </a>
                         </div>
@@ -280,7 +276,6 @@
                                                 <i class="fas fa-clipboard-list fa-2x text-muted mb-3"></i>
                                                 <h6>No Results Entered</h6>
                                                 <p class="text-muted">Upload results to see student performance</p>
-                                                <a href="{% url 'upload_results' exam.id %}" class="btn btn-primary">
                                                     <i class="fas fa-upload"></i> Upload Results
                                                 </a>
                                             </div>
@@ -424,14 +419,11 @@
                     <div class="card-body">
                         <div class="text-center">
                             <div class="btn-group" role="group">
-                                <a href="{% url 'exam_list' %}" class="btn btn-secondary">
                                     <i class="fas fa-arrow-left"></i> Back to Exams
                                 </a>
-                                <a href="{% url 'upload_results' exam.id %}" class="btn btn-primary">
                                     <i class="fas fa-upload"></i> Upload/Edit Results
                                 </a>
                                 {% if not exam.is_published %}
-                                <a href="{% url 'publish_exam' exam.id %}" 
                                    class="btn btn-success" 
                                    onclick="return confirm('Publish this exam? Published exams cannot be edited.')">
                                     <i class="fas fa-paper-plane"></i> Publish Exam

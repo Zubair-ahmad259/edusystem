@@ -1,0 +1,228 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}Manage Transcript Requests - Admin{% endblock %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Manage Transcript Requests</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Transcript Requests</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter -->
+        <div class="card mb-4">
+            <div class="card-header bg-gradient-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-filter me-2"></i> Filter Requests</h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" class="row">
+                    <div class="col-md-4">
+                        <label>Status</label>
+                        <select name="status" class="form-control" onchange="this.form.submit()">
+                            <option value="">All Requests</option>
+                            {% for status_code, status_label in status_choices %}
+                            <option value="{{ status_code }}" {% if status_filter == status_code %}selected{% endif %}>
+                                {{ status_label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label>&nbsp;</label>
+                        <a href="{% url 'admin_transcript_requests' %}" class="btn btn-secondary d-block">
+                            <i class="fas fa-redo"></i> Reset
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="stat-card stat-card-primary">
+                    <div class="stat-number">{{ transcript_requests|length }}</div>
+                    <div class="stat-label">Total Requests</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card stat-card-warning">
+                    <div class="stat-number">{{ transcript_requests|length|default:0 }}</div>
+                    <div class="stat-label">Pending</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card stat-card-success">
+                    <div class="stat-number">{{ transcript_requests|length|default:0 }}</div>
+                    <div class="stat-label">Approved</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card stat-card-info">
+                    <div class="stat-number">{{ transcript_requests|length|default:0 }}</div>
+                    <div class="stat-label">Issued</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Requests Table -->
+        <div class="card">
+            <div class="card-header bg-gradient-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-list me-2"></i> Transcript Requests</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Request Date</th>
+                                <th>Student ID</th>
+                                <th>Student Name</th>
+                                <th>Request Type</th>
+                                <th>Copies</th>
+                                <th>Delivery</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for req in transcript_requests %}
+                            <tr>
+                                <td>{{ forloop.counter }}</div>
+                                <td>{{ req.request_date|date:"M d, Y" }}</div>
+                                <td>{{ req.student.student_id }}</div>
+                                <td>{{ req.student.first_name }} {{ req.student.last_name }}</div>
+                                <td>{{ req.get_request_type_display }}</div>
+                                <td>{{ req.number_of_copies }}</div>
+                                <td>{{ req.get_delivery_method_display }}</div>
+                                <td>
+                                    {% if req.status == 'pending' %}
+                                        <span class="badge badge-warning">Pending</span>
+                                    {% elif req.status == 'approved' %}
+                                        <span class="badge badge-info">Approved</span>
+                                    {% elif req.status == 'processing' %}
+                                        <span class="badge badge-primary">Processing</span>
+                                    {% elif req.status == 'issued' %}
+                                        <span class="badge badge-success">Issued</span>
+                                    {% elif req.status == 'rejected' %}
+                                        <span class="badge badge-danger">Rejected</span>
+                                    {% endif %}
+                                </div>
+                                <td>
+                                    {% if req.status == 'pending' %}
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'approve_transcript_request' req.id %}" class="btn btn-success" onclick="return confirm('Approve this transcript request?')">
+                                                <i class="fas fa-check"></i> Approve
+                                            </a>
+                                            <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#rejectModal{{ req.id }}">
+                                                <i class="fas fa-times"></i> Reject
+                                            </button>
+                                        </div>
+                                    {% elif req.status == 'approved' %}
+                                        <a href="{% url 'issue_transcript_request' req.id %}" class="btn btn-sm btn-primary" onclick="return confirm('Issue this transcript?')">
+                                            <i class="fas fa-download"></i> Issue
+                                        </a>
+                                    {% elif req.status == 'issued' %}
+                                        <a href="{% url 'generate_transcript_pdf' req.id %}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-file-pdf"></i> Download PDF
+                                        </a>
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+
+                            <!-- Reject Modal -->
+                            <div class="modal fade" id="rejectModal{{ req.id }}" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <form method="POST" action="{% url 'reject_transcript_request' req.id %}">
+                                            {% csrf_token %}
+                                            <div class="modal-header bg-danger text-white">
+                                                <h5 class="modal-title">Reject Transcript Request</h5>
+                                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>Are you sure you want to reject this request?</p>
+                                                <textarea name="reason" class="form-control" rows="3" placeholder="Reason for rejection..." required></textarea>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                                <button type="submit" class="btn btn-danger">Confirm Reject</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {% empty %}
+                            <tr>
+                                <td colspan="9" class="text-center py-4">
+                                    <i class="fas fa-file-alt fa-3x text-muted mb-2 d-block"></i>
+                                    <p>No transcript requests found</p>
+                                </div>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .stat-card {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+    }
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    .stat-number {
+        font-size: 28px;
+        font-weight: 700;
+    }
+    .stat-label {
+        font-size: 13px;
+        color: #64748b;
+    }
+    .stat-card-primary .stat-number { color: #667eea; }
+    .stat-card-warning .stat-number { color: #f39c12; }
+    .stat-card-success .stat-number { color: #28a745; }
+    .stat-card-info .stat-number { color: #17a2b8; }
+    .badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-weight: 500;
+    }
+    .badge-warning { background: #fff3cd; color: #856404; }
+    .badge-info { background: #d1ecf1; color: #0c5460; }
+    .badge-success { background: #d4edda; color: #155724; }
+    .badge-danger { background: #f8d7da; color: #721c24; }
+    .badge-primary { background: #cce5ff; color: #004085; }
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+    .btn-group-sm .btn {
+        margin: 0 2px;
+    }
+</style>
+{% endblock %}

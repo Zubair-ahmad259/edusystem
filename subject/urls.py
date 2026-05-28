@@ -25,4 +25,9 @@ urlpatterns = [
     path('api/quick-stats/', views.quick_stats_api, name='quick_stats_api'),
     path('api/get-sections/', views.get_sections_for_assignment, name='get_sections_for_assignment'),
     path('api/get-prerequisites/', views.get_prerequisite_suggestions, name='get_prerequisite_suggestions'),
+
+
+    path('my-subjects/', views.student_subjects, name='student_my_subjects'),
+    path('subject/<int:subject_id>/', views.student_subject_detail, name='student_subject_detail'),
+
 ]

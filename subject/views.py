@@ -445,3 +445,163 @@ def teacher_assigned_subjects(request):
     }
     
     return render(request, 'subject/teacher_assigned_subjects .html', context)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.db.models import Q
+from subject.models import SubjectAssign
+from student.models import Student
+
+@login_required
+def student_subjects(request):
+    """View to show all subjects assigned to the student based on their section and semester"""
+    
+    try:
+        student = Student.objects.get(user=request.user)
+    except Student.DoesNotExist:
+        return render(request, 'subject/student_subjects.html', {'error': 'Student profile not found'})
+    
+    # Get subjects assigned to student's batch, semester, section, and discipline
+    subject_assignments = SubjectAssign.objects.filter(
+        batch=student.batch,
+        semester=student.semester,
+        discipline=student.discipline,
+        sections=student.section,
+        is_active=True
+    ).select_related('subject', 'teacher', 'batch', 'semester', 'discipline')
+    
+    # Prepare subject data
+    subjects_data = []
+    total_credits = 0
+    teachers_set = set()
+    
+    for assignment in subject_assignments:
+        subjects_data.append({
+            'id': assignment.subject.id,
+            'code': assignment.subject.code,
+            'name': assignment.subject.name,
+            'credit_hours': assignment.subject.credit_hours,
+            'description': assignment.subject.description,
+            'teacher_name': f"{assignment.teacher.first_name} {assignment.teacher.last_name}" if assignment.teacher else "Not Assigned",
+            'semester': assignment.semester.number,
+            'batch_name': assignment.batch.name,
+            'section': student.section.name,
+            'discipline': assignment.discipline.field,
+        })
+        total_credits += assignment.subject.credit_hours
+        if assignment.teacher:
+            teachers_set.add(assignment.teacher.id)
+    
+    teachers_count = len(teachers_set)
+    
+    # Pagination
+    paginator = Paginator(subjects_data, 9)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'student': student,
+        'subjects': page_obj,
+        'total_credits': total_credits,
+        'teachers_count': teachers_count,
+    }
+    
+    return render(request, 'subject/student_subjects.html', context)
+
+
+@login_required
+def student_subject_detail(request, subject_id):
+    """View to show detailed information about a specific subject"""
+    from subject.models import Subject
+    
+    try:
+        student = Student.objects.get(user=request.user)
+    except Student.DoesNotExist:
+        return render(request, 'student/error.html', {'error': 'Student profile not found'})
+    
+    subject = get_object_or_404(Subject, id=subject_id)
+    
+    # Verify student has access to this subject
+    has_access = SubjectAssign.objects.filter(
+        batch=student.batch,
+        semester=student.semester,
+        discipline=student.discipline,
+        sections=student.section,
+        subject=subject,
+        is_active=True
+    ).exists()
+    
+    if not has_access:
+        return render(request, 'student/error.html', {'error': 'You do not have access to this subject'})
+    
+    # Get the assignment to find teacher
+    assignment = SubjectAssign.objects.filter(
+        batch=student.batch,
+        semester=student.semester,
+        discipline=student.discipline,
+        sections=student.section,
+        subject=subject,
+        is_active=True
+    ).first()
+    
+    context = {
+        'student': student,
+        'subject': subject,
+        'teacher': assignment.teacher if assignment else None,
+        'assignment': assignment,
+    }
+    
+    return render(request, 'subject/student_subject_detail.html', context)
+    """View to show detailed information about a specific subject"""
+    from subject.models import Subject
+    
+    try:
+        student = Student.objects.get(user=request.user)
+    except Student.DoesNotExist:
+        return render(request, 'student/error.html', {'error': 'Student profile not found'})
+    
+    subject = get_object_or_404(Subject, id=subject_id)
+    
+    # Verify student has access to this subject
+    has_access = SubjectAssign.objects.filter(
+        batch=student.batch,
+        semester=student.semester,
+        discipline=student.discipline,
+        sections=student.section,
+        subject=subject,
+        is_active=True
+    ).exists()
+  
+    # Get the assignment to find teacher
+    assignment = SubjectAssign.objects.filter(
+        batch=student.batch,
+        semester=student.semester,
+        discipline=student.discipline,
+        sections=student.section,
+        subject=subject,
+        is_active=True
+    ).first()
+    
+    context = {
+        'student': student,
+        'subject': subject,
+        'teacher': assignment.teacher if assignment else None,
+        'assignment': assignment,
+    }
+    
+    return render(request, 'subject/student_subject_detail.html', context)    

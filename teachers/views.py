@@ -289,3 +289,124 @@ def export_teachers_excel(request):
     response['Content-Disposition'] = 'attachment; filename="teachers_export.xlsx"'
     wb.save(response)
     return response
+
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.hashers import make_password
+from .models import Teacher
+from home_auth.models import CustomUser
+
+
+@login_required
+def teacher_profile(request):
+    """Teacher profile view - show and edit profile"""
+    try:
+        # Get teacher profile
+        teacher = Teacher.objects.get(user=request.user)
+    except Teacher.DoesNotExist:
+        messages.error(request, 'Teacher profile not found!')
+        return redirect('dashboard')
+    
+    context = {
+        'teacher': teacher,
+        'user': request.user,
+    }
+    return render(request, 'teacher/profile.html', context)
+
+
+@login_required
+def edit_teacher_profile(request):
+    """Edit teacher profile"""
+    try:
+        teacher = Teacher.objects.get(user=request.user)
+    except Teacher.DoesNotExist:
+        messages.error(request, 'Teacher profile not found!')
+        return redirect('dashboard')
+    
+    if request.method == 'POST':
+        try:
+            # Update teacher information
+            teacher.first_name = request.POST.get('first_name', teacher.first_name)
+            teacher.last_name = request.POST.get('last_name', teacher.last_name)
+            teacher.father_name = request.POST.get('father_name', teacher.father_name)
+            teacher.gender = request.POST.get('gender', teacher.gender)
+            teacher.date_of_birth = request.POST.get('date_of_birth', teacher.date_of_birth)
+            teacher.mobile_number = request.POST.get('mobile_number', teacher.mobile_number)
+            teacher.email = request.POST.get('email', teacher.email)
+            teacher.field = request.POST.get('field', teacher.field)
+            teacher.experience = request.POST.get('experience', teacher.experience)
+            teacher.religion = request.POST.get('religion', teacher.religion)
+            
+            # Handle image upload
+            if 'teacher_image' in request.FILES:
+                teacher.teacher_image = request.FILES['teacher_image']
+            
+            teacher.save()
+            
+            # Update user information
+            user = request.user
+            user.first_name = request.POST.get('first_name', user.first_name)
+            user.last_name = request.POST.get('last_name', user.last_name)
+            user.email = request.POST.get('email', user.email)
+            user.save()
+            
+            messages.success(request, 'Profile updated successfully!')
+            return redirect('teacher_profile')
+            
+        except Exception as e:
+            messages.error(request, f'Error updating profile: {str(e)}')
+    
+    context = {
+        'teacher': teacher,
+    }
+    return render(request, 'teacher/edit_profile.html', context)
+
+
+@login_required
+def change_password(request):
+    """Change teacher password"""
+    if request.method == 'POST':
+        current_password = request.POST.get('current_password')
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+        
+        # Check current password
+        if not request.user.check_password(current_password):
+            messages.error(request, 'Current password is incorrect!')
+            return redirect('change_password')
+        
+        # Check new password match
+        if new_password != confirm_password:
+            messages.error(request, 'New passwords do not match!')
+            return redirect('change_password')
+        
+        # Check password length
+        if len(new_password) < 6:
+            messages.error(request, 'Password must be at least 6 characters!')
+            return redirect('change_password')
+        
+        # Update password
+        request.user.password = make_password(new_password)
+        request.user.save()
+        
+        messages.success(request, 'Password changed successfully! Please login again.')
+        return redirect('logout')
+    
+    return render(request, 'teacher/change_password.html')
+
+
+@login_required
+def teacher_settings(request):
+    """Teacher settings page"""
+    try:
+        teacher = Teacher.objects.get(user=request.user)
+    except Teacher.DoesNotExist:
+        messages.error(request, 'Teacher profile not found!')
+        return redirect('dashboard')
+    
+    context = {
+        'teacher': teacher,
+        'user': request.user,
+    }
+    return render(request, 'teacher/settings.html', context)    

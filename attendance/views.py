@@ -1652,10 +1652,212 @@ def subject_short_attendance_report(request, subject_id):
 
 
 
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.http import JsonResponse
+from django.db.models import Count, Q
+from datetime import date, datetime
+from .models import Attendance
+from student.models import Student
+from subject.models import Subject
+from Academic.models import Section
+
+@login_required
+def student_attendance_dashboard(request):
+    """Student Attendance Dashboard"""
+    try:
+        student = Student.objects.get(user=request.user)
+    except Student.DoesNotExist:
+        messages.error(request, 'Student profile not found!')
+        return redirect('student_dashboard')
+    
+    # Get all subjects for this student's section and semester - FIXED
+    subjects = Subject.objects.filter(
+        assigned_teachers__sections=student.section,
+        assigned_teachers__batch=student.batch,
+        assigned_teachers__semester=student.semester,
+        assigned_teachers__is_active=True
+    ).distinct()
+    
+    # Calculate overall attendance
+    total_classes = Attendance.objects.filter(student=student).count()
+    present_classes = Attendance.objects.filter(student=student, status='P').count()
+    overall_percentage = round((present_classes / total_classes * 100), 1) if total_classes > 0 else 0
+    
+    # Subject-wise attendance
+    subject_attendance = []
+    for subject in subjects:
+        subject_total = Attendance.objects.filter(student=student, subject=subject).count()
+        subject_present = Attendance.objects.filter(student=student, subject=subject, status='P').count()
+        subject_percentage = round((subject_present / subject_total * 100), 1) if subject_total > 0 else 0
+        
+        subject_attendance.append({
+            'subject': subject,
+            'total': subject_total,
+            'present': subject_present,
+            'absent': subject_total - subject_present,
+            'percentage': subject_percentage,
+        })
+    
+    # Recent attendance records
+    recent_attendance = Attendance.objects.filter(
+        student=student
+    ).select_related('subject').order_by('-date')[:10]
+    
+    context = {
+        'student': student,
+        'subjects': subject_attendance,
+        'overall_percentage': overall_percentage,
+        'total_classes': total_classes,
+        'present_classes': present_classes,
+        'absent_classes': total_classes - present_classes,
+        'recent_attendance': recent_attendance,
+    }
+    
+    return render(request, 'attendance/student_attendance_dashboard.html', context)
 
 
+@login_required
+def student_my_attendance(request):
+    """Student My Attendance Page"""
+    try:
+        student = Student.objects.get(user=request.user)
+    except Student.DoesNotExist:
+        messages.error(request, 'Student profile not found!')
+        return redirect('student_dashboard')
+    
+    # Get filter parameters
+    subject_id = request.GET.get('subject')
+    month = request.GET.get('month')
+    year = request.GET.get('year', date.today().year)
+    
+    # Base queryset
+    attendances = Attendance.objects.filter(student=student).select_related('subject')
+    
+    if subject_id:
+        attendances = attendances.filter(subject_id=subject_id)
+    if month:
+        attendances = attendances.filter(date__month=month)
+    if year:
+        attendances = attendances.filter(date__year=year)
+    
+    # Get all subjects for filter dropdown - FIXED
+    subjects = Subject.objects.filter(
+        assigned_teachers__sections=student.section,
+        assigned_teachers__batch=student.batch,
+        assigned_teachers__semester=student.semester,
+        assigned_teachers__is_active=True
+    ).distinct()
+    
+    # Calculate statistics
+    total_records = attendances.count()
+    present_count = attendances.filter(status='P').count()
+    absent_count = attendances.filter(status='A').count()
+    percentage = round((present_count / total_records * 100), 1) if total_records > 0 else 0
+    
+    context = {
+        'student': student,
+        'attendances': attendances.order_by('-date'),
+        'subjects': subjects,
+        'total_records': total_records,
+        'present_count': present_count,
+        'absent_count': absent_count,
+        'percentage': percentage,
+        'selected_subject': subject_id,
+        'selected_month': month,
+        'selected_year': year,
+        'months': range(1, 13),
+        'current_year': date.today().year,
+    }
+    
+    return render(request, 'attendance/student_my_attendance.html', context)
 
-def student_attendance_api(request, student_id):
+
+@login_required
+def student_subject_attendance(request, subject_id):
+    """Student Attendance for a specific subject"""
+    try:
+        student = Student.objects.get(user=request.user)
+    except Student.DoesNotExist:
+        messages.error(request, 'Student profile not found!')
+        return redirect('student_dashboard')
+    
+    subject = get_object_or_404(Subject, id=subject_id)
+    
+    # Get all attendance for this subject
+    attendances = Attendance.objects.filter(
+        student=student,
+        subject=subject
+    ).order_by('-date')
+    
+    # Calculate statistics
+    total_classes = attendances.count()
+    present_count = attendances.filter(status='P').count()
+    absent_count = attendances.filter(status='A').count()
+    percentage = round((present_count / total_classes * 100), 1) if total_classes > 0 else 0
+    
+    # Calculate required days to reach 75%
+    required_days = 0
+    if total_classes > 0 and percentage < 75:
+        required_days = int(((0.75 * total_classes) - present_count) / 0.25)
+        if required_days < 0:
+            required_days = 0
+    
+    context = {
+        'student': student,
+        'subject': subject,
+        'attendances': attendances,
+        'total_classes': total_classes,
+        'present_count': present_count,
+        'absent_count': absent_count,
+        'percentage': percentage,
+        'required_days': required_days,
+    }
+    
+    return render(request, 'attendance/student_subject_attendance.html', context)
+
+
+@login_required
+def student_attendance_api(request, subject_id):
+    """API endpoint for student attendance data"""
+    try:
+        student = Student.objects.get(user=request.user)
+    except Student.DoesNotExist:
+        return JsonResponse({'error': 'Student not found'}, status=404)
+    
+    subject = get_object_or_404(Subject, id=subject_id)
+    
+    # Get all attendance for this subject
+    attendances = Attendance.objects.filter(
+        student=student,
+        subject=subject
+    ).order_by('-date')
+    
+    # Prepare chart data
+    chart_data = []
+    for att in attendances:
+        chart_data.append({
+            'date': att.date.strftime('%Y-%m-%d'),
+            'status': att.status,
+            'status_text': 'Present' if att.status == 'P' else 'Absent',
+        })
+    
+    # Calculate statistics
+    total = attendances.count()
+    present = attendances.filter(status='P').count()
+    percentage = round((present / total * 100), 1) if total > 0 else 0
+    
+    return JsonResponse({
+        'success': True,
+        'subject_code': subject.code,
+        'subject_name': subject.name,
+        'total_classes': total,
+        'present_count': present,
+        'absent_count': total - present,
+        'percentage': percentage,
+        'chart_data': chart_data,
+    })
     """API endpoint for student attendance details"""
     from datetime import datetime
     

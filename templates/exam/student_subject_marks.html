@@ -20,7 +20,7 @@
                 </div>
                 <div class="col-auto">
                     <div class="btn-group">
-                        <a href="{% url 'upload_marks_dashboard' %}" class="btn btn-primary">
+                        <a href="{% url 'exam_manag:upload_marks_dashboard' %}" class="btn btn-primary">
                             <i class="fas fa-upload"></i> Upload Marks
                         </a>
                     </div>
@@ -65,7 +65,7 @@
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-search"></i> Apply Filters
                         </button>
-                        <a href="{% url 'student_subject_marks' %}" class="btn btn-secondary">
+                        <a href="{% url 'exam_manag:student_subject_marks' %}" class="btn btn-secondary">
                             <i class="fas fa-redo"></i> Reset
                         </a>
                     </div>
@@ -97,6 +97,7 @@
                                         <th style="width: 50px;">#</th>
                                         <th>Student ID</th>
                                         <th>Student Name</th>
+                                        <th>Email</th>
                                         <th>Subject</th>
                                         <th class="text-center">Mid Term<br><small>(20)</small></th>
                                         <th class="text-center">Final<br><small>(50)</small></th>
@@ -114,16 +115,11 @@
                                 <tbody>
                                     {% for student in section_students %}
                                     <tr>
-                                        <td class="text-center">{{ forloop.counter }}</div>
-                                        <td><strong>{{ student.student_id }}</strong></div>
-                                        <td>
-                                            <div>
-                                                <strong>{{ student.name }}</strong>
-                                                <br>
-                                                <small class="text-muted">{{ student.email|default:"No email" }}</small>
-                                            </div>
-                                        </div>
-                                        <td>{{ student.subject_code }} - {{ student.subject_name }}</div>
+                                        <td class="text-center">{{ forloop.counter }}</td>
+                                        <td><strong>{{ student.student_id }}</strong></td>
+                                        <td>{{ student.name }}</td>
+                                        <td><small class="text-muted">{{ student.email|default:"—" }}</small></td>
+                                        <td>{{ student.subject_code }} - {{ student.subject_name }}</td>
                                         
                                         <!-- Mid Term -->
                                         <td class="text-center">
@@ -132,7 +128,7 @@
                                             {% else %}
                                                 <span class="text-muted">—</span>
                                             {% endif %}
-                                        </div>
+                                        </td>
                                         
                                         <!-- Final -->
                                         <td class="text-center">
@@ -141,7 +137,7 @@
                                             {% else %}
                                                 <span class="text-muted">—</span>
                                             {% endif %}
-                                        </div>
+                                        </td>
                                         
                                         <!-- Quiz -->
                                         <td class="text-center">
@@ -150,7 +146,7 @@
                                             {% else %}
                                                 <span class="text-muted">—</span>
                                             {% endif %}
-                                        </div>
+                                        </td>
                                         
                                         <!-- Assignment -->
                                         <td class="text-center">
@@ -159,7 +155,7 @@
                                             {% else %}
                                                 <span class="text-muted">—</span>
                                             {% endif %}
-                                        </div>
+                                        </td>
                                         
                                         <!-- Lab -->
                                         <td class="text-center">
@@ -168,7 +164,7 @@
                                             {% else %}
                                                 <span class="text-muted">—</span>
                                             {% endif %}
-                                        </div>
+                                        </td>
                                         
                                         <!-- Attendance -->
                                         <td class="text-center">
@@ -177,31 +173,31 @@
                                             {% else %}
                                                 <span class="text-muted">—</span>
                                             {% endif %}
-                                        </div>
+                                        </td>
                                         
                                         <!-- Total -->
                                         <td class="text-center">
                                             <strong class="{% if student.total_marks >= 50 %}text-success{% else %}text-danger{% endif %}">
                                                 {{ student.total_marks|floatformat:1 }}
                                             </strong>
-                                        </div>
+                                        </td>
                                         
                                         <!-- Percentage -->
                                         <td class="text-center">
-                                            <div class="progress" style="height: 6px; width: 60px; display: inline-block;">
-                                                <div class="progress-bar bg-{% if student.percentage >= 75 %}success{% elif student.percentage >= 50 %}warning{% else %}danger{% endif %}" 
+                                            <div class="progress" style="height: 6px; width: 60px; display: inline-block; margin-bottom: 5px;">
+                                                <div class="progress-bar {% if student.percentage >= 75 %}bg-success{% elif student.percentage >= 50 %}bg-warning{% else %}bg-danger{% endif %}" 
                                                      style="width: {{ student.percentage }}%"></div>
                                             </div>
                                             <br>
                                             <strong>{{ student.percentage|floatformat:1 }}%</strong>
-                                        </div>
+                                        </td>
                                         
                                         <!-- Grade -->
                                         <td class="text-center">
-                                            <span class="badge badge-{% if student.grade == 'A+' or student.grade == 'A' %}success{% elif student.grade == 'F' %}danger{% else %}warning{% endif %}">
+                                            <span class="badge {% if student.grade == 'A+' or student.grade == 'A' %}badge-success{% elif student.grade == 'F' %}badge-danger{% else %}badge-warning{% endif %}">
                                                 {{ student.grade|default:"-" }}
                                             </span>
-                                        </div>
+                                        </td>
                                         
                                         <!-- Status -->
                                         <td class="text-center">
@@ -214,15 +210,15 @@
                                                     <i class="fas fa-times-circle"></i> Failed
                                                 </span>
                                             {% endif %}
-                                        </div>
+                                        </td>
                                         
                                         <!-- Action -->
                                         <td class="text-center">
                                             <a href="#" class="btn btn-sm btn-outline-primary">
                                                 <i class="fas fa-eye"></i> Details
                                             </a>
-                                        </div>
-                                    </table>
+                                        </td>
+                                    </tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
@@ -238,7 +234,7 @@
                     <i class="fas fa-chart-line fa-4x text-muted mb-3 d-block"></i>
                     <h5>No Data Found</h5>
                     <p class="text-muted">No student marks available for the selected filters.</p>
-                    <a href="{% url 'upload_marks_dashboard' %}" class="btn btn-primary mt-2">
+                    <a href="{% url 'exam_manag:upload_marks_dashboard' %}" class="btn btn-primary mt-2">
                         <i class="fas fa-upload"></i> Upload Marks
                     </a>
                 </div>
@@ -317,11 +313,13 @@
         font-size: 12px;
         text-align: center;
         vertical-align: middle;
+        background-color: #f8fafc;
     }
     
     .table td {
         vertical-align: middle;
         font-size: 13px;
+        padding: 12px 8px;
     }
     
     .badge {
@@ -400,6 +398,14 @@
         border-radius: 12px;
     }
     
+    .text-success {
+        color: #28a745 !important;
+    }
+    
+    .text-danger {
+        color: #dc3545 !important;
+    }
+    
     @media (max-width: 768px) {
         .table {
             font-size: 11px;
@@ -418,13 +424,10 @@
         .btn-group .btn {
             width: 100%;
         }
+        
+        .section-title {
+            font-size: 16px;
+        }
     }
 </style>
-
-<script>
-    // Auto-dismiss alerts after 5 seconds
-    setTimeout(function() {
-        $('.alert').fadeOut('slow');
-    }, 5000);
-</script>
 {% endblock %}

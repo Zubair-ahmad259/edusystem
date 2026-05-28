@@ -1,0 +1,180 @@
+{% extends 'teacher/teacher_base.html' %}
+{% load static %}
+
+{% block title %}My Profile - EduSphere{% endblock %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">My Profile</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'teacher_dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Profile</li>
+                    </ul>
+                </div>
+                <div class="col-auto">
+                    <a href="{% url 'edit_teacher_profile' %}" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> Edit Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Profile Image Card -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        {% if teacher.teacher_image %}
+                            <img src="{{ teacher.teacher_image.url }}" alt="Profile Image" class="rounded-circle mb-3" width="150" height="150" style="object-fit: cover;">
+                        {% else %}
+                            <div class="avatar-circle mx-auto mb-3" style="width: 150px; height: 150px; font-size: 48px;">
+                                <span class="avatar-text">{{ teacher.first_name|first }}{{ teacher.last_name|first }}</span>
+                            </div>
+                        {% endif %}
+                        <h4>{{ teacher.first_name }} {{ teacher.last_name }}</h4>
+                        <p class="text-muted">Teacher ID: {{ teacher.teacher_id }}</p>
+                        <span class="badge bg-primary">Teacher</span>
+                    </div>
+                </div>
+
+                <!-- Contact Info Card -->
+                <div class="card mt-3">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Contact Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <p><i class="fas fa-envelope"></i> <strong>Email:</strong><br>{{ teacher.email }}</p>
+                        <p><i class="fas fa-phone"></i> <strong>Mobile:</strong><br>{{ teacher.mobile_number }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Details Card -->
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Personal Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="info-box">
+                                    <label>First Name</label>
+                                    <p><strong>{{ teacher.first_name }}</strong></p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-box">
+                                    <label>Last Name</label>
+                                    <p><strong>{{ teacher.last_name }}</strong></p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-box">
+                                    <label>Father Name</label>
+                                    <p><strong>{{ teacher.father_name|default:"-" }}</strong></p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-box">
+                                    <label>Gender</label>
+                                    <p><strong>{{ teacher.gender|default:"-" }}</strong></p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-box">
+                                    <label>Date of Birth</label>
+                                    <p><strong>{{ teacher.date_of_birth|date:"F d, Y"|default:"-" }}</strong></p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-box">
+                                    <label>Religion</label>
+                                    <p><strong>{{ teacher.religion|default:"-" }}</strong></p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-box">
+                                    <label>Joining Date</label>
+                                    <p><strong>{{ teacher.joining_date|date:"F d, Y"|default:"-" }}</strong></p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-box">
+                                    <label>Experience</label>
+                                    <p><strong>{{ teacher.experience|default:"0" }} Years</strong></p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-box">
+                                    <label>Specialization</label>
+                                    <p><strong>{{ teacher.field|default:"-" }}</strong></p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-box">
+                                    <label>Salary</label>
+                                    <p><strong>Rs. {{ teacher.salary|floatformat:2|default:"0" }}</strong></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Account Settings Card -->
+                <div class="card mt-3">
+                    <div class="card-header bg-warning text-white">
+                        <h5 class="mb-0">Account Settings</h5>
+                    </div>
+                    <div class="card-body">
+                        <a href="{% url 'change_password' %}" class="btn btn-warning">
+                            <i class="fas fa-key"></i> Change Password
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .avatar-circle {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .avatar-text {
+        font-size: 48px;
+        font-weight: 600;
+        color: white;
+    }
+    .info-box {
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        margin-bottom: 10px;
+    }
+    .info-box label {
+        font-size: 12px;
+        color: #6c757d;
+        margin-bottom: 5px;
+        display: block;
+    }
+    .info-box p {
+        margin-bottom: 0;
+        font-size: 16px;
+    }
+    .badge {
+        padding: 8px 15px;
+        font-size: 12px;
+    }
+</style>
+{% endblock %}

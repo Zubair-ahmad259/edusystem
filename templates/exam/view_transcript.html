@@ -96,7 +96,7 @@
                         <h3 class="page-title">Academic Transcript</h3>
                         <ul class="breadcrumb">
                             <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
-                            <li class="breadcrumb-item"><a href="{% url 'all_transcripts_list' %}">Transcripts</a></li>
+                            <li class="breadcrumb-item"><a href="{% url 'exam_manag:all_transcripts_list' %}">Transcripts</a></li>
                             <li class="breadcrumb-item active">{{ transcript.transcript_number }}</li>
                         </ul>
                     </div>
@@ -306,11 +306,11 @@
             <div class="card-footer no-print">
                 <div class="row">
                     <div class="col-md-6">
-                        <a href="{% url 'all_transcripts_list' %}" class="btn btn-secondary">
+                        <a href="{% url 'exam_manag:all_transcripts_list' %}" class="btn btn-secondary">
                             <i class="fas fa-arrow-left"></i> Back to Transcripts
                         </a>
                         {% if user.is_staff %}
-                        <a href="{% url 'delete_transcript' transcript.id %}" 
+                        <a href="{% url 'exam_manag:delete_transcript' transcript.id %}" 
                            class="btn btn-danger" 
                            onclick="return confirm('Are you sure you want to delete this transcript?')">
                             <i class="fas fa-trash"></i> Delete
@@ -318,13 +318,13 @@
                         {% endif %}
                     </div>
                     <div class="col-md-6 text-right">
-                        <a href="{% url 'print_transcript' transcript.id %}" class="btn btn-primary" target="_blank">
+                        <a href="{% url 'exam_manag:print_transcript' transcript.id %}" class="btn btn-primary" target="_blank">
                             <i class="fas fa-print"></i> Print View
                         </a>
                         <button onclick="window.print()" class="btn btn-success">
                             <i class="fas fa-file-pdf"></i> Print Now
                         </button>
-                        <a href="{% url 'generate_transcript' transcript.student.id %}" class="btn btn-info">
+                        <a href="{% url 'exam_manag:generate_transcript' transcript.student.id %}" class="btn btn-info">
                             <i class="fas fa-redo"></i> Regenerate
                         </a>
                     </div>

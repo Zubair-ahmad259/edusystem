@@ -13,4 +13,12 @@ urlpatterns = [
     path("bulk-paste/", views.bulk_paste_teachers, name="bulk_paste_teachers"),
     path("download-template/", views.download_teacher_template, name="download_teacher_template"),
     path("export-excel/", views.export_teachers_excel, name="export_teachers_excel"),
+
+
+
+    path('profile/', views.teacher_profile, name='teacher_profile'),
+    path('edit-profile/', views.edit_teacher_profile, name='edit_teacher_profile'),
+    path('change-password/', views.change_password, name='change_password'),
+    path('settings/', views.teacher_settings, name='teacher_settings'),
+    # ... other URLs
 ]

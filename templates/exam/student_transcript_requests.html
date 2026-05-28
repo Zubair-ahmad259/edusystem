@@ -1,0 +1,169 @@
+{% extends 'students/base.html' %}
+{% load static %}
+
+{% block title %}My Transcript Requests - EduSphere{% endblock %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">My Transcript Requests</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'student_dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Transcript Requests</li>
+                    </ul>
+                </div>
+                <div class="col-auto">
+                    <a href="{% url 'exam_manag:student_transcript_request' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> New Request
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="stat-card stat-card-primary">
+                    <div class="stat-number">{{ transcript_requests|length }}</div>
+                    <div class="stat-label">Total Requests</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card stat-card-warning">
+                    <div class="stat-number">{{ transcript_requests|length|default:0 }}</div>
+                    <div class="stat-label">Pending</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card stat-card-success">
+                    <div class="stat-number">{{ transcript_requests|length|default:0 }}</div>
+                    <div class="stat-label">Approved</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card stat-card-info">
+                    <div class="stat-number">{{ transcript_requests|length|default:0 }}</div>
+                    <div class="stat-label">Issued</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Requests Table -->
+        <div class="card">
+            <div class="card-header bg-gradient-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-list me-2"></i> All Transcript Requests</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Request Date</th>
+                                <th>Request Type</th>
+                                <th>Copies</th>
+                                <th>Delivery Method</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for req in transcript_requests %}
+                            <tr>
+                                <td>{{ forloop.counter }}</div>
+                                <td>{{ req.request_date|date:"M d, Y" }}</div>
+                                <td>{{ req.get_request_type_display }}</div>
+                                <td>{{ req.number_of_copies }}</div>
+                                <td>{{ req.get_delivery_method_display }}</div>
+                                <td>
+                                    {% if req.status == 'pending' %}
+                                        <span class="badge badge-warning">Pending</span>
+                                    {% elif req.status == 'approved' %}
+                                        <span class="badge badge-info">Approved</span>
+                                    {% elif req.status == 'processing' %}
+                                        <span class="badge badge-primary">Processing</span>
+                                    {% elif req.status == 'issued' %}
+                                        <span class="badge badge-success">Issued</span>
+                                    {% elif req.status == 'rejected' %}
+                                        <span class="badge badge-danger">Rejected</span>
+                                    {% endif %}
+                                </div>
+                                <td class="text-center">
+                                    {% if req.status == 'approved' or req.status == 'issued' %}
+                                        <a href="{% url 'student_view_transcript' req.id %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                    {% elif req.status == 'rejected' %}
+                                        <button class="btn btn-sm btn-outline-secondary" disabled>
+                                            <i class="fas fa-times"></i> Rejected
+                                        </button>
+                                    {% else %}
+                                        <span class="text-muted">Processing</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <i class="fas fa-file-alt fa-3x text-muted mb-2 d-block"></i>
+                                    <p>No transcript requests found</p>
+                                    <a href="{% url 'exam_manag:student_transcript_request' %}" class="btn btn-primary btn-sm">
+                                        Request Transcript
+                                    </a>
+                                </div>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .stat-card {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+    }
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    .stat-number {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1e293b;
+    }
+    .stat-label {
+        font-size: 13px;
+        color: #64748b;
+    }
+    .stat-card-primary .stat-number { color: #667eea; }
+    .stat-card-warning .stat-number { color: #f39c12; }
+    .stat-card-success .stat-number { color: #28a745; }
+    .stat-card-info .stat-number { color: #17a2b8; }
+    .badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-weight: 500;
+    }
+    .badge-warning { background: #fff3cd; color: #856404; }
+    .badge-info { background: #d1ecf1; color: #0c5460; }
+    .badge-success { background: #d4edda; color: #155724; }
+    .badge-danger { background: #f8d7da; color: #721c24; }
+    .badge-primary { background: #cce5ff; color: #004085; }
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+</style>
+{% endblock %}

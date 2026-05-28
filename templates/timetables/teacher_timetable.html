@@ -25,8 +25,7 @@
     <div><i class="fas fa-door-open"></i> {{ entry.classroom.room_number }}</div>
     {% if user.is_superuser or user.role == 'admin' %}
     <div class="mt-2">
-        <a href="{% url 'timetables:edit_timetable_entry' entry.id %}" class="btn btn-sm btn-outline-primary">
-            <i class="fas fa-edit"></i> Edit
+        
         </a>
     </div>
     {% endif %}

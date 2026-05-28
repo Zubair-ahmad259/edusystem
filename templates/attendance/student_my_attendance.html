@@ -1,0 +1,189 @@
+{% extends 'students/base.html' %}
+{% load static %}
+
+{% block title %}My Attendance Details - EduSphere{% endblock %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Attendance Details</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'student_dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'student_attendance_dashboard' %}">Attendance</a></li>
+                        <li class="breadcrumb-item active">Details</li>
+                    </ul>
+                </div>
+                <div class="col-auto">
+                    <a href="{% url 'student_attendance_dashboard' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="card mb-4">
+            <div class="card-header bg-gradient-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-filter me-2"></i> Filter Attendance</h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" class="row">
+                    <div class="col-md-4 mb-2">
+                        <label>Subject</label>
+                        <select name="subject" class="form-control">
+                            <option value="">All Subjects</option>
+                            {% for subject in subjects %}
+                            <option value="{{ subject.id }}" {% if selected_subject == subject.id|stringformat:"s" %}selected{% endif %}>
+                                {{ subject.code }} - {{ subject.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <label>Month</label>
+                        <select name="month" class="form-control">
+                            <option value="">All Months</option>
+                            {% for m in months %}
+                            <option value="{{ m }}" {% if selected_month == m|stringformat:"s" %}selected{% endif %}>
+                                {{ m }} - {{ m|stringformat:"s"|add:"/" }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <label>Year</label>
+                        <select name="year" class="form-control">
+                            {% for y in "2023,2024,2025,2026"|split:"," %}
+                            <option value="{{ y }}" {% if selected_year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2 mb-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search"></i> Apply
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Statistics Summary -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="stat-card stat-card-primary">
+                    <div class="stat-number">{{ total_records }}</div>
+                    <div class="stat-label">Total Records</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card stat-card-success">
+                    <div class="stat-number">{{ present_count }}</div>
+                    <div class="stat-label">Present</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card stat-card-danger">
+                    <div class="stat-number">{{ absent_count }}</div>
+                    <div class="stat-label">Absent</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card stat-card-info">
+                    <div class="stat-number">{{ percentage }}%</div>
+                    <div class="stat-label">Percentage</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attendance Table -->
+        <div class="card">
+            <div class="card-header bg-gradient-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-table me-2"></i> Attendance Records</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Date</th>
+                                <th>Subject</th>
+                                <th>Status</th>
+                                <th>Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for att in attendances %}
+                            <tr>
+                                <td>{{ forloop.counter }}</div>
+                                <td>{{ att.date|date:"l, F d, Y" }}</div>
+                                <td><strong>{{ att.subject.code }}</strong> - {{ att.subject.name }}</div>
+                                <td>
+                                    {% if att.status == 'P' %}
+                                        <span class="badge badge-success">Present</span>
+                                    {% else %}
+                                        <span class="badge badge-danger">Absent</span>
+                                    {% endif %}
+                                </div>
+                                <td>{{ att.remarks|default:"-" }}</div>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4">
+                                    <i class="fas fa-calendar-times fa-3x text-muted mb-2 d-block"></i>
+                                    <p>No attendance records found</p>
+                                </div>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .stat-card {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+    }
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    .stat-number {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1e293b;
+    }
+    .stat-label {
+        font-size: 13px;
+        color: #64748b;
+    }
+    .stat-card-primary .stat-number { color: #667eea; }
+    .stat-card-success .stat-number { color: #28a745; }
+    .stat-card-danger .stat-number { color: #dc3545; }
+    .stat-card-info .stat-number { color: #17a2b8; }
+    .badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-weight: 500;
+    }
+    .badge-success { background: #28a745; color: white; }
+    .badge-danger { background: #dc3545; color: white; }
+    .bg-gradient-primary { background: linear-gradient(135deg, #667eea, #764ba2); }
+    @media (max-width: 768px) {
+        .stat-number { font-size: 22px; }
+    }
+</style>
+{% endblock %}

@@ -15,10 +15,7 @@ urlpatterns = [
     # Section Timetable URLs
     path('section-timetable/', views.section_timetable_view, name='section_list_timetable'),
     path('section-timetable/<int:section_id>/', views.section_timetable_view, name='section_timetable'),
-# Section Timetable URLs
-    path('section-timetable/', views.section_timetable_view, name='section_list_timetable'),
-    path('section-timetable/<int:section_id>/', views.section_timetable_view, name='section_timetable'),
-    
+
     
     # Teacher Timetable URLs
     path('teacher/<int:teacher_id>/', views.teacher_timetable_view, name='teacher_timetable'),

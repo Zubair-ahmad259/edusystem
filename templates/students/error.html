@@ -1,0 +1,58 @@
+{% extends 'student/base.html' %}
+{% load static %}
+
+{% block title %}Error - EduSphere{% endblock %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="card text-center">
+                    <div class="card-body py-5">
+                        <div class="error-icon mb-4">
+                            <i class="fas fa-exclamation-triangle fa-4x text-warning"></i>
+                        </div>
+                        <h3 class="text-danger mb-3">Oops! Something went wrong</h3>
+                        <p class="text-muted mb-4">{{ error|default:"An unexpected error occurred. Please try again later." }}</p>
+                        <div class="btn-group">
+                            <a href="javascript:history.back()" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Go Back
+                            </a>
+                            <a href="{% url 'student_dashboard' %}" class="btn btn-primary">
+                                <i class="fas fa-home"></i> Go to Dashboard
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .error-icon {
+        color: #ffc107;
+    }
+    .card {
+        border: none;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    .btn-group {
+        gap: 10px;
+    }
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border: none;
+        border-radius: 10px;
+        padding: 10px 25px;
+    }
+    .btn-secondary {
+        background: #6c757d;
+        border: none;
+        border-radius: 10px;
+        padding: 10px 25px;
+    }
+</style>
+{% endblock %}

@@ -35,11 +35,11 @@ INSTALLED_APPS = [
     'fee_system',
     'stu',
     'Academic',
-    'exam_mang',
     'attendance',
     'token_app',
     'timetables',
     'assignm',
+    'exam_manag',
 ]
 
 MIDDLEWARE = [

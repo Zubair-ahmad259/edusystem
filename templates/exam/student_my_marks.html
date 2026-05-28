@@ -1,0 +1,197 @@
+{% extends 'students/base.html' %}
+{% load static %}
+
+{% block title %}student Marks - EduSphere{% endblock %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">My Marks</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'student_dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Marks</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student & Semester Info -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> Academic Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <p class="mb-0"><strong>Student Name:</strong></p>
+                                <p>{{ student.first_name }} {{ student.last_name }}</p>
+                            </div>
+                            <div class="col-md-3">
+                                <p class="mb-0"><strong>Student ID:</strong></p>
+                                <p>{{ student.student_id }}</p>
+                            </div>
+                            <div class="col-md-3">
+                                <p class="mb-0"><strong>Semester:</strong></p>
+                                <p>Semester {{ semester_info.number }}</p>
+                            </div>
+                            <div class="col-md-3">
+                                <p class="mb-0"><strong>Section:</strong></p>
+                                <p>{{ semester_info.section }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overall Stats -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="stat-card stat-card-primary">
+                    <div class="stat-number">{{ total_subjects }}</div>
+                    <div class="stat-label">Total Subjects</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card stat-card-success">
+                    <div class="stat-number">{{ subjects_passed }}</div>
+                    <div class="stat-label">Passed</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card stat-card-danger">
+                    <div class="stat-number">{{ subjects_failed }}</div>
+                    <div class="stat-label">Failed</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card stat-card-info">
+                    <div class="stat-number">{{ overall_percentage }}%</div>
+                    <div class="stat-label">Overall</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subjects Marks Table -->
+        <div class="card">
+            <div class="card-header bg-gradient-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-table me-2"></i> Subject-wise Marks</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Subject Code</th>
+                                <th>Subject Name</th>
+                                <th class="text-center">Obtained</th>
+                                <th class="text-center">Total</th>
+                                <th class="text-center">Percentage</th>
+                                <th class="text-center">Grade</th>
+                                <th class="text-center">Status</th>
+                                <th class="text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for subject in subjects %}
+                            <tr>
+                                <td>{{ forloop.counter }}</div>
+                                <td><strong>{{ subject.code }}</strong></div>
+                                <td>{{ subject.name }}</div>
+                                <td class="text-center">
+                                    <strong>{{ subject.total_marks|floatformat:1 }}</strong>
+                                </div>
+<td class="text-center">{{ subject.total_possible|default:100|floatformat:0 }}</td>                                <td class="text-center">
+                                    <div class="progress" style="height: 6px; width: 80px; display: inline-block; margin-bottom: 5px;">
+                                        <div class="progress-bar {% if subject.percentage >= 75 %}bg-success{% elif subject.percentage >= 50 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                             style="width: {{ subject.percentage }}%"></div>
+                                    </div>
+                                    <br>
+                                    <strong>{{ subject.percentage }}%</strong>
+                                </div>
+                                <td class="text-center">
+                                    <span class="badge {% if subject.grade == 'A+' or subject.grade == 'A' %}badge-success{% elif subject.grade == 'F' %}badge-danger{% else %}badge-warning{% endif %}">
+                                        {{ subject.grade }}
+                                    </span>
+                                </div>
+                                <td class="text-center">
+                                    {% if subject.is_passed %}
+                                        <span class="badge badge-success">Passed</span>
+                                    {% else %}
+                                        <span class="badge badge-danger">Failed</span>
+                                    {% endif %}
+                                </div>
+                                <td class="text-center">
+                                    <a href="{% url 'exam_manag:student_subject_marks_detail' subject_id   %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i> Details
+                                    </a>
+                                </div>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="10" class="text-center py-4">
+                                    <i class="fas fa-chart-line fa-3x text-muted mb-2 d-block"></i>
+                                    <p>No marks available yet.</p>
+                                </div>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .stat-card {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+    }
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    .stat-number {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1e293b;
+    }
+    .stat-label {
+        font-size: 13px;
+        color: #64748b;
+    }
+    .stat-card-primary .stat-number { color: #667eea; }
+    .stat-card-success .stat-number { color: #28a745; }
+    .stat-card-danger .stat-number { color: #dc3545; }
+    .stat-card-info .stat-number { color: #17a2b8; }
+    .badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-weight: 500;
+    }
+    .badge-success { background: #28a745; color: white; }
+    .badge-danger { background: #dc3545; color: white; }
+    .badge-warning { background: #ffc107; color: #212529; }
+    .progress {
+        border-radius: 10px;
+        background-color: #e2e8f0;
+    }
+    .bg-gradient-primary { background: linear-gradient(135deg, #667eea, #764ba2); }
+    @media (max-width: 768px) {
+        .stat-number { font-size: 22px; }
+    }
+</style>
+{% endblock %}

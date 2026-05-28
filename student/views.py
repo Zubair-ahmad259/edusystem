@@ -777,3 +777,48 @@ def get_sections_by_batch(request):
         sections = Section.objects.filter(batch_id=batch_id).values('id', 'name')
         return JsonResponse(list(sections), safe=False)
     return JsonResponse([], safe=False)
+
+
+
+
+
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.utils import timezone
+from datetime import date
+from timetables.models import TimetableEntry, TimeSlot
+from student.models import Student
+
+@login_required
+def student_timetable(request):
+    """View to show timetable for the student's section"""
+    
+    try:
+        student = Student.objects.get(user=request.user)
+    except Student.DoesNotExist:
+        messages.error(request, 'Student profile not found. Please contact administrator.')
+        return redirect('student_dashboard')
+    
+    # Get the student's section
+    section = student.section
+    
+    if not section:
+        messages.error(request, 'No section assigned to your profile.')
+        return redirect('student_dashboard')
+    
+    # Get timetable entries for this section
+    timetable_entries = TimetableEntry.objects.filter(
+        section=section,
+        is_active=True
+    ).select_related('teacher', 'subject', 'batch', 'semester', 'time_slot', 'classroom')
+    
+    context = {
+        'student': student,
+        'section': section,
+        'timetable_entries': timetable_entries,
+    }
+    
+    return render(request, 'students/student_timetable.html', context)
+
+    

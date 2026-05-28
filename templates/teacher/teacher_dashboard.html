@@ -24,82 +24,31 @@
     </div>
 </div>
 
-<!-- Stats Cards -->
-<div class="row g-3">
-    <!-- Classes Card (changed color to purple) -->
-    <div class="col-xl-3 col-sm-6 col-12">
-        <div class="card text-white" style="background-color:#6f42c1;">
-            <div class="card-body d-flex justify-content-between align-items-center">
-                <div>
-                    <h3 class="fw-bold mb-0">5</h3>
-                    <small>Classes</small>
-                </div>
-                <i class="fas fa-chalkboard-teacher fa-2x"></i>
-            </div>
-        </div>
-    </div>
-
-    <!-- Students -->
-    <div class="col-xl-3 col-sm-6 col-12">
-        <div class="card text-white bg-success shadow-sm rounded-3">
-            <div class="card-body d-flex justify-content-between align-items-center">
-                <div>
-                    <h3 class="fw-bold mb-0">120</h3>
-                    <small>Students</small>
-                </div>
-                <i class="fas fa-users fa-2x"></i>
-            </div>
-        </div>
-    </div>
-    
-
-    <!-- Assignments -->
-    <div class="col-xl-3 col-sm-6 col-12">
-        <div class="card text-white bg-info shadow-sm rounded-3">
-            <div class="card-body d-flex justify-content-between align-items-center">
-                <div>
-                    <h3 class="fw-bold mb-0">15</h3>
-                    <small>Assignments</small>
-                </div>
-                <i class="fas fa-tasks fa-2x"></i>
-            </div>
-        </div>
-    </div>
-
-    <!-- Completion Rate -->
-    <div class="col-xl-3 col-sm-6 col-12">
-        <div class="card text-white bg-warning shadow-sm rounded-3">
-            <div class="card-body d-flex justify-content-between align-items-center">
-                <div>
-                    <h3 class="fw-bold mb-0">85%</h3>
-                    <small>Completion Rate</small>
-                </div>
-                <i class="fas fa-clipboard-check fa-2x"></i>
-            </div>
-        </div>
-    </div>
-</div>
 
 <!-- Quick Actions Row -->
 <div class="row mt-4">
     <div class="col-md-12">
         <div class="card shadow-sm rounded-3 border-0">
-            <div class="card-header text-white" style="background-color:#6f42c1;">
+            <div class="card-header text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                 <h5 class="card-title mb-0">
                     <i class="fas fa-bolt"></i> Quick Actions
                 </h5>
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-md-6">
-                        <a href="{% url 'timetables:my_timetable' %}" class="btn btn-primary btn-lg w-100 mb-2">
-                            <i class="fas fa-calendar-alt"></i> View My Timetable
+                    <div class="col-md-4">
+                        <a href="{% url 'exam_manag:upload_marks_dashboard' %}" class="btn btn-primary btn-lg w-100 mb-2">
+                            <i class="fas fa-upload"></i> Upload Marks
                         </a>
                     </div>
-
-                    <div class="col-md-6">
-                        <a href="{% url 'timetables:teacher_availability' %}" class="btn btn-info btn-lg w-100 mb-2">
-                            <i class="fas fa-clock"></i> Set Availability
+                    <div class="col-md-4">
+                        <a href="{% url 'teacher_attendance_subjects' %}" class="btn btn-success btn-lg w-100 mb-2">
+                            <i class="fas fa-check-circle"></i> Take Attendance
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{% url 'assignment:teacher_assignment_list'  %}" class="btn btn-info btn-lg w-100 mb-2">
+                            <i class="fas fa-plus-circle"></i> Create Assignment
                         </a>
                     </div>
                 </div>
@@ -108,4 +57,120 @@
     </div>
 </div>
 
+<!-- Recent Activities Row -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm rounded-3 border-0">
+            <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <h5 class="card-title mb-0 text-white">
+                    <i class="fas fa-file-alt"></i> Recent Exams
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Subject</th>
+                                <th>Exam Type</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for exam in recent_exams|slice:":5" %}
+                            <tr>
+                                <td>{{ exam.subject.code }}</td>
+                                <td>{{ exam.get_exam_type_display }}</td>
+                                <td>{{ exam.exam_date|date:"M d, Y" }}</td>
+                                <td>
+                                    {% if exam.is_published %}
+                                        <span class="badge bg-success">Published</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">Draft</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">No exams found</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card shadow-sm rounded-3 border-0">
+            <div class="card-header" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                <h5 class="card-title mb-0 text-white">
+                    <i class="fas fa-tasks"></i> Recent Assignments
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Subject</th>
+                                <th>Due Date</th>
+                                <th>Submissions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for assignment in recent_assignments|slice:":5" %}
+                            <tr>
+                                <td>{{ assignment.title|truncatechars:20 }}</td>
+                                <td>{{ assignment.subject.code }}</td>
+                                <td>{{ assignment.due_date|date:"M d, Y" }}</td>
+                                <td>{{ assignment.submission_count|default:0 }}/{{ assignment.total_students|default:0 }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">No assignments found</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border-radius: 12px;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    .opacity-50 {
+        opacity: 0.5;
+    }
+    .btn-lg {
+        padding: 12px;
+        border-radius: 10px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    .btn-lg:hover {
+        transform: translateY(-2px);
+    }
+    .table th {
+        font-weight: 600;
+        color: #4a5568;
+    }
+    .badge {
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-weight: 500;
+    }
+</style>
 {% endblock %}

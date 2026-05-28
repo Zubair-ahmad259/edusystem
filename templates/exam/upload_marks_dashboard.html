@@ -30,14 +30,9 @@
                     </ul>
                 </div>
                 <div class="col-auto">
-                    <div class="btn-group">
-                        <a href="{% url 'subject_mark_components' %}" class="btn btn-primary">
-                            <i class="fas fa-cogs"></i> Configure Subjects
-                        </a>
-                        <a href="{% url 'teacher_dashboard' %}" class="btn btn-outline-primary">
-                            <i class="fas fa-arrow-left"></i> Back
-                        </a>
-                    </div>
+                    <a href="{% url 'teacher_dashboard' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </a>
                 </div>
             </div>
         </div>
@@ -60,7 +55,7 @@
                                 <i class="fas fa-star-of-life"></i>
                                 <strong>Total: 100 Marks</strong>
                             </div>
-                            <a href="{% url 'student_subject_marks' %}?subject_id={{ subject_data.subject.id }}" 
+                            <a href="{% url 'exam_manag:student_subject_marks' %}?subject_id={{ subject_data.subject.id }}" 
                                class="btn btn-sm btn-info ms-2">
                                 <i class="fas fa-chart-line"></i> View Student Marks
                             </a>
@@ -87,40 +82,76 @@
                         </div>
                     </div>
                     <div class="card-body">
+                        
                         <!-- Component-wise Marks Grid -->
                         <div class="component-grid">
                             {% for exam in section_data.exam_types %}
-                                <div class="component-card">
-                                    <div class="component-header">
-                                        <span class="component-name">{{ exam.name }}</span>
-                                        <span class="component-marks">{{ exam.max_marks|floatformat:0 }}/{{ exam.max_marks|floatformat:0 }}</span>
-                                    </div>
-                                    <div class="component-body">
-                                        {% if exam.uploaded %}
-                                            <a href="{% url 'view_marks' subject_data.subject.id section_data.section.id exam.type %}" 
-                                               class="btn-component btn-view-component">
-                                                <i class="fas fa-eye"></i> View {{ exam.name }}
-                                            </a>
-                                            <span class="badge-uploaded">
-                                                <i class="fas fa-check-circle"></i> {{ exam.student_count }}/{{ section_data.student_count }}
-                                            </span>
-                                        {% else %}
-                                            <a href="{% url 'upload_marks_direct' subject_data.subject.id section_data.section.id exam.type %}" 
-                                               class="btn-component btn-upload-component">
-                                                <i class="fas fa-upload"></i> Upload {{ exam.name }}
-                                            </a>
-                                            <span class="badge-pending">
-                                                <i class="fas fa-clock"></i> Pending
-                                            </span>
+                            <div class="component-card">
+                                <div class="component-header">
+                                    <span class="component-name">
+                                        {% if exam.type == 'final' %}
+                                            <i class="fas fa-flag-checkered"></i> 
+                                        {% elif exam.type == 'mid_term' %}
+                                            <i class="fas fa-pen-alt"></i> 
+                                        {% elif exam.type == 'quiz' %}
+                                            <i class="fas fa-question-circle"></i> 
+                                        {% elif exam.type == 'assignment' %}
+                                            <i class="fas fa-tasks"></i> 
+                                        {% elif exam.type == 'lab' %}
+                                            <i class="fas fa-flask"></i> 
+                                        {% elif exam.type == 'attendance' %}
+                                            <i class="fas fa-calendar-check"></i> 
                                         {% endif %}
-                                    </div>
+                                        {{ exam.name }}
+                                    </span>
+                                    <span class="component-marks">{{ exam.max_marks|floatformat:0 }}/{{ exam.max_marks|floatformat:0 }}</span>
                                 </div>
+                                <div class="component-body">
+                                    {% if exam.uploaded %}
+                                        <a href="{% url 'exam_manag:view_marks' subject_data.subject.id section_data.section.id exam.type %}" 
+                                           class="btn-component btn-view-component">
+                                            <i class="fas fa-eye"></i> View {{ exam.name }}
+                                        </a>
+                                        <span class="badge-uploaded">
+                                            <i class="fas fa-check-circle"></i> {{ exam.student_count }}/{{ section_data.student_count }}
+                                        </span>
+                                    {% else %}
+                                        <a href="{% url 'exam_manag:upload_marks_direct' subject_data.subject.id section_data.section.id exam.type %}" 
+                                           class="btn-component btn-upload-component">
+                                            <i class="fas fa-upload"></i> Upload {{ exam.name }}
+                                        </a>
+                                        <span class="badge-pending">
+                                            <i class="fas fa-clock"></i> Pending
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
                             {% endfor %}
                         </div>
                         
+                        <!-- Progress Bar -->
+                        <div class="progress mt-3" style="height: 8px;">
+                            <div class="progress-bar bg-success" style="width: {{ section_data.upload_percentage }}%"></div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-1">
+                            <small>{{ section_data.uploaded_count }}/{{ section_data.exam_types|length }} components uploaded</small>
+                            <small>{{ section_data.upload_percentage }}% complete</small>
+                        </div>
+                        
+                        <!-- Publish Button -->
+                        {% if section_data.uploaded_count > 0 %}
+                        <div class="text-center mt-3">
+                            <a href="{% url 'exam_manag:publish_section_marks' subject_data.subject.id section_data.section.id %}" 
+                               class="btn btn-warning btn-sm w-100 publish-btn"
+                               onclick="return confirm('Publish all uploaded marks for this section? This will make results visible to students.')">
+                                <i class="fas fa-upload"></i> Publish All Uploaded Marks
+                            </a>
+                        </div>
+                        {% endif %}
+                        
                         <!-- Section Student Marks Link -->
                         <div class="text-center mt-3">
-                            <a href="{% url 'student_subject_marks' %}?subject_id={{ subject_data.subject.id }}&section_id={{ section_data.section.id }}" 
+                            <a href="{% url 'exam_manag:student_subject_marks' %}?subject_id={{ subject_data.subject.id }}&section_id={{ section_data.section.id }}" 
                                class="btn btn-sm btn-outline-info w-100">
                                 <i class="fas fa-users"></i> View All Students Marks in Section {{ section_data.section.name }}
                             </a>
@@ -136,9 +167,9 @@
                 <div class="empty-state text-center py-5">
                     <i class="fas fa-upload fa-4x text-muted mb-3 d-block"></i>
                     <h5>No Subjects Found</h5>
-                    <p class="text-muted">Please configure mark distribution for your subjects first.</p>
-                    <a href="{% url 'subject_mark_components' %}" class="btn btn-primary">
-                        <i class="fas fa-cogs"></i> Configure Subjects
+                    <p class="text-muted">You have not been assigned any subjects yet.</p>
+                    <a href="{% url 'teacher_dashboard' %}" class="btn btn-primary">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
                     </a>
                 </div>
             </div>
@@ -196,10 +227,6 @@
         border-radius: 25px;
         font-size: 13px;
         color: #667eea;
-    }
-    
-    .total-marks-badge i {
-        margin-right: 6px;
     }
     
     .badge {
@@ -268,7 +295,6 @@
         font-size: 10px;
     }
     
-    /* Component Grid */
     .component-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
@@ -301,6 +327,11 @@
         font-size: 13px;
         font-weight: 600;
         color: #1e293b;
+    }
+    
+    .component-name i {
+        margin-right: 4px;
+        font-size: 11px;
     }
     
     .component-marks {
@@ -437,6 +468,19 @@
         border-color: transparent;
     }
     
+    .btn-warning {
+        background: linear-gradient(135deg, #ffc107, #ff9800);
+        border: none;
+        color: #212529;
+        font-weight: 600;
+    }
+    
+    .btn-warning:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255,193,7,0.4);
+        color: #212529;
+    }
+    
     .empty-state {
         padding: 60px 20px;
         text-align: center;
@@ -451,6 +495,11 @@
     .alert {
         border-radius: 10px;
         border: none;
+    }
+    
+    .progress {
+        border-radius: 10px;
+        background-color: #e2e8f0;
     }
     
     @media (max-width: 768px) {

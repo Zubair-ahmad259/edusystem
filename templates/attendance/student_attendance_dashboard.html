@@ -1,0 +1,303 @@
+{% extends 'students/base.html' %}
+{% load static %}
+
+{% block title %}My Attendance Dashboard - EduSphere{% endblock %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">My Attendance</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'student_dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Attendance</li>
+                    </ul>
+                </div>
+                <div class="col-auto">
+                    <a href="{% url 'student_my_attendance' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-calendar-alt"></i> View Detailed Report
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student Info -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-user-graduate me-2"></i> Student Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <p class="mb-0"><strong>Name:</strong></p>
+                                <p>{{ student.first_name }} {{ student.last_name }}</p>
+                            </div>
+                            <div class="col-md-3">
+                                <p class="mb-0"><strong>Student ID:</strong></p>
+                                <p>{{ student.student_id }}</p>
+                            </div>
+                            <div class="col-md-3">
+                                <p class="mb-0"><strong>Batch:</strong></p>
+                                <p>{{ student.batch.name }}</p>
+                            </div>
+                            <div class="col-md-3">
+                                <p class="mb-0"><strong>Section:</strong></p>
+                                <p>{{ student.section.name }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overall Stats -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="stat-card stat-card-primary">
+                    <div class="stat-icon"><i class="fas fa-chalkboard"></i></div>
+                    <div class="stat-info">
+                        <h3 class="stat-number">{{ total_classes }}</h3>
+                        <p class="stat-label">Total Classes</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card stat-card-success">
+                    <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                    <div class="stat-info">
+                        <h3 class="stat-number">{{ present_classes }}</h3>
+                        <p class="stat-label">Present</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card stat-card-danger">
+                    <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
+                    <div class="stat-info">
+                        <h3 class="stat-number">{{ absent_classes }}</h3>
+                        <p class="stat-label">Absent</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card stat-card-info">
+                    <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+                    <div class="stat-info">
+                        <h3 class="stat-number">{{ overall_percentage }}%</h3>
+                        <p class="stat-label">Attendance</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attendance Progress -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i> Overall Attendance</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="attendance-circle text-center mb-3">
+                            <div class="circle-chart" data-percent="{{ overall_percentage }}">
+                                <div class="circle-chart__info">
+                                    <span class="circle-chart__percent">{{ overall_percentage }}%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="progress-info">
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar {% if overall_percentage >= 75 %}bg-success{% elif overall_percentage >= 50 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                     style="width: {{ overall_percentage }}%">
+                                    {{ overall_percentage }}%
+                                </div>
+                            </div>
+                            <div class="alert alert-warning mt-3 mb-0">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Minimum Requirement:</strong> 75% attendance required for exams
+                                {% if overall_percentage < 75 %}
+                                <span class="text-danger"> - You need to improve!</span>
+                                {% else %}
+                                <span class="text-success"> - Good standing!</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subject-wise Attendance -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-book me-2"></i> Subject-wise Attendance</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Subject Code</th>
+                                        <th>Subject Name</th>
+                                        <th class="text-center">Total Classes</th>
+                                        <th class="text-center">Present</th>
+                                        <th class="text-center">Absent</th>
+                                        <th class="text-center">Attendance %</th>
+                                        <th class="text-center">Status</th>
+                                        <th class="text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for sub in subjects %}
+                                    <tr>
+                                        <td><strong>{{ sub.subject.code }}</strong></td>
+                                        <td>{{ sub.subject.name }}</div>
+                                        <td class="text-center">{{ sub.total }}</div>
+                                        <td class="text-center text-success">{{ sub.present }}</div>
+                                        <td class="text-center text-danger">{{ sub.absent }}</div>
+                                        <td class="text-center">
+                                            <div class="progress" style="height: 6px; width: 80px; display: inline-block;">
+                                                <div class="progress-bar {% if sub.percentage >= 75 %}bg-success{% elif sub.percentage >= 50 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                                     style="width: {{ sub.percentage }}%"></div>
+                                            </div>
+                                            <br>
+                                            <strong>{{ sub.percentage }}%</strong>
+                                        </div>
+                                        <td class="text-center">
+                                            {% if sub.percentage >= 75 %}
+                                                <span class="badge badge-success">Good</span>
+                                            {% elif sub.percentage >= 50 %}
+                                                <span class="badge badge-warning">Warning</span>
+                                            {% else %}
+                                                <span class="badge badge-danger">Critical</span>
+                                            {% endif %}
+                                        </div>
+                                        <td class="text-center">
+                                            <a href="{% url 'student_subject_attendance' sub.subject.id %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i> View Details
+                                            </a>
+                                        </div>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="8" class="text-center py-4">
+                                            <i class="fas fa-calendar-times fa-3x text-muted mb-2 d-block"></i>
+                                            <p>No attendance records found</p>
+                                        </div>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Attendance -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-clock me-2"></i> Recent Attendance</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Subject</th>
+                                        <th>Status</th>
+                                        <th>Remarks</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for att in recent_attendance %}
+                                    <tr>
+                                        <td>{{ att.date|date:"M d, Y" }}</div>
+                                        <td><strong>{{ att.subject.code }}</strong> - {{ att.subject.name }}</div>
+                                        <td>
+                                            {% if att.status == 'P' %}
+                                                <span class="badge badge-success">Present</span>
+                                            {% else %}
+                                                <span class="badge badge-danger">Absent</span>
+                                            {% endif %}
+                                        </div>
+                                        <td>{{ att.remarks|default:"-" }}</div>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center py-4">
+                                            <i class="fas fa-calendar-week fa-3x text-muted mb-2 d-block"></i>
+                                            <p>No recent attendance records</p>
+                                        </div>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .stat-card {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+    }
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+    }
+    .stat-card-primary .stat-icon { background: linear-gradient(135deg, #667eea20, #764ba220); color: #667eea; }
+    .stat-card-success .stat-icon { background: linear-gradient(135deg, #28a74520, #20c99720); color: #28a745; }
+    .stat-card-danger .stat-icon { background: linear-gradient(135deg, #dc354520, #c8233320); color: #dc3545; }
+    .stat-card-info .stat-icon { background: linear-gradient(135deg, #17a2b820, #13849620); color: #17a2b8; }
+    .stat-number { font-size: 28px; font-weight: 700; margin: 0; color: #1e293b; }
+    .stat-label { font-size: 13px; color: #64748b; margin: 0; }
+    .progress {
+        border-radius: 10px;
+        background-color: #e2e8f0;
+    }
+    .badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-weight: 500;
+    }
+    .badge-success { background: #28a745; color: white; }
+    .badge-warning { background: #ffc107; color: #212529; }
+    .badge-danger { background: #dc3545; color: white; }
+    .bg-gradient-primary { background: linear-gradient(135deg, #667eea, #764ba2); }
+    @media (max-width: 768px) {
+        .stat-number { font-size: 22px; }
+        .stat-icon { width: 50px; height: 50px; font-size: 22px; }
+    }
+</style>
+{% endblock %}
