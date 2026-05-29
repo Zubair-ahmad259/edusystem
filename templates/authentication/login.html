@@ -294,7 +294,7 @@
          border: 1px solid #c3e6cb;
       }
       
-      .alert-error {
+      .alert-error, .alert-danger {
          background: #f8d7da;
          color: #721c24;
          border: 1px solid #f5c6cb;
@@ -315,7 +315,6 @@
             margin: 0 auto;
          }
          
-         /* Show mobile brand on mobile screens */
          .mobile-brand {
             display: block;
          }
@@ -389,7 +388,7 @@
             <!-- Messages -->
             {% if messages %}
                {% for message in messages %}
-                  <div class="alert alert-{% if message.tags == 'error' %}error{% else %}success{% endif %}">
+                  <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}">
                      {{ message }}
                   </div>
                {% endfor %}
@@ -425,5 +424,24 @@
          </div>
       </div>
    </div>
+   
+   <!-- CSRF Prevention Script -->
+   <script>
+      // Force reload on back button to prevent CSRF errors
+      (function() {
+         // Check if the page was loaded from cache (back button)
+         if (performance.navigation.type === 2) {
+            window.location.reload();
+         }
+         
+         // Handle pageshow event for modern browsers
+         window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+               // Page was loaded from cache (back button)
+               window.location.reload();
+            }
+         });
+      })();
+   </script>
 </body>
 </html>

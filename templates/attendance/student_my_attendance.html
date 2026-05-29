@@ -58,9 +58,7 @@
                     <div class="col-md-3 mb-2">
                         <label>Year</label>
                         <select name="year" class="form-control">
-                            {% for y in "2023,2024,2025,2026"|split:"," %}
                             <option value="{{ y }}" {% if selected_year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
-                            {% endfor %}
                         </select>
                     </div>
                     <div class="col-md-2 mb-2 d-flex align-items-end">
