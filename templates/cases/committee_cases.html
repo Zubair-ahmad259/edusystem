@@ -1,0 +1,183 @@
+{% extends 'Home/index.html' %}
+{% load static %}
+
+{% block body %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row">
+                <div class="col-sm-12 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="page-title">🏛️ Department Discipline Committee</h3>
+                        <ul class="breadcrumb">
+                            <li class="breadcrumb-item">
+                                <a href="#">DDC</a>
+                            </li>
+                            <li class="breadcrumb-item active">Committee Cases</li>
+                        </ul>
+                    </div>
+                    <button onclick="window.print()" class="btn btn-success">
+                        🖨️ Print
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-white bg-primary">
+                    <div class="card-body text-center">
+                        <h3>{{ total_cases }}</h3>
+                        <p>Total DDC Cases</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-warning">
+                    <div class="card-body text-center">
+                        <h3>{{ pending_cases }}</h3>
+                        <p>Pending Cases</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-success">
+                    <div class="card-body text-center">
+                        <h3>{{ resolved_cases }}</h3>
+                        <p>Resolved Cases</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-info">
+                    <div class="card-body text-center">
+                        <h3>{{ upcoming_hearings|length }}</h3>
+                        <p>Upcoming Hearings</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Committee Notice -->
+        <div class="alert alert-danger text-center mb-4">
+            <h4 class="alert-heading">⚠️ IMPORTANT NOTICE ⚠️</h4>
+            <p>All students involved in Unfair Means (UFM) cases must appear before the <strong>Department Discipline Committee (DDC)</strong> on the scheduled dates. Failure to appear will result in strict disciplinary action.</p>
+            <hr>
+            <p class="mb-0">Committee Meeting Schedule: Every <strong>Thursday</strong> at <strong>11:00 AM</strong> in <strong>Conference Room</strong></p>
+        </div>
+
+        <!-- Upcoming Hearings -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-warning">
+                <h5 class="mb-0">📅 Upcoming Hearings</h5>
+            </div>
+            <div class="card-body">
+                {% if upcoming_hearings %}
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>Student</th>
+                                <th>Subject</th>
+                                <th>Hearing Date</th>
+                                <th>Time</th>
+                                <th>Venue</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for case in upcoming_hearings %}
+                            <tr>
+                                <td>{{ case.student.first_name }} {{ case.student.last_name }}</div>
+                                <td>{{ case.subject.code }} - {{ case.subject.name }}</div>
+                                <td>{{ case.committee_hearing_date|date:"d M Y" }}</div>
+                                <td>{{ case.committee_hearing_time|time:"h:i A" }}</div>
+                                <td>{{ case.committee_venue|default:"Conference Room" }}</div>
+                                <td>
+                                    {% if case.status == 'pending' %}
+                                        <span class="badge bg-warning">Pending</span>
+                                    {% elif case.status == 'under_review' %}
+                                        <span class="badge bg-info">Under Review</span>
+                                    {% endif %}
+                                </div>
+                                <td>
+                                    <a href="{% url 'case_detail' case.id %}" class="btn btn-sm btn-primary">View</a>
+                                </div>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-center">No upcoming hearings scheduled.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- All DDC Cases -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">📋 All DDC Cases</h5>
+            </div>
+            <div class="card-body">
+                {% if ddc_cases %}
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>Student</th>
+                                <th>Subject</th>
+                                <th>Case Type</th>
+                                <th>Incident Date</th>
+                                <th>Hearing Date</th>
+                                <th>Fine</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for case in ddc_cases %}
+                            <tr>
+                                <td>{{ case.student.first_name }} {{ case.student.last_name }}</div>
+                                <td>{{ case.subject.code }}</div>
+                                <td>{{ case.get_case_type_display }}</div>
+                                <td>{{ case.incident_date|date:"d M Y"|default:"-" }}</div>
+                                <td>
+                                    {% if case.committee_hearing_date %}
+                                        {{ case.committee_hearing_date|date:"d M Y" }}
+                                    {% else %}
+                                        <span class="text-muted">Not Scheduled</span>
+                                    {% endif %}
+                                </div>
+                                <td>{{ case.fine|default:"-" }}</div>
+                                <td>
+                                    {% if case.status == 'pending' %}
+                                        <span class="badge bg-warning">Pending</span>
+                                    {% elif case.status == 'under_review' %}
+                                        <span class="badge bg-info">Under Review</span>
+                                    {% elif case.status == 'resolved' %}
+                                        <span class="badge bg-success">Resolved</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ case.status }}</span>
+                                    {% endif %}
+                                </div>
+                                <td>
+                                    <a href="{% url 'case_detail' case.id %}" class="btn btn-sm btn-primary">View</a>
+                                </div>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-warning">No DDC cases found.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}s

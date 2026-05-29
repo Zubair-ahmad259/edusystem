@@ -1,4 +1,5 @@
 {% extends 'Home/index.html' %}
+{% load static %}
 
 {% block body %}
 <div class="page-wrapper">
@@ -17,82 +18,255 @@
                             <li class="breadcrumb-item active">Cases List</li>
                         </ul>
                     </div>
-                    <!-- Print Button -->
-                    <button onclick="window.print()" class="btn btn-success">
-                        🖨️ Print
-                    </button>
+                    <div>
+                        <a href="{% url 'ddcomit:add_case' %}" class="btn btn-success me-2">
+                            <i class="fas fa-plus"></i> Add New Case
+                        </a>
+                        <button onclick="window.print()" class="btn btn-primary">
+                            <i class="fas fa-print"></i> Print
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>  
 
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-white bg-primary">
+                    <div class="card-body text-center">
+                        <h3>{{ cases|length }}</h3>
+                        <p>Total Cases</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-warning">
+                    <div class="card-body text-center">
+                        <h3>{{ cases|length }}</h3>
+                        <p>Pending Cases</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-danger">
+                    <div class="card-body text-center">
+                        <h3>{{ cases|length }}</h3>
+                        <p>UFM Cases</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-info">
+                    <div class="card-body text-center">
+                        <h3>{{ cases|length }}</h3>
+                        <p>DDC Cases</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Important Notice -->
+        <div class="alert alert-danger text-center mb-4" style="border:2px solid red; background:#ffe6e6;">
+            <h3 style="color:#cc0000; font-weight:bold;">
+                <i class="fas fa-exclamation-triangle"></i> IMPORTANT NOTICE
+            </h3>
+           
+        </div>
+
         <!-- Cases Table -->
         <div class="card shadow-sm">
-            <div class="card-header bg-primary text-yellow">
-                <h5 class="card-title mb-0">Cases Overview</h5>
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list"></i> Cases Overview
+                </h5>
             </div>
-           <div style="border:2px solid red; padding:15px; margin:15px 0; background:#ffe6e6; border-radius:8px;">
-    <h3 style="color:#cc0000; font-weight:bold; text-align:center;">
-        ⚠️ Important Notice
-    </h3>
-    <p style="font-size:20px; font-weight:bold; text-align:center; color:#000;">
-        All the below-mentioned students are involved in 
-        <span style="color:#cc0000;">Unfair Means (UFM) cases</span>. 
-        They are strictly instructed to appear before the 
-        <b>Department Discipline Committee (DDC)</b> 
-        on <u>15-feb-2026</u> without any excuse.
-    </p>
-</div>
-
             <div class="card-body">
                 {% if cases %}
                 <div class="table-responsive">
-                    <table class="table table-bordered table-striped">
+                    <table class="table table-bordered table-striped table-hover">
                         <thead class="thead-dark">
                             <tr>
+                                <th>#</th>
                                 <th>Student</th>
                                 <th>Teacher</th>
                                 <th>Subject</th>
                                 <th>Batch</th>
                                 <th>Semester</th>
+                                <th>Section</th>
                                 <th>Case Type</th>
-                                <th>Created At</th>
+                                <th>Incident Date</th>
+                                <th>Case Date</th>
+                                <th>Hearing Date</th>
                                 <th>Fine</th>
                                 <th>Status</th>
-                                <th>Detail</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for case in cases %}
                             <tr>
-                                <td>{{ case.student }}</td>
-                                <td>{{ case.teacher }}</td>
-                                <td>{{ case.subject }}</td>
-                                <td>{{ case.batch }}</td>
-                                <td>{{ case.semester }}</td>
+                                <td>{{ forloop.counter }}</div>
                                 <td>
-                                    {{ case.get_case_type_display }}
-                                    {% if case.case_type == 'ddc' %}
-                                        <br>
-                                        <small class="text-danger fw-bold">
-                                            ⚠️ all student are show in decipline commette                                        </small>
+                                    <strong>{{ case.student.first_name }} {{ case.student.last_name }}</strong>
+                                    <br>
+                                    <small class="text-muted">ID: {{ case.student.student_id }}</small>
+                                </div>
+                                <td>{{ case.teacher.first_name }} {{ case.teacher.last_name }}</div>
+                                <td>
+                                    {{ case.subject.code }}<br>
+                                    <small>{{ case.subject.name|truncatechars:20 }}</small>
+                                </div>
+                                <td>{{ case.batch.name }}</div>
+                                <td>Semester {{ case.semester.number }}</div>
+                                <td>{{ case.section.name }}</div>
+                                <td>
+                                    {% if case.case_type == 'ufm' %}
+                                        <span class="badge badge-danger">
+                                            <i class="fas fa-gavel"></i> UFM
+                                        </span>
+                                    {% else %}
+                                        <span class="badge badge-warning">
+                                            <i class="fas fa-balance-scale"></i> DDC
+                                        </span>
                                     {% endif %}
-                                </td>
-                                <td>{{ case.created_at|date:"d M Y, h:i A" }}</td>
-                                <td>{{ case.fine }}</td>
-                                <td>{{ case.status }}</td>
+                                 </div>
                                 <td>
-                                    <a class="btn btn-sm btn-primary" href="{% url 'case_detail' case.id %}">View</a>
-                                </td>
+                                    {% if case.incident_date %}
+                                        {{ case.incident_date|date:"d M Y" }}
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                 </div>
+                                <td>
+                                    {% if case.case_date %}
+                                        {{ case.case_date|date:"d M Y" }}
+                                    {% else %}
+                                        {{ case.created_at|date:"d M Y" }}
+                                    {% endif %}
+                                    <br>
+                                    <small class="text-muted">{{ case.created_at|time:"h:i A" }}</small>
+                                 </div>
+                                <td>
+                                    {% if case.committee_hearing_date %}
+                                        {{ case.committee_hearing_date|date:"d M Y" }}
+                                        <br>
+                                        <small>{{ case.committee_hearing_time|time:"h:i A"|default:"" }}</small>
+                                    {% else %}
+                                        <span class="text-muted">Not Scheduled</span>
+                                    {% endif %}
+                                 </div>
+                                <td>
+                                    {% if case.fine %}
+                                        <span class="text-danger">Rs. {{ case.fine }}</span>
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                 </div>
+                                <td>
+                                    {% if case.status == 'pending' %}
+                                        <span class="badge bg-warning text-dark">Pending</span>
+                                    {% elif case.status == 'under_review' %}
+                                        <span class="badge bg-info">Under Review</span>
+                                    {% elif case.status == 'resolved' %}
+                                        <span class="badge bg-success">Resolved</span>
+                                    {% elif case.status == 'dismissed' %}
+                                        <span class="badge bg-secondary">Dismissed</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ case.status }}</span>
+                                    {% endif %}
+                                 </div>
+                                <td>
+                                    <div class="btn-group">
+                                        <a class="btn btn-sm btn-primary" href="{% url 'ddcomit:case_detail' case.id %}" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% if case.case_type == 'ddc' %}
+                                        <a class="btn btn-sm btn-info" href="{% url 'schedule_hearing' case.id %}" title="Schedule Hearing">
+                                            <i class="fas fa-calendar-alt"></i>
+                                        </a>
+                                        {% endif %}
+                                        <a class="btn btn-sm btn-success" href="{% url 'ddcomit:update_case_status' case.id %}" title="Update Status">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                 </div>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
+                
+                <!-- Pagination -->
+                {% if cases.has_other_pages %}
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <ul class="pagination justify-content-center">
+                            {% if cases.has_previous %}
+                            <li class="page-item"><a class="page-link" href="?page={{ cases.previous_page_number }}">Previous</a></li>
+                            {% endif %}
+                            {% for i in cases.paginator.page_range %}
+                            <li class="page-item {% if cases.number == i %}active{% endif %}">
+                                <a class="page-link" href="?page={{ i }}">{{ i }}</a>
+                            </li>
+                            {% endfor %}
+                            {% if cases.has_next %}
+                            <li class="page-item"><a class="page-link" href="?page={{ cases.next_page_number }}">Next</a></li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+                {% endif %}
+                
                 {% else %}
-                <div class="alert alert-warning">No cases found.</div>
+                <div class="alert alert-warning text-center">
+                    <i class="fas fa-info-circle fa-2x mb-2 d-block"></i>
+                    <p>No cases found.</p>
+                    <a href="{% url 'ddcomit:add_case' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add First Case
+                    </a>
+                </div>
                 {% endif %}
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .badge {
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 500;
+    }
+    .badge-danger { background: #dc3545; color: white; }
+    .badge-warning { background: #ffc107; color: #212529; }
+    .badge-info { background: #17a2b8; color: white; }
+    .badge-success { background: #28a745; color: white; }
+    .badge-secondary { background: #6c757d; color: white; }
+    .table th {
+        font-size: 12px;
+        font-weight: 600;
+        text-align: center;
+        vertical-align: middle;
+    }
+    .table td {
+        vertical-align: middle;
+        font-size: 13px;
+    }
+    .btn-group .btn {
+        padding: 3px 8px;
+        margin: 0 2px;
+    }
+    @media print {
+        .btn, .btn-group, .alert a, .page-header .btn {
+            display: none !important;
+        }
+        .alert {
+            border: 1px solid #000;
+            background: #fff;
+            color: #000;
+        }
+    }
+</style>
 {% endblock %}

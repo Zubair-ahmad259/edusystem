@@ -11,7 +11,7 @@
                     <h3 class="page-title">📑 Case Detail</h3>
                     <ul class="breadcrumb">
                         <li class="breadcrumb-item">
-                            <a href="{% url 'case_list' %}">Cases</a>
+                            <a href="{% url 'ddcomit:case_list' %}">Cases</a>
                         </li>
                         <li class="breadcrumb-item active">Case Detail</li>
                     </ul>
@@ -34,7 +34,7 @@
                 <p><strong>Case Type:</strong> {{ case.get_case_type_display }}</p>
                 <p><strong>Created At:</strong> {{ case.created_at|date:"d M Y, h:i A" }}</p>
 
-                <a href="{% url 'case_list' %}" class="btn btn-secondary mt-3">⬅ Back to list</a>
+                <a href="{% url 'ddcomit:case_list' %}" class="btn btn-secondary mt-3">⬅ Back to list</a>
             </div>
         </div>
     </div>

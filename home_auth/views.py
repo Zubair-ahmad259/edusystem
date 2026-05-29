@@ -241,7 +241,7 @@ def send_account_creation_email(request, user, password, user_type, email, name=
         
         message = (
             f"Dear {name},\n\n"
-            f"Welcome to the Learning Management System.\n\n"
+            f"Welcome to edusphare.\n\n"
             f"Your {user_type} account has been created successfully.\n\n"
             f"Login Credentials:\n"
             f"Username: {user.username}\n"
@@ -271,7 +271,7 @@ def send_account_creation_email(request, user, password, user_type, email, name=
 def send_password_reset_email(request, user, new_password, user_type):
     """Send password reset email"""
     try:
-        subject = f"Your {user_type} Password Has Been Reset - LMS Portal"
+        subject = f"Your {user_type} Password Has Been Reset - edusphare Portal"
         
         user_name = ""
         if hasattr(user, 'first_name') and user.first_name:

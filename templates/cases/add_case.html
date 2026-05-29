@@ -1,4 +1,5 @@
 {% extends 'Home/index.html' %}
+{% load static %}
 
 {% block body %}
 <div class="page-wrapper">
@@ -11,7 +12,7 @@
                     <h3 class="page-title">➕ Add New Case</h3>
                     <ul class="breadcrumb">
                         <li class="breadcrumb-item">
-                            <a href="{% url 'case_list' %}">Cases</a>
+                            <a href="{% url 'ddcomit:case_list' %}">Cases</a>
                         </li>
                         <li class="breadcrumb-item active">Add Case</li>
                     </ul>
@@ -25,17 +26,295 @@
                 <h5 class="mb-0">Case Form</h5>
             </div>
             <div class="card-body">
-                <form method="POST" class="row g-3">
+                <form method="POST" enctype="multipart/form-data" id="caseForm">
                     {% csrf_token %}
-                    {{ form.as_p }}
-                    <div class="text-right">
-                        <button type="submit" class="btn btn-success">💾 Save</button>
-                        <a href="{% url 'case_list' %}" class="btn btn-secondary">Cancel</a>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">Case Type <span class="text-danger">*</span></label>
+                            {{ form.case_type }}
+                        </div>
+                    </div>
+
+                    <hr>
+                    <h6 class="mt-3 mb-3">📚 Academic Information</h6>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label class="form-label">Discipline <span class="text-danger">*</span></label>
+                            <select class="form-control" id="disciplineSelect" required>
+                                <option value="">-- Select Discipline --</option>
+                                {% for discipline in disciplines %}
+                                <option value="{{ discipline.id }}">{{ discipline.field }}</option>
+                                {% endfor %}
+                            </select>
+                            <!-- Hidden field to store discipline ID -->
+                            <input type="hidden" name="Disciplines" id="disciplinesHidden">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Batch <span class="text-danger">*</span></label>
+                            <select class="form-control" id="batchSelect" disabled required>
+                                <option value="">-- Select Discipline First --</option>
+                            </select>
+                            <!-- Hidden field to store batch ID -->
+                            <input type="hidden" name="batch" id="batchHidden">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Section <span class="text-danger">*</span></label>
+                            <select class="form-control" id="sectionSelect" disabled required>
+                                <option value="">-- Select Batch First --</option>
+                            </select>
+                            <!-- Hidden field to store section ID -->
+                            <input type="hidden" name="section" id="sectionHidden">
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Student <span class="text-danger">*</span></label>
+                            {{ form.student }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Semester <span class="text-danger">*</span></label>
+                            {{ form.semester }}
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Subject <span class="text-danger">*</span></label>
+                            {{ form.subject }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Teacher <span class="text-danger">*</span></label>
+                            {{ form.teacher }}
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Discipline Field</label>
+                            <input type="text" class="form-control" id="disciplineField" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Section Name</label>
+                            <input type="text" class="form-control" id="sectionName" readonly>
+                        </div>
+                    </div>
+
+                    <hr>
+                    <h6 class="mt-3 mb-3">📅 Case Details</h6>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label class="form-label">Incident Date</label>
+                            {{ form.incident_date }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Case Date</label>
+                            {{ form.case_date }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Fine Amount</label>
+                            {{ form.fine }}
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <label class="form-label">Description</label>
+                            {{ form.description }}
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Status</label>
+                            {{ form.status }}
+                        </div>
+                    </div>
+
+                    <hr>
+                    <h6 class="mt-3 mb-3">⚖️ Committee Information (For DDC Cases)</h6>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label class="form-label">Hearing Date</label>
+                            {{ form.committee_hearing_date }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Hearing Time</label>
+                            {{ form.committee_hearing_time }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Venue</label>
+                            {{ form.committee_venue }}
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <label class="form-label">Committee Remarks</label>
+                            {{ form.committee_remarks }}
+                        </div>
+                    </div>
+
+                    <div class="text-right mt-4">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> Save Case
+                        </button>
+                        <a href="{% url 'ddcomit:case_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
                     </div>
                 </form>
             </div>
         </div>
-
     </div>
 </div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function() {
+    // When Discipline changes
+    $('#disciplineSelect').change(function() {
+        var disciplineId = $(this).val();
+        var disciplineText = $('#disciplineSelect option:selected').text();
+        
+        $('#disciplinesHidden').val(disciplineId);
+        $('#disciplineField').val(disciplineText);
+        
+        $('#batchSelect').prop('disabled', true).html('<option value="">-- Select Discipline First --</option>');
+        $('#sectionSelect').prop('disabled', true).html('<option value="">-- Select Batch First --</option>');
+        $('#id_student').prop('disabled', true).html('<option value="">---------</option>');
+        $('#id_student').val('');
+        
+        if (disciplineId) {
+            $.ajax({
+                url: '{% url "ddcomit:get_batches_by_discipline" %}',
+                data: { 'discipline_id': disciplineId },
+                dataType: 'json',
+                success: function(data) {
+                    var options = '<option value="">-- Select Batch --</option>';
+                    for (var i = 0; i < data.length; i++) {
+                        options += '<option value="' + data[i].id + '">' + data[i].name + '</option>';
+                    }
+                    $('#batchSelect').html(options).prop('disabled', false);
+                }
+            });
+        }
+    });
+
+    // When Batch changes
+    $('#batchSelect').change(function() {
+        var batchId = $(this).val();
+        $('#batchHidden').val(batchId);
+        
+        $('#sectionSelect').prop('disabled', true).html('<option value="">-- Select Batch First --</option>');
+        $('#id_student').prop('disabled', true).html('<option value="">---------</option>');
+        $('#id_student').val('');
+        
+        if (batchId) {
+            $.ajax({
+                url: '{% url "ddcomit:get_sections_by_batch" %}',
+                data: { 'batch_id': batchId },
+                dataType: 'json',
+                success: function(data) {
+                    var options = '<option value="">-- Select Section --</option>';
+                    for (var i = 0; i < data.length; i++) {
+                        options += '<option value="' + data[i].id + '">' + data[i].name + '</option>';
+                    }
+                    $('#sectionSelect').html(options).prop('disabled', false);
+                }
+            });
+        }
+    });
+
+    // When Section changes
+    $('#sectionSelect').change(function() {
+        var sectionId = $(this).val();
+        var sectionName = $('#sectionSelect option:selected').text();
+        
+        $('#sectionHidden').val(sectionId);
+        $('#sectionName').val(sectionName);
+        
+        $('#id_student').prop('disabled', true).html('<option value="">---------</option>');
+        
+        if (sectionId) {
+            $.ajax({
+                url: '{% url "ddcomit:get_students_by_section" %}',
+                data: { 'section_id': sectionId },
+                dataType: 'json',
+                success: function(data) {
+                    var options = '<option value="">---------</option>';
+                    for (var i = 0; i < data.length; i++) {
+                        options += '<option value="' + data[i].id + '">' + data[i].name + '</option>';
+                    }
+                    $('#id_student').html(options).prop('disabled', false);
+                }
+            });
+        }
+    });
+
+    // When Semester changes
+    $('#id_semester').change(function() {
+        var semesterId = $(this).val();
+        $('#id_subject').prop('disabled', true).html('<option value="">---------</option>');
+        $('#id_teacher').prop('disabled', true).html('<option value="">---------</option>');
+        
+        if (semesterId) {
+            $.ajax({
+                url: '{% url "ddcomit:get_subjects_by_semester" %}',
+                data: { 'semester_id': semesterId },
+                dataType: 'json',
+                success: function(data) {
+                    var options = '<option value="">---------</option>';
+                    for (var i = 0; i < data.length; i++) {
+                        options += '<option value="' + data[i].id + '">' + data[i].name + '</option>';
+                    }
+                    $('#id_subject').html(options).prop('disabled', false);
+                }
+            });
+        }
+    });
+
+    // When Subject changes
+    $('#id_subject').change(function() {
+        var subjectId = $(this).val();
+        $('#id_teacher').prop('disabled', true).html('<option value="">---------</option>');
+        
+        if (subjectId) {
+            $.ajax({
+                url: '{% url "ddcomit:get_teachers_by_subject" %}',
+                data: { 'subject_id': subjectId },
+                dataType: 'json',
+                success: function(data) {
+                    var options = '<option value="">---------</option>';
+                    for (var i = 0; i < data.length; i++) {
+                        options += '<option value="' + data[i].id + '">' + data[i].name + '</option>';
+                    }
+                    $('#id_teacher').html(options).prop('disabled', false);
+                }
+            });
+        }
+    });
+});
+</script>
+
+<style>
+    .form-label {
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+    select[disabled] {
+        background-color: #e9ecef;
+    }
+    hr {
+        margin: 15px 0;
+    }
+    h6 {
+        color: #667eea;
+        font-weight: 600;
+    }
+</style>
 {% endblock %}

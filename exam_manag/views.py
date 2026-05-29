@@ -1008,6 +1008,7 @@ def student_my_marks(request):
     
     for result in subject_results:
         subjects_data.append({
+            'id': result.subject.id,  # ADD THIS LINE - subject_id
             'code': result.subject.code,
             'name': result.subject.name,
             'mid_term_marks': float(result.mid_term_marks),
@@ -1041,7 +1042,6 @@ def student_my_marks(request):
         'cgpa': cgpa,
     }
     return render(request, 'exam/student_my_marks.html', context)
-
 
 # ==================== TRANSCRIPT FUNCTIONS ====================
 
@@ -1338,101 +1338,83 @@ def student_subject_marks_detail(request, subject_id):
         messages.warning(request, f'No results found for {subject.code} - {subject.name}')
         return redirect('student_my_marks')
     
-    # Get all exams for this subject (to show individual component marks)
+    # Get all exams for this subject
     exams = Exam.objects.filter(
         subject=subject,
         section=student.section,
         is_published=True
     ).order_by('exam_type')
     
-    # Prepare exam results
+    # Prepare exam results for template
     exam_results = []
+    total_obtained = 0
+    total_max = 0
+    
     for exam in exams:
         try:
             exam_result = ExamResult.objects.get(exam=exam, student=student)
+            obtained = float(exam_result.marks_obtained) if exam_result.marks_obtained else 0
+            percentage = (obtained / float(exam.total_marks) * 100) if exam.total_marks > 0 else 0
+            
             exam_results.append({
-                'exam_type': exam.get_exam_type_display(),
-                'exam_type_key': exam.exam_type,
-                'marks_obtained': float(exam_result.marks_obtained) if exam_result.marks_obtained else 0,
-                'total_marks': float(exam.total_marks),
-                'percentage': float(exam_result.percentage),
-                'grade': exam_result.grade,
+                'exam': exam,
+                'result': exam_result,
+                'obtained': obtained,
+                'max': float(exam.total_marks),
+                'percentage': percentage,
                 'is_absent': exam_result.is_absent,
-                'remarks': exam_result.remarks,
             })
+            
+            if not exam_result.is_absent:
+                total_obtained += obtained
+                total_max += float(exam.total_marks)
+                
         except ExamResult.DoesNotExist:
             exam_results.append({
-                'exam_type': exam.get_exam_type_display(),
-                'exam_type_key': exam.exam_type,
-                'marks_obtained': 0,
-                'total_marks': float(exam.total_marks),
+                'exam': exam,
+                'result': None,
+                'obtained': 0,
+                'max': float(exam.total_marks),
                 'percentage': 0,
-                'grade': 'F',
                 'is_absent': False,
-                'remarks': '',
             })
+            total_max += float(exam.total_marks)
     
-    # Get component wise marks from StudentSubjectResult
-    component_marks = {
-        'mid_term': float(subject_result.mid_term_marks),
-        'final': float(subject_result.final_marks),
-        'quiz': float(subject_result.quiz_marks),
-        'assignment': float(subject_result.assignment_marks),
-        'lab': float(subject_result.lab_marks),
-        'attendance': float(subject_result.attendance_marks),
-    }
+    # Calculate overall percentage
+    overall_percentage = (total_obtained / total_max * 100) if total_max > 0 else 0
     
-    # Calculate grade information
-    percentage = float(subject_result.percentage)
-    if percentage >= 90:
+    # Determine grade
+    if overall_percentage >= 90:
         grade = 'A+'
-        grade_point = 4.00
-        remarks = 'Outstanding'
-    elif percentage >= 80:
+    elif overall_percentage >= 80:
         grade = 'A'
-        grade_point = 4.00
-        remarks = 'Excellent'
-    elif percentage >= 70:
+    elif overall_percentage >= 70:
         grade = 'B+'
-        grade_point = 3.50
-        remarks = 'Very Good'
-    elif percentage >= 60:
+    elif overall_percentage >= 60:
         grade = 'B'
-        grade_point = 3.00
-        remarks = 'Good'
-    elif percentage >= 50:
+    elif overall_percentage >= 50:
         grade = 'C+'
-        grade_point = 2.50
-        remarks = 'Satisfactory'
-    elif percentage >= 40:
+    elif overall_percentage >= 40:
         grade = 'C'
-        grade_point = 2.00
-        remarks = 'Fair'
-    elif percentage >= 33:
+    elif overall_percentage >= 33:
         grade = 'D'
-        grade_point = 1.50
-        remarks = 'Pass'
     else:
         grade = 'F'
-        grade_point = 0.00
-        remarks = 'Fail'
+    
+    is_passed = grade != 'F'
     
     context = {
         'student': student,
         'subject': subject,
-        'subject_result': subject_result,
-        'component_marks': component_marks,
         'exam_results': exam_results,
-        'total_marks': float(subject_result.total_marks),
-        'percentage': percentage,
+        'total_obtained': total_obtained,
+        'total_max': total_max,
+        'overall_percentage': round(overall_percentage, 1),
         'grade': grade,
-        'grade_point': grade_point,
-        'remarks': remarks,
-        'is_passed': subject_result.is_passed,
+        'is_passed': is_passed,
     }
     
     return render(request, 'exam/student_subject_marks_detail.html', context)
-
 
 # ==================== STUDENT MARKS API ====================
 

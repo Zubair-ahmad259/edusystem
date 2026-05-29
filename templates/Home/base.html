@@ -278,6 +278,19 @@
             }
         }
 
+        /* Logout Button Styling */
+        .dropdown-item.logout-item {
+            color: #dc2626;
+            border-top: 1px solid #e2e8f0;
+            margin-top: 5px;
+            padding-top: 10px;
+        }
+        
+        .dropdown-item.logout-item:hover {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
         /* ===== MAIN CONTENT ===== */
         .main-content {
             flex: 1;
@@ -515,38 +528,20 @@
                 
                 <!-- Timetable -->
                 <li><a href="{% url 'timetables:timetable_dashboard' %}"><i class="fas fa-calendar-week"></i> <span>Timetable</span></a></li>
-                                              <li><a href="{% url 'admin_transcript_requests' %}">admin_transcript_requests</a></li>
+                <li><a href="{% url 'admin_transcript_requests' %}">admin_transcript_requests</a></li>
 
-                <!-- Financial Management -->
+                <!-- Financial Management - Only Fee Overview -->
                 <li class="menu-title">Financial Management</li>
-                <li class="submenu">
-                    <a href="javascript:void(0);"><i class="fas fa-file-invoice-dollar"></i> <span>Fee Management</span> <i class="fas fa-chevron-down menu-arrow"></i></a>
-                    <ul>
-                        <li><a href="{% url 'upload_fee' %}">Upload Fee</a></li>
-                        <li><a href="{% url 'fee_list' %}">Fee Overview</a></li>
-                        <li><a href="{% url 'defaulter_student' %}">Defaulter Students</a></li>
-                    </ul>
-                </li>
+                <li><a href="{% url 'fee_list' %}"><i class="fas fa-file-invoice-dollar"></i> <span>Fee Overview</span></a></li>
                 
                 <!-- Token Management -->
                 <li class="menu-title">Token Management</li>
-                <li class="submenu">
-                    <a href="javascript:void(0);"><i class="fas fa-ticket-alt"></i> <span>Tokens</span> <i class="fas fa-chevron-down menu-arrow"></i></a>
-                    <ul>
-                        <li><a href="{% url 'token_app:dashboard' %}">Token Dashboard</a></li>
-                        <li><a href="#">Generate Token</a></li>
-                    </ul>
-                </li>
+                <li><a href="{% url 'token_app:dashboard' %}"><i class="fas fa-ticket-alt"></i> <span>Token Dashboard</span></a></li>
                 
-                <!-- Discipline Committee -->
+                <!-- Discipline Committee - Cases -->
                 <li class="menu-title">Discipline Committee</li>
-                <li class="submenu">
-                    <a href="javascript:void(0);"><i class="fas fa-gavel"></i> <span>Cases</span> <i class="fas fa-chevron-down menu-arrow"></i></a>
-                    <ul>
-                        <li><a href="{% url 'case_list' %}">View Cases</a></li>
-                        <li><a href="{% url 'add_case' %}">Add Case</a></li>
-                    </ul>
-                </li>
+                <li><a href="{% url 'ddcomit:case_list' %}"><i class="fas fa-gavel"></i> <span>View Cases</span></a></li>
+                <li><a href="{% url 'ddcomit:add_case' %}"><i class="fas fa-plus-circle"></i> <span>Add Case</span></a></li>
                 
                 <!-- END OF ACCOUNTS OFFICER MENU -->
                 
@@ -579,6 +574,9 @@
                 <li class="menu-title">Financial Management</li>
                 <li><a href="{% url 'fee_list' %}"><i class="fas fa-file-invoice-dollar"></i> <span>Fee Overview</span></a></li>
                 
+                <li class="menu-title">Discipline Committee</li>
+                <li><a href="{% url 'ddcomit:case_list' %}"><i class="fas fa-gavel"></i> <span>View Cases</span></a></li>
+                
                 {% elif user_role == 'Librarian' %}
                 
                 <li class="menu-title">Library Management</li>
@@ -597,6 +595,7 @@
                 </li>
                 <li><a href="{% url 'attendance_dashboard' %}"><i class="fas fa-calendar-check"></i> <span>Attendance</span></a></li>
                 <li><a href="{% url 'timetables:timetable_dashboard' %}"><i class="fas fa-calendar-week"></i> <span>Timetable</span></a></li>
+                <li><a href="{% url 'ddcomit:case_list' %}"><i class="fas fa-gavel"></i> <span>View Cases</span></a></li>
                 
                 {% elif user.is_superuser or user.is_admin %}
                 
@@ -649,36 +648,19 @@
                 
                 <li class="menu-title">Examination</li>
                 <li><a href="{% url 'exam_manag:dashboard' %}"><i class="fas fa-chart-line"></i> <span>Exam Dashboard</span></a></li>
-               
                 
-                <li class="menu-title">Discipline Committee</li>
-                <li class="submenu">
-                    <a href="javascript:void(0);"><i class="fas fa-gavel"></i> <span>Cases</span> <i class="fas fa-chevron-down menu-arrow"></i></a>
-                    <ul>
-                        <li><a href="{% url 'add_case' %}">Add Case</a></li>
-                        <li><a href="{% url 'case_list' %}">View Cases</a></li>
-                    </ul>
-                </li>
-                
-                <li class="menu-title">Token Management</li>
-                <li class="submenu">
-                    <a href="javascript:void(0);"><i class="fas fa-ticket-alt"></i> <span>Tokens</span> <i class="fas fa-chevron-down menu-arrow"></i></a>
-                    <ul>
-                        <li><a href="{% url 'token_app:dashboard' %}">Token Dashboard</a></li>
-                        <li><a href="#">Generate Token</a></li>
-                    </ul>
-                </li>
-                
+                <!-- Financial Management - Only Fee Overview -->
                 <li class="menu-title">Financial Management</li>
-                <li class="submenu">
-                    <a href="javascript:void(0);"><i class="fas fa-file-invoice-dollar"></i> <span>Fee Management</span> <i class="fas fa-chevron-down menu-arrow"></i></a>
-                    <ul>
-                        <li><a href="{% url 'upload_fee' %}">Upload Fee</a></li>
-                        <li><a href="{% url 'fee_list' %}">Fee Overview</a></li>
-                        <li><a href="{% url 'defaulter_student' %}">Defaulter Students</a></li>
-                    </ul>
-                </li>
+                <li><a href="{% url 'fee_list' %}"><i class="fas fa-file-invoice-dollar"></i> <span>Fee Overview</span></a></li>
                 
+                <!-- Discipline Committee -->
+                <li class="menu-title">Discipline Committee</li>
+                <li><a href="{% url 'ddcomit:case_list' %}"><i class="fas fa-gavel"></i> <span>View Cases</span></a></li>
+                
+                <!-- Token Management -->
+                <li class="menu-title">Token Management</li>
+                <li><a href="{% url 'token_app:dashboard' %}"><i class="fas fa-ticket-alt"></i> <span>Token Dashboard</span></a></li>
+              
                 {% endif %}
             </ul>
         </div>
@@ -763,7 +745,9 @@
                     <a class="dropdown-item" href="#">My Profile</a>
                     <a class="dropdown-item" href="#">Settings</a>
                     <div class="dropdown-divider"></div>
-                    <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
+                    <a class="dropdown-item logout-item" href="{% url 'logout' %}">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
                 </div>
             </li>
         </ul>
