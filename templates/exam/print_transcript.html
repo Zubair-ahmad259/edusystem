@@ -52,7 +52,7 @@
             position: relative;
         }
         
-        /* Header Section - Matching reference style */
+        /* Header Section */
         .header {
             text-align: center;
             margin-bottom: 10px;
@@ -181,33 +181,32 @@
             padding: 3px 4px;
             vertical-align: middle;
             text-align: center;
-            font-weight: bold;
         }
         
         .code-col {
-            width: 10%;
+            width: 15%;
         }
         
         .title-col {
-            width: 45%;
+            width: 40%;
             text-align: left;
             padding-left: 5px;
         }
         
         .total-col {
-            width: 8%;
+            width: 10%;
         }
         
         .obtained-col {
-            width: 9%;
+            width: 12%;
         }
         
         .grade-col {
-            width: 9%;
+            width: 10%;
         }
         
         .gpa-col {
-            width: 8%;
+            width: 10%;
         }
         
         .semester-total {
@@ -220,7 +219,6 @@
             font-size: 8.5pt;
         }
         
-        /* Horizontal rule style */
         .hr-line {
             border-top: 1px solid #000;
             margin: 8px 0;
@@ -351,20 +349,6 @@
             }
         }
         
-        /* Grade highlighting */
-        .grade-A, .grade-A-plus {
-            background: #d4edda;
-        }
-        
-        .grade-B, .grade-B-plus {
-            background: #fff3cd;
-        }
-        
-        .grade-C, .grade-C-plus, .grade-D, .grade-F {
-            background: #f8d7da;
-        }
-        
-        /* Text styles */
         .text-left {
             text-align: left;
         }
@@ -380,15 +364,8 @@
         .bold {
             font-weight: bold;
         }
-        
-        .uppercase {
-            text-transform: uppercase;
-        }
-        
-        .text-sm {
-            font-size: 7.5pt;
-        }
     </style>
+</head>
 <body>
     <!-- Print Controls -->
     <div class="print-controls">
@@ -430,7 +407,7 @@
                 </div>
                 <div class="info-item">
                     <span class="info-label">Session:</span>
-                    <span class="info-value">{{ transcript.student.batch.start_session|default:"-" }} {{ transcript.student.batch.end_session|default:"-" }}</span>
+                    <span class="info-value">{{ transcript.student.batch.start_session|default:"-" }} - {{ transcript.student.batch.end_session|default:"-" }}</span>
                 </div>
                 <div class="info-item">
                     <span class="info-label">CGPA:</span>
@@ -441,7 +418,7 @@
         
         <!-- Academic Records by Semester -->
         {% for semester_name, results in results_by_semester.items %}
-        <div class="semester-section" id="semester-{{ forloop.counter }}">
+        <div class="semester-section">
             <div class="semester-heading">{{ semester_name }}</div>
             <table class="semester-table">
                 <thead>
@@ -456,38 +433,17 @@
                 </thead>
                 <tbody>
                     {% for result in results %}
-                    <tr class="course-row">
-                        <td>{{ result.subject_code }}</td>
-                        <td class="text-left">{{ result.subject_name }}</td>
-                        <td>100</td> <!-- Always 100 for total marks -->
-                        <td class="obtained-marks">
-                            {% if result.total_marks %}
-                                {{ result.total_marks|floatformat:2 }}
-                            {% else %}
-                                -
-                            {% endif %}
-                        </td>
-                        <td class="grade-{{ result.grade }}">
-                            {{ result.grade|default:"-" }}
-                        </td>
-                        <td class="course-gpa">
-                            {% if result.grade_point %}
-                                {{ result.grade_point|floatformat:2 }}
-                            {% else %}
-                                -
-                            {% endif %}
-                        </td>
+                    <tr>
+                        <td>{{ result.subject_code }}</div>
+                        <td class="text-left">{{ result.subject_name }}</div>
+                        <td>{{ result.total_marks }}</div>
+                        <td>{{ result.obtained_marks|floatformat:2 }}</div>
+                        <td>
+                            <strong>{{ result.grade }}</strong>
+                        </div>
+                        <td>{{ result.grade_point|floatformat:2 }}</div>
                     </tr>
                     {% endfor %}
-                    
-                    <!-- Semester Total Row -->
-                    <tr class="semester-total">
-                        <td colspan="2" class="text-right"><strong>SEMESTER TOTAL:</strong></td>
-                        <td id="total-marks-{{ forloop.counter }}"><strong>0</strong></td>
-                        <td id="total-obtained-{{ forloop.counter }}"><strong>0</strong></td>
-                        <td id="semester-grade-{{ forloop.counter }}"><strong>-</strong></td>
-                        <td id="semester-gpa-{{ forloop.counter }}"><strong>0</strong></td>
-                    </tr>
                 </tbody>
             </table>
         </div>
@@ -544,116 +500,13 @@
     
     <script>
         window.onload = function() {
-            // Auto-print if requested
             if (window.location.search.includes('autoprint=true')) {
                 setTimeout(function() {
                     window.print();
                 }, 500);
             }
-            
-            // Calculate and display semester totals
-            calculateAllSemesterTotals();
-            
-            // Add grade colors
-            addGradeColors();
-            
-            // Adjust for single page
-            adjustForSinglePage();
         };
         
-        function calculateAllSemesterTotals() {
-            const semesterSections = document.querySelectorAll('.semester-section');
-            
-            semesterSections.forEach((section, index) => {
-                const courseRows = section.querySelectorAll('.course-row');
-                let totalCourses = 0;
-                let totalObtained = 0;
-                let totalGPA = 0;
-                let validGPACount = 0;
-                
-                courseRows.forEach(row => {
-                    totalCourses++;
-                    
-                    // Get obtained marks (now from result.total_marks)
-                    const obtainedCell = row.querySelector('.obtained-marks');
-                    const obtainedText = obtainedCell.textContent.trim();
-                    if (obtainedText !== '-') {
-                        const obtained = parseFloat(obtainedText);
-                        if (!isNaN(obtained)) {
-                            totalObtained += obtained;
-                        }
-                    }
-                    
-                    // Get GPA
-                    const gpaCell = row.querySelector('.course-gpa');
-                    const gpaText = gpaCell.textContent.trim();
-                    if (gpaText !== '-') {
-                        const gpa = parseFloat(gpaText);
-                        if (!isNaN(gpa)) {
-                            totalGPA += gpa;
-                            validGPACount++;
-                        }
-                    }
-                });
-                
-                // Calculate totals
-                const totalMarks = totalCourses * 100;
-                const avgGPA = validGPACount > 0 ? (totalGPA / validGPACount) : 0;
-                
-                // Determine grade based on GPA
-                let grade = '-';
-                if (avgGPA >= 3.67) grade = 'A';
-                else if (avgGPA >= 3.33) grade = 'B+';
-                else if (avgGPA >= 3.00) grade = 'B';
-                else if (avgGPA >= 2.67) grade = 'C+';
-                else if (avgGPA >= 2.33) grade = 'C';
-                else if (avgGPA >= 2.00) grade = 'D';
-                else if (avgGPA > 0) grade = 'F';
-                
-                // Update the total row
-                const totalMarksCell = section.querySelector(`#total-marks-${index + 1}`);
-                const totalObtainedCell = section.querySelector(`#total-obtained-${index + 1}`);
-                const semesterGradeCell = section.querySelector(`#semester-grade-${index + 1}`);
-                const semesterGPACell = section.querySelector(`#semester-gpa-${index + 1}`);
-                
-                if (totalMarksCell) totalMarksCell.textContent = totalMarks;
-                if (totalObtainedCell) totalObtainedCell.textContent = totalObtained.toFixed(2);
-                if (semesterGradeCell) semesterGradeCell.textContent = grade;
-                if (semesterGPACell) semesterGPACell.textContent = avgGPA.toFixed(2);
-            });
-        }
-        
-        function addGradeColors() {
-            document.querySelectorAll('[class*="grade-"]').forEach(el => {
-                const className = el.className;
-                if (className.includes('grade-A')) {
-                    el.style.backgroundColor = '#d4edda';
-                } else if (className.includes('grade-B')) {
-                    el.style.backgroundColor = '#fff3cd';
-                } else if (className.includes('grade-C') || className.includes('grade-D') || className.includes('grade-F')) {
-                    el.style.backgroundColor = '#f8d7da';
-                }
-            });
-        }
-        
-        function adjustForSinglePage() {
-            const container = document.querySelector('.container');
-            const windowHeight = window.innerHeight;
-            const contentHeight = container.scrollHeight;
-            
-            if (contentHeight > windowHeight * 0.9) {
-                document.body.style.fontSize = '9.8pt';
-                document.querySelectorAll('table').forEach(table => {
-                    table.style.fontSize = '7.8pt';
-                    table.style.marginBottom = '3px';
-                });
-                document.querySelectorAll('.semester-section').forEach(section => {
-                    section.style.marginBottom = '8px';
-                });
-            }
-        }
-        
-        // Keyboard shortcuts
         document.addEventListener('keydown', function(e) {
             if (e.ctrlKey && e.key === 'p') {
                 e.preventDefault();
@@ -662,16 +515,6 @@
             if (e.key === 'Escape') {
                 window.close();
             }
-        });
-        
-        // Print button event
-        document.querySelector('.print-btn').addEventListener('click', function() {
-            window.print();
-        });
-        
-        // Close button event
-        document.querySelector('.close-btn').addEventListener('click', function() {
-            window.close();
         });
     </script>
 </body>

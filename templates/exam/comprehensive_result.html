@@ -238,6 +238,7 @@
                             </tr>
                         </thead>
                         <tbody>
+                            
                             {% for student_data in page_obj %}
                             <tr class="align-middle student-row" data-toggle="collapse" data-target="#details-{{ forloop.counter }}">
                                 <td class="text-center">{{ forloop.counter0|add:page_obj.start_index }}</td>
@@ -291,7 +292,11 @@
                                     </div>
                                 </td>
 <td class="text-center">
-        <i class="fas fa-scroll"></i>
+    <a href="{% url 'exam_manag:generate_transcript' student_data.student.id %}" 
+       class="btn btn-sm btn-outline-primary" 
+       title="Generate Transcript"
+       onclick="return confirm('Generate transcript for {{ student_data.student.get_full_name }}?')">
+        <i class="fas fa-scroll"></i> Transcript
     </a>
 </td>
                             </tr>
