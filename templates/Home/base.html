@@ -481,8 +481,13 @@
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <div class="sidebar" id="sidebar">
+
         <div class="sidebar-menu">
             <ul>
+                <!-- Debug: Show user role -->
+<div style="background: yellow; padding: 5px; font-size: 12px; display: none;">
+    User Role: {{ user_role|default:'NOT SET' }}
+</div>
                 <!-- Main Menu -->
                 <li class="menu-title">Main Menu</li>
                 <li><a href="{% url 'dashboard' %}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
@@ -521,14 +526,16 @@
                         <li><a href="{% url 'subject:add_subject' %}">Add Subject</a></li>
                         <li><a href="{% url 'subject:add_subject_assign' %}">Assign Subject</a></li>
                     </ul>
-                </li>
+                </li> <li class="menu-title">Examination</li>
+                <li><a href="{% url 'exam_manag:dashboard' %}"><i class="fas fa-chart-line"></i> <span>Exam Dashboard</span></a></li>
+                
                 
                 <!-- Attendance (View Only) -->
                 <li><a href="{% url 'attendance_dashboard' %}"><i class="fas fa-calendar-check"></i> <span>Attendance (View Only)</span></a></li>
                 
                 <!-- Timetable -->
                 <li><a href="{% url 'timetables:timetable_dashboard' %}"><i class="fas fa-calendar-week"></i> <span>Timetable</span></a></li>
-                <li><a href="{% url 'admin_transcript_requests' %}">admin_transcript_requests</a></li>
+                <li><a href="{% url 'exam_manag:admin_transcript_requests' %}">admin_transcript_requests</a></li>
 
                 <!-- Financial Management - Only Fee Overview -->
                 <li class="menu-title">Financial Management</li>
@@ -566,7 +573,7 @@
                 <li><a href="{% url 'timetables:timetable_dashboard' %}"><i class="fas fa-calendar-week"></i> <span>Timetable</span></a></li>
                 
                 <li class="menu-title">Examination</li>
-                <li><a href="{% url 'exam_manag:exam_dashboard' %}"><i class="fas fa-chart-line"></i> <span>Exam Dashboard</span></a></li>
+                <li><a href="{% url 'exam_manag:dashboard' %}"><i class="fas fa-chart-line"></i> <span>Exam Dashboard</span></a></li>
                 
                 <li class="menu-title">Token Management</li>
                 <li><a href="{% url 'token_app:dashboard' %}"><i class="fas fa-ticket-alt"></i> <span>Token Dashboard</span></a></li>

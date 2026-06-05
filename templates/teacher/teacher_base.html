@@ -266,7 +266,7 @@
             .main-content { margin-left: var(--sidebar-width); }
         }
 
-        /* ===== FIXED FOOTER - ALWAYS VISIBLE ===== */
+        /* ===== FIXED FOOTER ===== */
         .footer {
             background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
             color: #94a3b8;
@@ -347,7 +347,6 @@
             .main-content { padding: 15px; }
         }
 
-        /* Utility */
         .card { border: none; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
         .bg-primary-grad { background: var(--primary-gradient); color: #fff; }
         
@@ -418,25 +417,17 @@
                 
                 <li class="menu-title">Examination</li>
                 <li>
-                        <i class="fas fa-star-of-life"></i> 
-                        <span>1. Configure Marks</span>
-                    </a>
-                </li>
-                <li>
                     <a href="{% url 'exam_manag:upload_marks_dashboard' %}">
                         <i class="fas fa-upload"></i> 
-                        <span> Upload & View Marks</span>
+                        <span>Upload & View Marks</span>
                     </a>
                 </li>
-
                 <li>
                     <a href="{% url 'exam_manag:student_subject_marks' %}">
                         <i class="fas fa-chart-bar"></i> 
-                        <span>View all result</span>
+                        <span>View All Results</span>
                     </a>
                 </li>
-                
-                
             </ul>
         </div>
     </div>
@@ -446,7 +437,7 @@
             <button class="mobile-menu-toggle" id="mobileToggle">
                 <i class="fas fa-bars"></i>
             </button>
-            <a href="{% url 'index' %}" class="logo">
+            <a href="/" class="logo">
                 <img src="{% static 'assets/images/LOGO.png' %}" alt="LMS">
                 <span>Edu<span>Sphere</span></span>
             </a>
@@ -507,8 +498,6 @@
                             <p class="text-muted mb-0">Teacher</p>
                         </div>
                     </div>
-                    <a class="dropdown-item" href="#">My Profile</a>
-                    <a class="dropdown-item" href="#">Settings</a>
                     <div class="dropdown-divider"></div>
                     <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
                 </div>

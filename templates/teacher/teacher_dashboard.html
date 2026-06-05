@@ -2,7 +2,6 @@
 {% load static %}
 
 {% block body %}
-<!-- Header Section -->
 <div class="page-header bg-light p-3 rounded shadow-sm mb-4">
     <div class="row align-items-center">
         <div class="col-md-6">
@@ -23,7 +22,6 @@
         </div>
     </div>
 </div>
-
 
 <!-- Quick Actions Row -->
 <div class="row mt-4">
@@ -47,7 +45,7 @@
                         </a>
                     </div>
                     <div class="col-md-4">
-                        <a href="{% url 'assignment:teacher_assignment_list'  %}" class="btn btn-info btn-lg w-100 mb-2">
+                        <a href="{% url 'assignment:teacher_assignment_list' %}" class="btn btn-info btn-lg w-100 mb-2">
                             <i class="fas fa-plus-circle"></i> Create Assignment
                         </a>
                     </div>
@@ -58,89 +56,7 @@
 </div>
 
 <!-- Recent Activities Row -->
-<div class="row mt-4">
-    <div class="col-md-6">
-        <div class="card shadow-sm rounded-3 border-0">
-            <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                <h5 class="card-title mb-0 text-white">
-                    <i class="fas fa-file-alt"></i> Recent Exams
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Subject</th>
-                                <th>Exam Type</th>
-                                <th>Date</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for exam in recent_exams|slice:":5" %}
-                            <tr>
-                                <td>{{ exam.subject.code }}</td>
-                                <td>{{ exam.get_exam_type_display }}</td>
-                                <td>{{ exam.exam_date|date:"M d, Y" }}</td>
-                                <td>
-                                    {% if exam.is_published %}
-                                        <span class="badge bg-success">Published</span>
-                                    {% else %}
-                                        <span class="badge bg-warning">Draft</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="4" class="text-center">No exams found</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <div class="col-md-6">
-        <div class="card shadow-sm rounded-3 border-0">
-            <div class="card-header" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
-                <h5 class="card-title mb-0 text-white">
-                    <i class="fas fa-tasks"></i> Recent Assignments
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Title</th>
-                                <th>Subject</th>
-                                <th>Due Date</th>
-                                <th>Submissions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for assignment in recent_assignments|slice:":5" %}
-                            <tr>
-                                <td>{{ assignment.title|truncatechars:20 }}</td>
-                                <td>{{ assignment.subject.code }}</td>
-                                <td>{{ assignment.due_date|date:"M d, Y" }}</td>
-                                <td>{{ assignment.submission_count|default:0 }}/{{ assignment.total_students|default:0 }}</td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="4" class="text-center">No assignments found</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
 <style>
     .card {
@@ -151,9 +67,6 @@
         transform: translateY(-5px);
         box-shadow: 0 10px 25px rgba(0,0,0,0.15);
     }
-    .opacity-50 {
-        opacity: 0.5;
-    }
     .btn-lg {
         padding: 12px;
         border-radius: 10px;
@@ -162,10 +75,6 @@
     }
     .btn-lg:hover {
         transform: translateY(-2px);
-    }
-    .table th {
-        font-weight: 600;
-        color: #4a5568;
     }
     .badge {
         padding: 5px 10px;

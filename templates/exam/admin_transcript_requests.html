@@ -40,7 +40,7 @@
                     </div>
                     <div class="col-md-4">
                         <label>&nbsp;</label>
-                        <a href="{% url 'admin_transcript_requests' %}" class="btn btn-secondary d-block">
+                        <a href="{% url 'exam_manag:admin_transcript_requests' %}" class="btn btn-secondary d-block">
                             <i class="fas fa-redo"></i> Reset
                         </a>
                     </div>
@@ -123,7 +123,7 @@
                                 <td>
                                     {% if req.status == 'pending' %}
                                         <div class="btn-group btn-group-sm">
-                                            <a href="{% url 'approve_transcript_request' req.id %}" class="btn btn-success" onclick="return confirm('Approve this transcript request?')">
+                                            <a href="{% url 'exam_manag:approve_transcript_request' req.id %}" class="btn btn-success" onclick="return confirm('Approve this transcript request?')">
                                                 <i class="fas fa-check"></i> Approve
                                             </a>
                                             <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#rejectModal{{ req.id }}">
@@ -131,11 +131,11 @@
                                             </button>
                                         </div>
                                     {% elif req.status == 'approved' %}
-                                        <a href="{% url 'issue_transcript_request' req.id %}" class="btn btn-sm btn-primary" onclick="return confirm('Issue this transcript?')">
+                                        <a href="{% url 'exam_manag:issue_transcript_request' req.id %}" class="btn btn-sm btn-primary" onclick="return confirm('Issue this transcript?')">
                                             <i class="fas fa-download"></i> Issue
                                         </a>
                                     {% elif req.status == 'issued' %}
-                                        <a href="{% url 'generate_transcript_pdf' req.id %}" class="btn btn-sm btn-info">
+                                        <a href="{% url 'exam_manag:generate_transcript_pdf' req.id %}" class="btn btn-sm btn-info">
                                             <i class="fas fa-file-pdf"></i> Download PDF
                                         </a>
                                     {% else %}
@@ -148,7 +148,7 @@
                             <div class="modal fade" id="rejectModal{{ req.id }}" tabindex="-1">
                                 <div class="modal-dialog">
                                     <div class="modal-content">
-                                        <form method="POST" action="{% url 'reject_transcript_request' req.id %}">
+                                        <form method="POST" action="{% url 'exam_manag:reject_transcript_request' req.id %}">
                                             {% csrf_token %}
                                             <div class="modal-header bg-danger text-white">
                                                 <h5 class="modal-title">Reject Transcript Request</h5>

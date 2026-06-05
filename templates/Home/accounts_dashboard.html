@@ -5,49 +5,404 @@
 
 {% block body %}
 <div class="content container-fluid">
+    <!-- Page Header -->
     <div class="page-header">
-        <div class="row align-items-center">
-            <div class="col">
-                <h3 class="page-title">Accounts Dashboard</h3>
+        <div class="row">
+            <div class="col-sm-12">
+                <h3 class="page-title fade-in-up">Accounts Dashboard</h3>
                 <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
                     <li class="breadcrumb-item active">Accounts Officer</li>
                 </ul>
             </div>
-            <div class="col-auto">
-                <span class="badge badge-success">{{ user_role }}</span>
-            </div>
         </div>
     </div>
-
+    
+    <!-- Statistics Cards -->
     <div class="row">
-        <div class="col-md-4">
-            <div class="card bg-primary text-white">
+        <div class="col-xl-3 col-sm-6 col-12 d-flex">
+            <div class="card bg-primary w-100 fade-in-up" style="animation-delay: 0.1s;">
                 <div class="card-body">
-                    <h5>Total Fees</h5>
-                    <h2>Rs. {{ total_fees|floatformat:0 }}</h2>
+                    <div class="db-widgets d-flex justify-content-between align-items-center">
+                        <div class="db-icon">
+                            <i class="fas fa-rupee-sign"></i>
+                        </div>
+                        <div class="db-info text-right">
+                            <h3>Rs. {{ total_fees|floatformat:0 }}</h3>
+                            <h6>Total Fees</h6>
+                            <p class="text-white-50 mb-0">Overall fee amount</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card bg-success text-white">
+        
+        <div class="col-xl-3 col-sm-6 col-12 d-flex">
+            <div class="card bg-success w-100 fade-in-up" style="animation-delay: 0.2s;">
                 <div class="card-body">
-                    <h5>Total Collected</h5>
-                    <h2>Rs. {{ total_paid|floatformat:0 }}</h2>
+                    <div class="db-widgets d-flex justify-content-between align-items-center">
+                        <div class="db-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="db-info text-right">
+                            <h3>Rs. {{ total_paid|floatformat:0 }}</h3>
+                            <h6>Total Collected</h6>
+                            <p class="text-white-50 mb-0">{{ collection_percentage|default:0 }}% collected</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card bg-warning text-white">
+        
+        <div class="col-xl-3 col-sm-6 col-12 d-flex">
+            <div class="card bg-warning w-100 fade-in-up" style="animation-delay: 0.3s;">
                 <div class="card-body">
-                    <h5>Pending Fees</h5>
-                    <h2>Rs. {{ pending_fees|floatformat:0 }}</h2>
+                    <div class="db-widgets d-flex justify-content-between align-items-center">
+                        <div class="db-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="db-info text-right">
+                            <h3>Rs. {{ pending_fees|floatformat:0 }}</h3>
+                            <h6>Pending Fees</h6>
+                            <p class="text-white-50 mb-0">Awaiting payment</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-sm-6 col-12 d-flex">
+            <div class="card bg-info w-100 fade-in-up" style="animation-delay: 0.4s;">
+                <div class="card-body">
+                    <div class="db-widgets d-flex justify-content-between align-items-center">
+                        <div class="db-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="db-info text-right">
+                            <h3>{{ total_students|default:"0" }}</h3>
+                            <h6>Total Students</h6>
+                            <p class="text-white-50 mb-0">{{ defaulters_count|default:"0" }} defaulters</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="alert alert-info mt-3">
-        <i class="fas fa-info-circle"></i> You have <strong>read/write</strong> access for financial records only.
+    <!-- Recent Payments & Fee Collection Progress -->
+    <div class="row mt-4">
+        <div class="col-md-7">
+            <div class="card fade-in-up" style="animation-delay: 0.6s;">
+                <div class="card-header">
+                    <h5 class="card-title"><i class="fas fa-history"></i> Recent Payments</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Student Name</th>
+                                    <th>Student ID</th>
+                                    <th>Amount</th>
+                                    <th>Date</th>
+                                    <th>Method</th>
+                                    <th>Receipt</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payment in recent_payments %}
+                                <tr>
+                                    <td>{{ payment.upload_fee.student.first_name }} {{ payment.upload_fee.student.last_name }}</div>
+                                    <td>{{ payment.upload_fee.student.student_id }}</div>
+                                    <td><strong>Rs. {{ payment.cleared_amount|floatformat:0 }}</strong></div>
+                                    <td>{{ payment.cleared_date|date:"M d, Y" }}</div>
+                                    <td><span class="badge badge-success">Cash</span></div>
+                                    <td>
+                                        <a href="#" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-print"></i>
+                                        </a>
+                                    </div>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center">No recent payments found</div>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-5">
+            <div class="card fade-in-up" style="animation-delay: 0.7s;">
+                <div class="card-header">
+                    <h5 class="card-title"><i class="fas fa-chart-line"></i> Fee Collection Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="progress mb-4" style="height: 25px; border-radius: 12px;">
+                        <div class="progress-bar bg-success" style="width: {{ collection_percentage|default:0 }}%; border-radius: 12px;">
+                            {{ collection_percentage|default:0 }}% Collected
+                        </div>
+                    </div>
+                    
+                    <div class="row text-center mb-3">
+                        <div class="col-6">
+                            <div class="border rounded p-3 bg-light">
+                                <h4 class="text-success mb-0">Rs. {{ total_paid|floatformat:0 }}</h4>
+                                <small>Collected</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="border rounded p-3 bg-light">
+                                <h4 class="text-warning mb-0">Rs. {{ pending_fees|floatformat:0 }}</h4>
+                                <small>Pending</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle"></i> You have <strong>read/write</strong> access for financial records only.
+                    </div>
+                    
+                    <div class="alert alert-warning mt-2">
+                        <i class="fas fa-exclamation-triangle"></i> <strong>{{ defaulters_count|default:0 }}</strong> students have pending fees for over 30 days.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Monthly Collection Chart & Defaulters List -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card fade-in-up" style="animation-delay: 0.8s;">
+                <div class="card-header">
+                    <h5 class="card-title"><i class="fas fa-chart-bar"></i> Monthly Collection</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="monthlyCollectionChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        
+
     </div>
 </div>
+
+<style>
+    /* Custom styles for dashboard */
+    .fade-in-up {
+        animation: fadeInUp 0.6s ease-out both;
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .db-widgets {
+        position: relative;
+    }
+    
+    .db-icon {
+        font-size: 45px;
+        width: 70px;
+        height: 70px;
+        line-height: 70px;
+        text-align: center;
+        background: rgba(255,255,255,0.2);
+        border-radius: 50%;
+    }
+    
+    .db-icon i {
+        font-size: 30px;
+        color: white;
+    }
+    
+    .db-info h3 {
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 5px;
+        color: white;
+    }
+    
+    .db-info h6 {
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 5px;
+        color: rgba(255,255,255,0.9);
+    }
+    
+    .btn-outline-primary, .btn-outline-info, .btn-outline-success, .btn-outline-warning {
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-outline-primary:hover, .btn-outline-info:hover, 
+    .btn-outline-success:hover, .btn-outline-warning:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .btn-outline-primary {
+        border: 2px solid #667eea;
+        color: #667eea;
+    }
+    
+    .btn-outline-primary:hover {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-color: transparent;
+        color: white;
+    }
+    
+    .btn-outline-success {
+        border: 2px solid #28a745;
+        color: #28a745;
+    }
+    
+    .btn-outline-success:hover {
+        background: #28a745;
+        border-color: transparent;
+        color: white;
+    }
+    
+    .btn-outline-warning {
+        border: 2px solid #ffc107;
+        color: #ffc107;
+    }
+    
+    .btn-outline-warning:hover {
+        background: #ffc107;
+        border-color: transparent;
+        color: white;
+    }
+    
+    .btn-outline-info {
+        border: 2px solid #17a2b8;
+        color: #17a2b8;
+    }
+    
+    .btn-outline-info:hover {
+        background: #17a2b8;
+        border-color: transparent;
+        color: white;
+    }
+    
+    .rounded-3 {
+        border-radius: 16px;
+    }
+    
+    .progress-bar {
+        font-weight: 600;
+        line-height: 25px;
+    }
+    
+    .card-header {
+        background: transparent;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 20px 25px;
+    }
+    
+    .card-header h5 {
+        margin-bottom: 0;
+        color: #1e293b;
+        font-weight: 600;
+    }
+    
+    .card {
+        border-radius: 16px;
+        border: none;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        transition: transform 0.3s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-3px);
+    }
+    
+    .bg-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .bg-success {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    }
+    
+    .bg-warning {
+        background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+    }
+    
+    .bg-info {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    }
+    
+    .badge-success {
+        background: #28a745;
+        padding: 5px 10px;
+        border-radius: 20px;
+    }
+    
+    .table th, .table td {
+        vertical-align: middle;
+    }
+    
+    .thead-light th {
+        background-color: #f8f9fa;
+        color: #495057;
+        font-weight: 600;
+    }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Monthly Collection Chart
+    const ctx = document.getElementById('monthlyCollectionChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+                label: 'Collection (Rs.)',
+                data: {{ monthly_collection|default:'[0,0,0,0,0,0]' }},
+                backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                borderRadius: 8,
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Rs. ' + context.raw.toLocaleString();
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return 'Rs. ' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
 {% endblock %}
