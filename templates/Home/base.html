@@ -485,13 +485,36 @@
         <div class="sidebar-menu">
             <ul>
                 <!-- Debug: Show user role -->
-<div style="background: yellow; padding: 5px; font-size: 12px; display: none;">
-    User Role: {{ user_role|default:'NOT SET' }}
-</div>
+                    <div style="background: yellow; padding: 5px; font-size: 12px; display: none;">
+                        User Role: {{ user_role|default:'NOT SET' }}
+                    </div>
                 <!-- Main Menu -->
                 <li class="menu-title">Main Menu</li>
                 <li><a href="{% url 'dashboard' %}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
-                
+                        <!-- ============ DEMO USER MENU (View All Dashboards) ============ -->
+        {% if user_role == 'Demo Viewer' or is_demo_user %}
+        
+        <li class="menu-title">Demo Mode (View Only)</li>
+        <li><a href="{% url 'demo_dashboard_selector' %}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard Selector</span></a></li>
+        
+        <li class="menu-title">📋 Dashboards</li>
+        <li><a href="{% url 'admin_dashboard' %}"><i class="fas fa-user-shield"></i> <span>Admin Dashboard</span></a></li>
+        <li><a href="{% url 'teacher_dashboard' %}"><i class="fas fa-chalkboard-teacher"></i> <span>Teacher Dashboard</span></a></li>
+        <li><a href="{% url 'student_dashboard' %}"><i class="fas fa-user-graduate"></i> <span>Student Dashboard</span></a></li>
+        
+        <li class="menu-title">📚 Features to Explore</li>
+        <li><a href="{% url 'exam_manag:upload_marks_dashboard' %}"><i class="fas fa-upload"></i> <span>Upload Marks</span></a></li>
+        <li><a href="{% url 'exam_manag:comprehensive_results' %}"><i class="fas fa-table"></i> <span>Comprehensive Results</span></a></li>
+        <li><a href="{% url 'student_list' %}"><i class="fas fa-users"></i> <span>Student List</span></a></li>
+        <li><a href="{% url 'teacher_list' %}"><i class="fas fa-chalkboard-teacher"></i> <span>Teacher List</span></a></li>
+        <li><a href="{% url 'attendance_dashboard' %}"><i class="fas fa-calendar-check"></i> <span>Attendance</span></a></li>
+        <li><a href="{% url 'fee_list' %}"><i class="fas fa-file-invoice-dollar"></i> <span>Fee Management</span></a></li>
+        
+        <li class="menu-title">⚠️ Demo Info</li>
+        <li><a href="#"><i class="fas fa-info-circle"></i> <span>View-Only Mode</span></a></li>
+     {% endif %}
+
+
                 <!-- ACCOUNTS OFFICER MENU - Full Access -->
                 {% if user_role == 'Accounts' %}
                 

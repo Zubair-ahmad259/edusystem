@@ -12,8 +12,9 @@ from Academic.models import Section
 from django.utils import timezone
 from django.utils import timezone
 from django.core.paginator import Paginator
-    
+from common.decorators import demo_block, is_demo_user    
 @login_required
+@demo_block
 def assignment_dashboard(request):
     now = timezone.now()
     
@@ -57,6 +58,8 @@ def assignment_dashboard(request):
     
     return render(request, 'assignment/dashboard.html', context)
 @login_required
+@demo_block
+
 def teacher_submit_assignment(request):
     """Allow teachers to submit assignments"""
     if request.method == 'POST':
@@ -87,6 +90,8 @@ def teacher_submit_assignment(request):
     
     return redirect('assignment:assignment_dashboard')
 @login_required
+
+
 def teacher_assignment_list(request):
     """Show only assignments for subjects assigned to the logged-in teacher"""
     try:
@@ -121,6 +126,8 @@ def teacher_assignment_list(request):
     return render(request, 'assignment/teacher_assignment_list.html', context)
 
 @login_required
+@demo_block
+
 def teacher_assignment_create(request):
     """Create assignment - only shows subjects assigned to teacher"""
     try:

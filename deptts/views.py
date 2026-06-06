@@ -133,3 +133,7 @@ def student_dashboard(request):
 
 def teacher_dashboard(request):
     return render(request,"teacher/teacher_dashboard.html")
+@login_required
+def demo_dashboard_selector(request):
+    """Demo user dashboard selector"""
+    return render(request, 'Home/demo_selector.html')

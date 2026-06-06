@@ -15,7 +15,15 @@ from subject.models import Subject, SubjectAssign
 from teachers.models import Teacher
 from home_auth.models import CustomUser
 from django.contrib.auth import get_user_model
+def is_demo_user(user):
+    """Check if user is demo user"""
+    return user.username == 'demo_user'
 
+def get_demo_filtered_queryset(queryset, user, demo_field='code', demo_prefix='DEMO'):
+    """Filter queryset to show only demo data for demo user"""
+    if is_demo_user(user):
+        return queryset.filter(**{f'{demo_field}__startswith': demo_prefix})
+    return queryset
 # ==================== MAIN DASHBOARDS ====================
 
 def dashboard(request):
@@ -167,6 +175,7 @@ def exam_dashboard(request, exam_id):
 def upload_marks_dashboard(request):
     """Dashboard showing all subjects and sections for marks upload - NO CONFIGURATION NEEDED"""
     try:
+
         teacher = Teacher.objects.get(user=request.user)
         
         subject_assignments = SubjectAssign.objects.filter(

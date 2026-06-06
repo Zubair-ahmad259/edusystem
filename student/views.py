@@ -7,8 +7,11 @@ import pandas as pd
 import openpyxl
 from openpyxl import Workbook
 import io
+from common.decorators import demo_block, is_demo_user    
+
 
 # ============= EXCEL IMPORT/EXPORT FUNCTIONS =============
+@demo_block
 def bulk_paste_students(request):
     
     if request.method == 'POST':
@@ -180,6 +183,8 @@ def bulk_paste_students(request):
     
     # GET request - show the paste form
     return render(request, 'students/bulk-paste.html')
+@demo_block
+
 def download_excel_template(request):
     """Download Excel template for bulk student import"""
     
@@ -236,11 +241,13 @@ def download_excel_template(request):
     wb.save(response)
     return response
 
+@demo_block
 
 def download_student_template(request):
     """Alias for download_excel_template - for template compatibility"""
     return download_excel_template(request)
 
+@demo_block
 
 def bulk_student_import(request):
     """Handle bulk student import from Excel/CSV file"""
@@ -480,7 +487,7 @@ def export_students_excel(request):
 
 
 # ============= STUDENT MANAGEMENT VIEWS =============
-
+@demo_block
 def add_student(request):
     batches = Batch.objects.all()
     semesters = Semester.objects.all()
@@ -598,6 +605,7 @@ def view_student(request, student_id):
     student = get_object_or_404(Student, id=student_id)
     return render(request, 'students/student-details.html', {'student': student})
 
+@demo_block
 
 def edit_student(request, student_id):
     student = get_object_or_404(Student, id=student_id)
@@ -769,7 +777,7 @@ def promote_all_students(request):
     
     return redirect('student_list')
 
-
+@demo_block
 def get_sections_by_batch(request):
     """AJAX view to get sections for a specific batch"""
     batch_id = request.GET.get('batch_id')
@@ -791,6 +799,8 @@ from timetables.models import TimetableEntry, TimeSlot
 from student.models import Student
 
 @login_required
+@demo_block
+
 def student_timetable(request):
     """View to show timetable for the student's section"""
     

@@ -22,6 +22,20 @@ logger = logging.getLogger(__name__)
 
 
 # ============= ROLE CHECK FUNCTIONS =============
+from functools import wraps
+from django.shortcuts import redirect
+from django.contrib import messages
+
+def demo_block(view_func):
+    """Decorator to block demo user from making changes"""
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if request.user.username == 'demo_user' and request.method == 'POST':
+            messages.error(request, '⚠️ Demo Mode: View-only access. You cannot make changes.')
+            return redirect(request.META.get('HTTP_REFERER', 'dashboard'))
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
 
 def is_office_clerk(user):
     """Check if user is office clerk"""
@@ -107,9 +121,27 @@ def user_role_context(request):
     return {'user_role': None}
 # ============= DASHBOARD VIEWS =============
 
+
 @login_required
 def admin_dashboard(request):
-    """Full admin dashboard - Superuser and Admin only"""
+    """Full admin dashboard - Allow demo user to view"""
+    
+    # ✅ Allow demo user to view (but not edit)
+    if request.user.username == 'demo_user':
+        from student.models import Student
+        from teachers.models import Teacher
+        from subject.models import Subject
+        
+        context = {
+            'total_students': Student.objects.count(),
+            'total_teachers': Teacher.objects.count(),
+            'total_subjects': Subject.objects.count(),
+            'user_role': 'Demo Viewer',
+            'is_demo_user': True,
+        }
+        return render(request, 'Home/admin_dashboard.html', context)
+    
+    # Regular admin check
     if not (request.user.is_superuser or request.user.is_admin):
         messages.error(request, 'You do not have permission to access this page.')
         return redirect('dashboard')
@@ -123,9 +155,9 @@ def admin_dashboard(request):
         'total_teachers': Teacher.objects.count(),
         'total_subjects': Subject.objects.count(),
         'user_role': 'Admin',
+        'is_demo_user': False,
     }
     return render(request, 'Home/admin_dashboard.html', context)
-
 
 @login_required
 def office_clerk_dashboard(request):
@@ -339,11 +371,18 @@ def reset_user_password(user):
 # ============= AUTHENTICATION VIEWS =============
 # Add this function before login_view
 def get_user_role_and_redirect(user):
-    """Get user role and return appropriate redirect URL name"""
-    if user.is_superuser or user.is_admin:
-        return 'admin_dashboard'
-    elif hasattr(user, 'admin_profile') and user.admin_profile:
-        role = user.admin_profile.role
+    """Get user role and return appropriate redirect URL"""
+    
+    # ✅ DEMO USER - Go to selector page
+    if user.username == 'demo_user':
+        return 'demo_dashboard_selector'
+    
+    # ✅ Check for admin profile role (Accounts Officer, Office Clerk, etc.)
+    try:
+        from head.models import AdminProfile
+        admin_profile = AdminProfile.objects.get(user=user)
+        role = admin_profile.role
+        
         if role == 'Office Clerk':
             return 'office_clerk_dashboard'
         elif role == 'Accounts':
@@ -352,12 +391,26 @@ def get_user_role_and_redirect(user):
             return 'librarian_dashboard'
         elif role == 'HOD':
             return 'hod_dashboard'
-    elif user.is_teacher:
+        elif role == 'Admin' or role == 'Super Admin':
+            return 'admin_dashboard'
+    except:
+        pass  # No admin profile found, continue to next checks
+    
+    # ✅ Check for superuser or admin
+    if user.is_superuser or user.is_admin:
+        return 'admin_dashboard'
+    
+    # ✅ Check for teacher
+    if hasattr(user, 'teacher') and user.teacher:
         return 'teacher_dashboard'
-    elif user.is_student:
+    
+    # ✅ Check for student
+    if hasattr(user, 'student') and user.student:
         return 'student_dashboard'
-    else:
-        return 'dashboard'
+    
+    # ✅ Default fallback
+    return 'dashboard'
+
 def login_view(request):
     """Handle user login"""
     if request.method == 'POST':
@@ -382,9 +435,10 @@ def login_view(request):
                 login(request, user)
                 messages.success(request, f'Welcome back, {user.username}!')
                 
-                # Check if password is temporary and needs change
-                if user.password_generated and user.temp_password:
-                    messages.warning(request, 'Please change your temporary password.')
+                # ✅ Skip temporary password warning for demo user
+                if user.username != 'demo_user':
+                    if user.password_generated and user.temp_password:
+                        messages.warning(request, 'Please change your temporary password.')
                 
                 # Redirect based on role
                 redirect_url = get_user_role_and_redirect(user)
@@ -1252,27 +1306,14 @@ def manage_admins_view(request):
 
     return render(request, "authentication/register_admin.html", context)
 def get_user_role_and_redirect(user):
-    """Get user role and return appropriate redirect URL name"""
-    # ✅ Check AdminProfile FIRST (for role-based users)
-    if hasattr(user, 'admin_profile') and user.admin_profile:
-        role = user.admin_profile.role
-        if role == 'Office Clerk':
-            return 'office_clerk_dashboard'
-        elif role == 'Accounts':
-            return 'accounts_dashboard'
-        elif role == 'Librarian':
-            return 'librarian_dashboard'
-        elif role == 'HOD':
-            return 'hod_dashboard'
-        elif role == 'Admin':
-            return 'admin_dashboard'
-        elif role == 'Super Admin':
-            return 'admin_dashboard'
+    """Get user role and return appropriate redirect URL"""
     
-    # Then check for regular users
-    if user.is_superuser:
-        return 'admin_dashboard'
-    if user.is_admin:
+    # Demo user - go to selector page
+    if user.username == 'demo_user':
+        return 'demo_dashboard_selector'
+    
+    # Rest of your existing code...
+    if user.is_superuser or user.is_admin:
         return 'admin_dashboard'
     if hasattr(user, 'teacher') and user.teacher:
         return 'teacher_dashboard'
@@ -1383,3 +1424,7 @@ def validate_student_email(request):
     from student.models import Student
     is_valid = Student.objects.filter(email=email).exists()
     return JsonResponse({'is_valid': is_valid})
+
+
+
+    
