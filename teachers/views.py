@@ -67,6 +67,7 @@ def teacher_list(request):
     }
     return render(request, "teacher/teachers.html", context)
 
+
 def edit_teacher(request, teacher_id):
     teacher_obj = get_object_or_404(Teacher, teacher_id=teacher_id)
     
@@ -103,7 +104,6 @@ def edit_teacher(request, teacher_id):
     
     context = {"teacher": teacher_obj}
     return render(request, "teacher/edit-teacher.html", context)
-
 def view_teacher(request, teacher_id):
     teacher_obj = get_object_or_404(Teacher, teacher_id=teacher_id)
     context = {"teacher": teacher_obj}
@@ -250,7 +250,6 @@ def download_teacher_template(request):
     response['Content-Disposition'] = 'attachment; filename="teacher_import_template.xlsx"'
     wb.save(response)
     return response
-
 def export_teachers_excel(request):
     """Export all teachers to Excel"""
     
@@ -313,6 +312,7 @@ def teacher_profile(request):
         'user': request.user,
     }
     return render(request, 'teacher/profile.html', context)
+
 
 
 @login_required

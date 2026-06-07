@@ -11,16 +11,16 @@
         <div class="page-header">
             <div class="row align-items-center">
                 <div class="col">
-                    <h3 class="page-title">Subject Assignment Records</h3>
+                    <h3 class="page-title">Subject Assign Records</h3>
                     <ul class="breadcrumb">
                         <li class="breadcrumb-item"><a href="{% url 'index' %}">Dashboard</a></li>
                         <li class="breadcrumb-item"><a href="{% url 'subject:view_subject' %}">Subjects</a></li>
-                        <li class="breadcrumb-item active">Assignments</li>
+                        <li class="breadcrumb-item active">Assign</li>
                     </ul>
                 </div>
                 <div class="col-auto text-right">
                     <a href="{% url 'subject:add_subject_assign' %}" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Add New Assignment
+                        <i class="fas fa-plus"></i> Add New Assign
                     </a>
                 </div>
             </div>
@@ -49,7 +49,7 @@
                         </span>
                         <div class="dash-widget-info">
                             <h3>{{ assigns|length }}</h3>
-                            <span>Active Assignments</span>
+                            <span>Active Assign</span>
                         </div>
                     </div>
                 </div>
@@ -73,7 +73,7 @@
         <div class="card">
             <div class="card-header bg-gradient-primary text-white">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-list"></i> Assignment Records
+                    <i class="fas fa-list"></i> Assign Records
                 </h5>
             </div>
             <div class="card-body">
