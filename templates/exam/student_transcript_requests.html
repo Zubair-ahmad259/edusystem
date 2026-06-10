@@ -95,7 +95,7 @@
                                 </div>
                                 <td class="text-center">
                                     {% if req.status == 'approved' or req.status == 'issued' %}
-                                        <a href="{% url 'student_view_transcript' req.id %}" class="btn btn-sm btn-outline-primary">
+                                        <a href="{% url 'exam_manag:student_view_transcript' req.id %}" class="btn btn-sm btn-outline-primary">
                                             <i class="fas fa-eye"></i> View
                                         </a>
                                     {% elif req.status == 'rejected' %}
