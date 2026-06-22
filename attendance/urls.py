@@ -48,7 +48,7 @@ path('view-attendance/<int:subject_id>/<int:section_id>/', views.view_section_at
     path('api/students-by-section/', views.get_students_by_section, name='get_students_by_section'),
     
     path('api/subjects-for-attendance/', views.get_subjects_for_attendance, name='get_subjects_for_attendance'),
-        # Subject Attendance
+        # Subject AttAendance
     path('subject/<int:subject_id>/', views.subject_attendance, name='subject_attendance'),
         path('short-attendance/', views.short_attendance, name='short_attendance'),
     path('subject-short-attendance/', views.subject_short_attendance, name='subject_short_attendance'),
@@ -60,5 +60,7 @@ path('view-attendance/<int:subject_id>/<int:section_id>/', views.view_section_at
 # path('subject/<int:subject_id>/low-attendance/', views.subject_low_attendance, name='subject_low_attendance'),
     # Or keep the old one but fix it
     path('api/subjects-by-semester/', views.get_subjects_by_semester, name='get_subjects_by_semester'),
+    # ... your existing URLs ...
+    path('api/student-subjects/<int:student_id>/', views.student_subjects_api, name='student_subjects_api'),
 
 ]

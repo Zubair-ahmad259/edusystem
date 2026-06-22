@@ -984,324 +984,316 @@ from subject.models import Subject
 from Academic.models import Batch, Semester, Section, Discipline
 
 # ... rest of your existing code ...
-
 def short_attendance(request):
     """View students with short attendance (below threshold)"""
-    # Get filter parameters
-    batch_id = request.GET.get('batch')
-    discipline_id = request.GET.get('discipline')
-    threshold = int(request.GET.get('threshold', 75))
-    
-    # Get all students
-    students = Student.objects.select_related('batch', 'section', 'semester', 'discipline')
-    
-    # Apply filters
-    if batch_id:
-        students = students.filter(batch_id=batch_id)
-    if discipline_id:
-        students = students.filter(discipline_id=discipline_id)
-    
-    # Calculate attendance for each student
-    short_attendance_students = []
-    for student in students:
-        # Get all attendance for this student
-        attendance_records = Attendance.objects.filter(student=student)
-        total_days = attendance_records.count()
+    try:
+        # Get filter parameters
+        batch_id = request.GET.get('batch')
+        discipline_id = request.GET.get('discipline')
+        threshold = int(request.GET.get('threshold', 75))
         
-        if total_days == 0:
-            continue
-            
-        present_days = attendance_records.filter(status='P').count()
-        overall_percentage = (present_days / total_days) * 100 if total_days > 0 else 0
+        # Get all students
+        students = Student.objects.select_related('batch', 'section', 'semester', 'discipline')
         
-        # Check if below threshold
-        if overall_percentage < threshold:
-            # Get subject-wise attendance
-            subject_stats = []
-            
-            # Get subjects from attendance records
-            subjects_from_attendance = Subject.objects.filter(
-                attendances__student=student
-            ).distinct()
-            
-            # If you have a SubjectAssign model, get subjects from there too
-            try:
-                from Academic.models import SubjectAssign
-                subjects_from_assign = Subject.objects.filter(
-                    subjectassign__student=student
-                ).distinct()
-                
-                # Combine both querysets
-                subject_ids = list(subjects_from_attendance.values_list('id', flat=True))
-                assigned_subject_ids = list(subjects_from_assign.values_list('id', flat=True))
-                all_subject_ids = list(set(subject_ids + assigned_subject_ids))
-                
-                # Get all unique subjects
-                subjects = Subject.objects.filter(id__in=all_subject_ids)
-            except:
-                # If SubjectAssign doesn't exist, just use attendance subjects
-                subjects = subjects_from_attendance
-            
-            for subject in subjects:
-                subject_attendance = attendance_records.filter(subject=subject)
-                subject_total = subject_attendance.count()
-                if subject_total > 0:
-                    subject_present = subject_attendance.filter(status='P').count()
-                    subject_percentage = (subject_present / subject_total) * 100
-                    if subject_percentage < threshold:
-                        subject_stats.append({
-                            'subject': subject,
-                            'percentage': subject_percentage
-                        })
-            
-            # Sort by lowest percentage
-            subject_stats.sort(key=lambda x: x['percentage'])
-            
-            student_data = {
-                'student': student,
-                'total_days': total_days,
-                'present_days': present_days,
-                'overall_percentage': overall_percentage,
-                'low_subjects': subject_stats,
-                'lowest_percentage': subject_stats[0]['percentage'] if subject_stats else 0
-            }
-            
-            short_attendance_students.append(student_data)
-    
-    # Sort by overall percentage (lowest first)
-    short_attendance_students.sort(key=lambda x: x['overall_percentage'])
-    
-    # Get statistics
-    total_students = students.count()
-    short_attendance_count = len(short_attendance_students)
-    critical_count = len([s for s in short_attendance_students if s['overall_percentage'] < 50])
-    good_attendance_count = total_students - short_attendance_count
-    
-    # Get batch distribution
-    batch_distribution = []
-    if batch_id:
-        # For selected batch only
-        batch_students = Student.objects.filter(batch_id=batch_id)
-        total_in_batch = batch_students.count()
-        short_in_batch = short_attendance_count
-        percentage = (short_in_batch / total_in_batch * 100) if total_in_batch > 0 else 0
-        batch_distribution.append({
-            'batch__name': batch_students.first().batch.name if batch_students.exists() else 'Selected Batch',
-            'total_students': total_in_batch,
-            'short_count': short_in_batch,
-            'percentage': percentage
-        })
-    else:
-        # For all batches
-        batches = Batch.objects.all()
-        for batch in batches:
-            batch_students = students.filter(batch=batch)
-            total_in_batch = batch_students.count()
-            if total_in_batch > 0:
-                # Calculate short attendance in this batch
-                short_in_batch = 0
-                for student_data in short_attendance_students:
-                    if student_data['student'].batch == batch:
-                        short_in_batch += 1
-                
-                percentage = (short_in_batch / total_in_batch * 100) if total_in_batch > 0 else 0
-                batch_distribution.append({
-                    'batch__name': batch.name,
-                    'total_students': total_in_batch,
-                    'short_count': short_in_batch,
-                    'percentage': percentage
-                })
-    
-    # Get problem subjects (subjects with most low attendance)
-    problem_subjects = []
-    subject_low_count = defaultdict(int)  # Now this will work
-    subject_lowest_percentage = defaultdict(float)
-    
-    for student_data in short_attendance_students:
-        for subject_stat in student_data['low_subjects']:
-            subject = subject_stat['subject']
-            subject_low_count[subject] += 1
-            if subject not in subject_lowest_percentage or subject_stat['percentage'] < subject_lowest_percentage[subject]:
-                subject_lowest_percentage[subject] = subject_stat['percentage']
-    
-    for subject, count in subject_low_count.items():
-        problem_subjects.append({
-            'subject__code': subject.code,
-            'subject__name': subject.name,
-            'low_count': count,
-            'lowest_percentage': subject_lowest_percentage[subject]
-        })
-    
-    # Sort by most low attendance
-    problem_subjects.sort(key=lambda x: x['low_count'], reverse=True)
-    
-    # Pagination
-    paginator = Paginator(short_attendance_students, 25)  # Show 25 students per page
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    
-    context = {
-        'short_attendance_students': page_obj,
-        'page_obj': page_obj,
-        'total_students': total_students,
-        'short_attendance_count': short_attendance_count,
-        'critical_count': critical_count,
-        'good_attendance_count': good_attendance_count,
-        'batches': Batch.objects.all(),
-        'disciplines': Discipline.objects.all(),
-        'selected_batch': batch_id,
-        'selected_discipline': discipline_id,
-        'selected_threshold': str(threshold),
-        'batch_distribution': batch_distribution,
-        'problem_subjects': problem_subjects[:10],  # Top 10 problem subjects
-    }
-    
-    return render(request, 'attendance/short_attendance.html', context)
-
-def subject_short_attendance(request):
-    """View subjects with students having short attendance"""
-    # Get filter parameters
-    discipline_id = request.GET.get('discipline')
-    semester_num = request.GET.get('semester')
-    threshold = int(request.GET.get('threshold', 75))
-    
-    # Get all subjects - REMOVED select_related('desciplain') since it doesn't exist
-    subjects = Subject.objects.all()
-    
-    # Apply filters - REMOVED desciplain filter since it doesn't exist
-    # If you want to filter by discipline, you need to use SubjectAssign or another model
-    # For now, we'll skip discipline filter
-    if semester_num:
-        # Assuming your Subject model has a semester field
-        # If not, you'll need to adjust this
-        try:
-            subjects = subjects.filter(semester=semester_num)
-        except:
-            pass
-    
-    # Calculate statistics for each subject
-    subject_stats = []
-    total_affected_students = 0
-    
-    for subject in subjects:
-        # Get all attendance for this subject
-        attendance_records = Attendance.objects.filter(subject=subject)
+        # Apply filters
+        if batch_id:
+            students = students.filter(batch_id=batch_id)
+        if discipline_id:
+            students = students.filter(discipline_id=discipline_id)
         
-        if not attendance_records.exists():
-            continue
-        
-        # Get unique students for this subject
-        student_ids = attendance_records.values_list('student', flat=True).distinct()
-        students = Student.objects.filter(id__in=student_ids)
-        
-        total_students = students.count()
-        if total_students == 0:
-            continue
-        
-        # Calculate student-wise attendance
-        short_students = 0
-        student_percentages = []
-        lowest_percentage = 100
+        # Calculate attendance for each student
+        short_attendance_students = []
         
         for student in students:
-            student_records = attendance_records.filter(student=student)
-            total_days = student_records.count()
+            # Get all attendance for this student
+            attendance_records = Attendance.objects.filter(student=student)
+            total_days = attendance_records.count()
+            
             if total_days == 0:
                 continue
+                
+            present_days = attendance_records.filter(status='P').count()
+            overall_percentage = (present_days / total_days) * 100
             
-            present_days = student_records.filter(status='P').count()
-            percentage = (present_days / total_days) * 100
-            student_percentages.append(percentage)
+            # Check if below threshold
+            if overall_percentage < threshold:
+                # Get subject-wise attendance for low subjects
+                low_subjects = []
+                
+                # Get all subjects this student has attendance for
+                subject_ids = attendance_records.values_list('subject_id', flat=True).distinct()
+                subjects = Subject.objects.filter(id__in=subject_ids)
+                
+                for subject in subjects:
+                    subject_records = attendance_records.filter(subject=subject)
+                    subject_total = subject_records.count()
+                    if subject_total > 0:
+                        subject_present = subject_records.filter(status='P').count()
+                        subject_percentage = (subject_present / subject_total) * 100
+                        
+                        if subject_percentage < threshold:
+                            low_subjects.append({
+                                'subject': subject,
+                                'percentage': subject_percentage
+                            })
+                
+                # Sort low subjects by percentage (lowest first)
+                low_subjects.sort(key=lambda x: x['percentage'])
+                
+                student_data = {
+                    'student': student,
+                    'total_days': total_days,
+                    'present_days': present_days,
+                    'overall_percentage': overall_percentage,
+                    'low_subjects': low_subjects,
+                    'lowest_percentage': low_subjects[0]['percentage'] if low_subjects else overall_percentage
+                }
+                
+                short_attendance_students.append(student_data)
+        
+        # Sort by overall percentage (lowest first)
+        short_attendance_students.sort(key=lambda x: x['overall_percentage'])
+        
+        # Get statistics
+        total_students = students.count()
+        short_attendance_count = len(short_attendance_students)
+        critical_count = len([s for s in short_attendance_students if s['overall_percentage'] < 50])
+        good_attendance_count = total_students - short_attendance_count
+        
+        # Pagination
+        paginator = Paginator(short_attendance_students, 25)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        
+        context = {
+            'short_attendance_students': page_obj,
+            'page_obj': page_obj,
+            'total_students': total_students,
+            'short_attendance_count': short_attendance_count,
+            'critical_count': critical_count,
+            'good_attendance_count': good_attendance_count,
+            'batches': Batch.objects.all(),
+            'disciplines': Discipline.objects.all(),
+            'selected_batch': batch_id,
+            'selected_discipline': discipline_id,
+            'selected_threshold': str(threshold),
+        }
+        
+        return render(request, 'attendance/short_attendance.html', context)
+        
+    except Exception as e:
+        import traceback
+        print(f"Error in short_attendance: {e}")
+        print(traceback.format_exc())
+        
+        context = {
+            'short_attendance_students': [],
+            'page_obj': [],
+            'total_students': Student.objects.count(),
+            'short_attendance_count': 0,
+            'critical_count': 0,
+            'good_attendance_count': 0,
+            'batches': Batch.objects.all(),
+            'disciplines': Discipline.objects.all(),
+            'selected_batch': None,
+            'selected_discipline': None,
+            'selected_threshold': '75',
+        }
+        return render(request, 'attendance/short_attendance.html', context)
+def subject_short_attendance(request):
+    """View subjects with students having short attendance"""
+    try:
+        # Get filter parameters
+        discipline_id = request.GET.get('discipline')
+        semester_num = request.GET.get('semester')
+        threshold = int(request.GET.get('threshold', 75))
+        
+        # Get all subjects that have attendance records
+        # Using values_list to get distinct subject IDs from Attendance
+        subject_ids = Attendance.objects.values_list('subject_id', flat=True).distinct()
+        
+        print(f"Subject IDs from attendance: {list(subject_ids)}")
+        
+        if not subject_ids:
+            print("No subjects found in attendance records")
+            context = {
+                'subject_stats': [],
+                'total_subjects': Subject.objects.count(),
+                'problem_subjects_count': 0,
+                'total_affected_students': 0,
+                'disciplines': Discipline.objects.all(),
+                'semesters': [],
+                'selected_discipline': discipline_id,
+                'selected_semester': semester_num,
+                'selected_threshold': str(threshold),
+            }
+            return render(request, 'attendance/subject_short_attendance.html', context)
+        
+        # Get the actual subjects
+        subjects = Subject.objects.filter(id__in=subject_ids)
+        
+        print(f"Found {subjects.count()} subjects")
+        
+        # Apply discipline filter
+        if discipline_id:
+            try:
+                # Try different field names
+                if hasattr(Subject, 'desciplain_id'):
+                    subjects = subjects.filter(desciplain_id=discipline_id)
+                elif hasattr(Subject, 'discipline_id'):
+                    subjects = subjects.filter(discipline_id=discipline_id)
+                print(f"Filtered by discipline: {subjects.count()} subjects")
+            except Exception as e:
+                print(f"Error filtering by discipline: {e}")
+        
+        # Apply semester filter
+        if semester_num:
+            try:
+                # Filter subjects by semester from attendance records
+                subject_ids_with_semester = Attendance.objects.filter(
+                    semester__number=semester_num
+                ).values_list('subject_id', flat=True).distinct()
+                subjects = subjects.filter(id__in=subject_ids_with_semester)
+                print(f"Filtered by semester: {subjects.count()} subjects")
+            except Exception as e:
+                print(f"Error filtering by semester: {e}")
+        
+        # If still no subjects, return empty
+        if not subjects.exists():
+            print("No subjects after filtering")
+            context = {
+                'subject_stats': [],
+                'total_subjects': Subject.objects.count(),
+                'problem_subjects_count': 0,
+                'total_affected_students': 0,
+                'disciplines': Discipline.objects.all(),
+                'semesters': [],
+                'selected_discipline': discipline_id,
+                'selected_semester': semester_num,
+                'selected_threshold': str(threshold),
+            }
+            return render(request, 'attendance/subject_short_attendance.html', context)
+        
+        # Calculate statistics for each subject
+        subject_stats = []
+        total_affected_students = 0
+        
+        for subject in subjects:
+            print(f"\nProcessing subject: {subject.code} - {subject.name}")
             
-            if percentage < lowest_percentage:
-                lowest_percentage = percentage
+            # Get all attendance for this subject
+            attendance_records = Attendance.objects.filter(subject=subject)
             
-            if percentage < threshold:
-                short_students += 1
-                total_affected_students += 1
-        
-        if not student_percentages:
-            continue
-        
-        # Calculate average percentage
-        average_percentage = sum(student_percentages) / len(student_percentages)
-        
-        # Calculate percentage of students with short attendance
-        short_percentage = (short_students / total_students) * 100 if total_students > 0 else 0
-        
-        if short_students > 0:  # Only include subjects with short attendance
+            if not attendance_records.exists():
+                print(f"  No attendance records found")
+                continue
+            
+            print(f"  Total attendance records: {attendance_records.count()}")
+            
+            # Get unique students for this subject - REMOVED is_active filter
+            student_ids = attendance_records.values_list('student_id', flat=True).distinct()
+            students = Student.objects.filter(id__in=student_ids)  # Removed is_active=True
+            
+            total_students = students.count()
+            if total_students == 0:
+                print(f"  No students found")
+                continue
+            
+            print(f"  Total students: {total_students}")
+            
+            # Calculate student-wise attendance
+            short_students = 0
+            student_percentages = []
+            lowest_percentage = 100
+            
+            for student in students:
+                student_records = attendance_records.filter(student=student)
+                total_days = student_records.count()
+                if total_days == 0:
+                    continue
+                
+                present_days = student_records.filter(status='P').count()
+                percentage = (present_days / total_days) * 100
+                student_percentages.append(percentage)
+                
+                if percentage < lowest_percentage:
+                    lowest_percentage = percentage
+                
+                if percentage < threshold:
+                    short_students += 1
+                    total_affected_students += 1
+            
+            if not student_percentages:
+                continue
+            
+            # Calculate average percentage
+            average_percentage = sum(student_percentages) / len(student_percentages)
+            
+            # Calculate percentage of students with short attendance
+            short_percentage = (short_students / total_students) * 100 if total_students > 0 else 0
+            
+            print(f"  Short students: {short_students}/{total_students} (below {threshold}%)")
+            print(f"  Average percentage: {average_percentage:.1f}%")
+            print(f"  Lowest percentage: {lowest_percentage:.1f}%")
+            
+            # Include ALL subjects that have students
             subject_stats.append({
                 'subject': subject,
                 'total_students': total_students,
                 'short_students': short_students,
                 'short_percentage': short_percentage,
                 'lowest_percentage': lowest_percentage,
-                'average_percentage': average_percentage
+                'average_percentage': average_percentage,
             })
-    
-    # Sort by number of short students (most first)
-    subject_stats.sort(key=lambda x: x['short_students'], reverse=True)
-    
-    # Get best performing subjects (no short attendance)
-    best_subjects = []
-    for subject in subjects:
-        attendance_records = Attendance.objects.filter(subject=subject)
-        if not attendance_records.exists():
-            continue
         
-        student_ids = attendance_records.values_list('student', flat=True).distinct()
-        students = Student.objects.filter(id__in=student_ids)
+        # Sort by short_students (most first)
+        subject_stats.sort(key=lambda x: x['short_students'], reverse=True)
         
-        all_good = True
-        student_percentages = []
+        print(f"\nTotal subject stats: {len(subject_stats)}")
+        for stat in subject_stats:
+            print(f"  {stat['subject'].code}: {stat['short_students']} short students")
         
-        for student in students:
-            student_records = attendance_records.filter(student=student)
-            total_days = student_records.count()
-            if total_days == 0:
-                continue
-            
-            present_days = student_records.filter(status='P').count()
-            percentage = (present_days / total_days) * 100
-            student_percentages.append(percentage)
-            
-            if percentage < threshold:
-                all_good = False
-                break
-        
-        if all_good and student_percentages:
-            average_percentage = sum(student_percentages) / len(student_percentages)
-            best_subjects.append({
-                'subject': subject,
-                'total_students': len(student_ids),
-                'average_percentage': average_percentage
-            })
-    
-    # Sort best subjects by average percentage (highest first)
-    best_subjects.sort(key=lambda x: x['average_percentage'], reverse=True)
-    
-    # Get unique semesters from subjects
-    # Assuming Subject model has a semester field (ForeignKey to Semester)
-    try:
-        semesters = Subject.objects.values_list('semester__number', flat=True).distinct().order_by('semester__number')
-    except:
+        # Get semesters from attendance
         semesters = []
-    
-    context = {
-        'subject_stats': subject_stats,
-        'best_subjects': best_subjects,
-        'total_subjects': subjects.count(),
-        'problem_subjects_count': len(subject_stats),
-        'total_affected_students': total_affected_students,
-        'disciplines': Discipline.objects.all(),  # For filter dropdown
-        'semesters': semesters,
-        'selected_discipline': request.GET.get('discipline'),
-        'selected_semester': semester_num,
-        'selected_threshold': str(threshold),
-    }
-    
-    return render(request, 'attendance/subject_short_attendance.html', context)
-
+        try:
+            semesters = Attendance.objects.values_list('semester__number', flat=True).distinct().order_by('semester__number')
+            semesters = [s for s in semesters if s is not None]
+        except Exception as e:
+            print(f"Error getting semesters: {e}")
+            semesters = []
+        
+        context = {
+            'subject_stats': subject_stats,
+            'total_subjects': Subject.objects.count(),
+            'problem_subjects_count': len([s for s in subject_stats if s['short_students'] > 0]),
+            'total_affected_students': total_affected_students,
+            'disciplines': Discipline.objects.all(),  # Removed is_active filter
+            'semesters': semesters,
+            'selected_discipline': discipline_id,
+            'selected_semester': semester_num,
+            'selected_threshold': str(threshold),
+        }
+        
+        return render(request, 'attendance/subject_short_attendance.html', context)
+        
+    except Exception as e:
+        import traceback
+        print(f"ERROR in subject_short_attendance: {e}")
+        print(traceback.format_exc())
+        
+        context = {
+            'subject_stats': [],
+            'total_subjects': Subject.objects.count(),
+            'problem_subjects_count': 0,
+            'total_affected_students': 0,
+            'disciplines': Discipline.objects.all(),
+            'semesters': [],
+            'selected_discipline': None,
+            'selected_semester': None,
+            'selected_threshold': '75',
+            'error_message': str(e)
+        }
+        return render(request, 'attendance/subject_short_attendance.html', context)
 def subject_detail_short_attendance(request, subject_id):
     """View students with short attendance for a specific subject"""
     subject = get_object_or_404(Subject, id=subject_id)
@@ -1314,6 +1306,29 @@ def subject_detail_short_attendance(request, subject_id):
     # Get all attendance for this subject
     attendance_records = Attendance.objects.filter(subject=subject)
     
+    if not attendance_records.exists():
+        context = {
+            'subject': subject,
+            'short_attendance_students': [],
+            'total_students': 0,
+            'short_attendance_count': 0,
+            'critical_count': 0,
+            'good_attendance_count': 0,
+            'total_records': 0,
+            'present_records': 0,
+            'absent_records': 0,
+            'overall_percentage': 0,
+            'average_percentage': 0,
+            'lowest_percentage': 0,
+            'highest_percentage': 0,
+            'batches': Batch.objects.all(),
+            'sections': Section.objects.all(),
+            'selected_batch': None,
+            'selected_section': None,
+            'selected_threshold': str(threshold),
+        }
+        return render(request, 'attendance/subject_detail_short_attendance.html', context)
+    
     # Calculate overall statistics
     total_records = attendance_records.count()
     present_records = attendance_records.filter(status='P').count()
@@ -1321,15 +1336,12 @@ def subject_detail_short_attendance(request, subject_id):
     overall_percentage = (present_records / total_records * 100) if total_records > 0 else 0
     
     # Get unique students for this subject
-    student_ids = attendance_records.values_list('student', flat=True).distinct()
-    students = Student.objects.filter(id__in=student_ids).select_related(
-        'batch', 'section', 'semester'
-    )
+    student_ids = attendance_records.values_list('student_id', flat=True).distinct()
+    students = Student.objects.filter(id__in=student_ids).select_related('batch', 'section', 'semester')
     
     # Apply filters
     if batch_id:
         students = students.filter(batch_id=batch_id)
-    
     if section_id:
         students = students.filter(section_id=section_id)
     
@@ -1350,7 +1362,6 @@ def subject_detail_short_attendance(request, subject_id):
         percentage = (present_days / total_days) * 100
         all_percentages.append(percentage)
         
-        # Update lowest and highest
         if percentage < lowest_percentage:
             lowest_percentage = percentage
         if percentage > highest_percentage:
@@ -1373,98 +1384,30 @@ def subject_detail_short_attendance(request, subject_id):
     total_students = students.count()
     short_attendance_count = len(short_attendance_students)
     critical_count = len([s for s in short_attendance_students if s['percentage'] < 50])
-    very_critical_count = len([s for s in short_attendance_students if s['percentage'] < 30])
     good_attendance_count = total_students - short_attendance_count
-    perfect_attendance_count = len([p for p in all_percentages if p == 100])
     
-    # Calculate average and median
-    if all_percentages:
-        average_percentage = sum(all_percentages) / len(all_percentages)
-        sorted_percentages = sorted(all_percentages)
-        mid = len(sorted_percentages) // 2
-        median_percentage = sorted_percentages[mid] if len(sorted_percentages) % 2 != 0 else (sorted_percentages[mid-1] + sorted_percentages[mid]) / 2
-    else:
-        average_percentage = 0
-        median_percentage = 0
-    
-    # Get batch distribution
-    batch_distribution = []
-    if batch_id:
-        # For selected batch only
-        batch_students = students.filter(batch_id=batch_id)
-        total_in_batch = batch_students.count()
-        short_in_batch = short_attendance_count
-        percentage = (short_in_batch / total_in_batch * 100) if total_in_batch > 0 else 0
-        batch_distribution.append({
-            'batch__name': batch_students.first().batch.name if batch_students.exists() else 'Selected Batch',
-            'total_students': total_in_batch,
-            'short_count': short_in_batch,
-            'percentage': percentage
-        })
-    else:
-        # For all batches
-        batches = Batch.objects.filter(student__in=students).distinct()
-        for batch in batches:
-            batch_students = students.filter(batch=batch)
-            total_in_batch = batch_students.count()
-            if total_in_batch > 0:
-                # Calculate short attendance in this batch
-                short_in_batch = 0
-                for student_data in short_attendance_students:
-                    if student_data['student'].batch == batch:
-                        short_in_batch += 1
-                
-                batch_percentage = (short_in_batch / total_in_batch * 100) if total_in_batch > 0 else 0
-                batch_distribution.append({
-                    'batch__name': batch.name,
-                    'total_students': total_in_batch,
-                    'short_count': short_in_batch,
-                    'percentage': batch_percentage
-                })
-    
-    # Get filter names for display
-    selected_batch_name = None
-    selected_section_name = None
-    
-    if batch_id:
-        try:
-            batch = Batch.objects.get(id=batch_id)
-            selected_batch_name = batch.name
-        except:
-            selected_batch_name = "Unknown"
-    
-    if section_id:
-        try:
-            section = Section.objects.get(id=section_id)
-            selected_section_name = section.name
-        except:
-            selected_section_name = "Unknown"
+    # Calculate average
+    average_percentage = sum(all_percentages) / len(all_percentages) if all_percentages else 0
     
     context = {
         'subject': subject,
+        'short_attendance_students': short_attendance_students,
         'total_students': total_students,
+        'short_attendance_count': short_attendance_count,
+        'critical_count': critical_count,
+        'good_attendance_count': good_attendance_count,
         'total_records': total_records,
         'present_records': present_records,
         'absent_records': absent_records,
         'overall_percentage': overall_percentage,
-        'short_attendance_students': short_attendance_students,
-        'short_attendance_count': short_attendance_count,
-        'critical_count': critical_count,
-        'very_critical_count': very_critical_count,
-        'good_attendance_count': good_attendance_count,
-        'perfect_attendance_count': perfect_attendance_count,
         'average_percentage': average_percentage,
-        'median_percentage': median_percentage,
         'lowest_percentage': lowest_percentage,
         'highest_percentage': highest_percentage,
-        'batch_distribution': batch_distribution,
         'batches': Batch.objects.filter(student__in=students).distinct(),
         'sections': Section.objects.filter(student__in=students).distinct(),
         'selected_batch': batch_id,
         'selected_section': section_id,
         'selected_threshold': str(threshold),
-        'selected_batch_name': selected_batch_name,
-        'selected_section_name': selected_section_name,
     }
     
     return render(request, 'attendance/subject_detail_short_attendance.html', context)
@@ -1645,7 +1588,43 @@ def subject_short_attendance_report(request, subject_id):
     }
     
     return render(request, 'attendance/subject_short_attendance_report.html', context)
-
+def student_subjects_api(request, student_id):
+    """API endpoint to get subject-wise attendance for a student"""
+    try:
+        student = get_object_or_404(Student, id=student_id)
+        
+        # Get all attendance records for this student
+        attendance_records = Attendance.objects.filter(student=student)
+        
+        if not attendance_records.exists():
+            return JsonResponse({'subjects': []})
+        
+        # Get all subjects this student has attendance for
+        subject_ids = attendance_records.values_list('subject_id', flat=True).distinct()
+        subjects = Subject.objects.filter(id__in=subject_ids)
+        
+        subjects_data = []
+        for subject in subjects:
+            subject_records = attendance_records.filter(subject=subject)
+            subject_total = subject_records.count()
+            if subject_total > 0:
+                subject_present = subject_records.filter(status='P').count()
+                subject_percentage = (subject_present / subject_total) * 100
+                
+                subjects_data.append({
+                    'id': subject.id,
+                    'code': subject.code,
+                    'name': subject.name,
+                    'percentage': round(subject_percentage, 1)
+                })
+        
+        # Sort by percentage (lowest first)
+        subjects_data.sort(key=lambda x: x['percentage'])
+        
+        return JsonResponse({'subjects': subjects_data})
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
 
 

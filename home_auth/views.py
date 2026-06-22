@@ -122,9 +122,20 @@ def user_role_context(request):
 # ============= DASHBOARD VIEWS =============
 
 
+
 @login_required
 def admin_dashboard(request):
-    """Full admin dashboard - Allow demo user to view"""
+    """Full admin dashboard - with tab isolation check"""
+    
+    # ✅ Check for tab isolation - prevent multiple tabs
+    tab_id = request.COOKIES.get('tab_id')
+    session_key = request.session.session_key
+    
+    # If tab_id doesn't match session, this tab might be hijacked
+    if tab_id and session_key and tab_id != session_key:
+        messages.warning(request, '⚠️ This session is active in another tab. Please refresh or login again.')
+        # You can redirect to login if you want
+        # return redirect('login')
     
     # ✅ Allow demo user to view (but not edit)
     if request.user.username == 'demo_user':
@@ -138,6 +149,7 @@ def admin_dashboard(request):
             'total_subjects': Subject.objects.count(),
             'user_role': 'Demo Viewer',
             'is_demo_user': True,
+            'tab_conflict': tab_id != session_key if tab_id and session_key else False,
         }
         return render(request, 'Home/admin_dashboard.html', context)
     
@@ -156,9 +168,9 @@ def admin_dashboard(request):
         'total_subjects': Subject.objects.count(),
         'user_role': 'Admin',
         'is_demo_user': False,
+        'tab_conflict': tab_id != session_key if tab_id and session_key else False,
     }
     return render(request, 'Home/admin_dashboard.html', context)
-
 @login_required
 def office_clerk_dashboard(request):
     """Office Clerk Dashboard - Can view students and teachers, cannot edit"""
@@ -410,9 +422,8 @@ def get_user_role_and_redirect(user):
     
     # ✅ Default fallback
     return 'dashboard'
-
 def login_view(request):
-    """Handle user login"""
+    """Handle user login with tab isolation"""
     if request.method == 'POST':
         email = request.POST.get('email')
         password = request.POST.get('password')
@@ -432,6 +443,26 @@ def login_view(request):
                 user = authenticate(request, username=email, password=password)
             
             if user is not None:
+                # ✅ Check if user already has an active session
+                from django.contrib.sessions.models import Session
+                from django.utils import timezone
+                
+                # Get all sessions for this user
+                user_sessions = Session.objects.filter(
+                    session_key__in=Session.objects.all().values_list('session_key', flat=True)
+                )
+                
+                # If user has other sessions, clear them
+                # This prevents multiple logins
+                for session in user_sessions:
+                    try:
+                        session_data = session.get_decoded()
+                        if session_data.get('_auth_user_id') == str(user.id):
+                            session.delete()
+                    except:
+                        pass
+                
+                # Login the user
                 login(request, user)
                 messages.success(request, f'Welcome back, {user.username}!')
                 
@@ -442,7 +473,12 @@ def login_view(request):
                 
                 # Redirect based on role
                 redirect_url = get_user_role_and_redirect(user)
-                return redirect(redirect_url)
+                response = redirect(redirect_url)
+                
+                # ✅ Set a cookie to identify the tab
+                response.set_cookie('tab_id', str(request.session.session_key), httponly=False, samesite='Lax')
+                
+                return response
             else:
                 messages.error(request, 'Invalid email or password.')
         except Exception as e:
@@ -450,12 +486,26 @@ def login_view(request):
             messages.error(request, 'An error occurred during login.')
     
     return render(request, 'authentication/login.html')
+
+
 def logout_view(request):
-    """Handle user logout"""
+    """Handle user logout with tab isolation"""
+    # Get session key before logout
+    session_key = request.session.session_key
+    
+    # Logout the user
     logout(request)
+    
+    # Delete the session
+    if session_key:
+        try:
+            from django.contrib.sessions.models import Session
+            Session.objects.filter(session_key=session_key).delete()
+        except:
+            pass
+    
     messages.success(request, 'You have been logged out successfully.')
     return redirect('login')
-
 
 from django.core.mail import send_mail
 from django.contrib.auth.tokens import default_token_generator
