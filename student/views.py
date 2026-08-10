@@ -3,7 +3,6 @@ from django.contrib import messages
 from django.http import JsonResponse, HttpResponse
 from .models import Batch, Semester, Section, Parent, Student, Discipline
 from datetime import datetime
-import pandas as pd
 import openpyxl
 from openpyxl import Workbook
 import io

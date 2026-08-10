@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from django.utils.text import slugify
 from django.contrib.auth.decorators import login_required
 from datetime import datetime
-import pandas as pd
+# import pandas as pd
 import openpyxl
 from openpyxl import Workbook
 from django.http import HttpResponse
